@@ -13,7 +13,7 @@ export default [
       },
     },
     rules: {
-      // "no-unused-vars": "warn",
+      'no-unused-vars': 'warn',
       // "no-console": "warn",
       // "capitalized-comments": "always"
     },

@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Always ignore
+# Always ignore these folders and archives
 node_modules/
 dist/
 .env

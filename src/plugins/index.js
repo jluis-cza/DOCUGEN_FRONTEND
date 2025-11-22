@@ -1,5 +1,5 @@
-import vuetify from '../common/styles/vuetify';
-import router from '../common/router/';
+import vuetify from '../styles/vuetify';
+import router from '../router/';
 import { createPinia } from 'pinia';
 
 export function registerPlugins(app) {
