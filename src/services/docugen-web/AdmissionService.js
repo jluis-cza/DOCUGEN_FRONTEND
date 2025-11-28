@@ -1,13 +1,17 @@
 // Admission HTTP services using the axios instance
 
-import axiosInstance from '../AxiosInstanceService';
-import { SERVICES } from '@/constants/services';
+import axiosInstance from '../AxiosInstanceService.js';
+import { SERVICES } from '@/constants/services.js';
+
+const ADMISSION_BASE_PATH = SERVICES.path.docugen_web.admission.base; 
+const REGISTER_ACCOUNT_PATH = SERVICES.path.docugen_web.admission.register_account;
+const START_SESSION_PATH = SERVICES.path.docugen_web.admission.start_session;
 
 export const AdmissionService = {
   registerAccount: (payload) => {
-    axiosInstance().post(SERVICES.path.docugen_web.admission.register_account, payload);
+    return axiosInstance.post(ADMISSION_BASE_PATH + REGISTER_ACCOUNT_PATH, payload);
   },
   login: (payload) => {
-    axiosInstance().post(SERVICES.path.docugen_web.admission.start_session, payload);
+    return axiosInstance.post(ADMISSION_BASE_PATH + START_SESSION_PATH, payload);
   },
 };

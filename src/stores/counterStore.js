@@ -14,13 +14,13 @@ export const useCounterStore = defineStore('counter', () => {
   getters.doubleCount = computed(() => states.count.value * 2);
   //Actions
   actions.increment = () => {
-    states.count.value++;
+    return states.count.value++;
   };
   actions.decrement = () => {
-    states.count.value--;
+    return states.count.value--;
   };
   actions.addElement = () => {
-    states.vector.value.push(states.vector.value.length);
+    return states.vector.value.push(states.vector.value.length);
   };
   return {
     states,

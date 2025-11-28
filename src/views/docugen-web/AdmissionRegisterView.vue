@@ -6,40 +6,40 @@
       <v-text-field
         v-model="accountData.username"
         label="Nombre de usuario"
-        :rules="[RULES.text.input.required]"
+        :rules="[RULE_TEXT_REQUIRED]"
         required
       ></v-text-field>
       <v-text-field
-        v-model="accountData.name"
+        v-model="accountData.user.name"
         label="Nombres"
-        :rules="[RULES.text.input.required]"
+        :rules="[RULE_TEXT_REQUIRED]"
         required
       ></v-text-field>
       <v-text-field
-        v-model="accountData.lastname"
+        v-model="accountData.user.lastname"
         label="Apellidos"
-        :rules="[RULES.text.input.required]"
+        :rules="[RULE_TEXT_REQUIRED]"
         required
       ></v-text-field>
       <v-text-field
-        v-model="accountData.email"
+        v-model="accountData.user.email"
         label="Correo"
         type="email"
-        :rules="[RULES.text.input.required, RULES.text.input.email]"
+        :rules="[RULE_TEXT_REQUIRED, RULE_EMAIL_INPUT]"
         required
       ></v-text-field>
       <v-text-field
         v-model="accountData.password"
         label="Contraseña"
         type="password"
-        :rules="[RULES.text.input.required]"
+        :rules="[RULE_TEXT_REQUIRED]"
         required
       ></v-text-field>
       <v-text-field
-        v-model="accountData.repeatedPassword"
+        v-model="passwordConfirmation"
         label="Reingrese la contraseña"
         type="password"
-        :rules="[RULES.text.input.required]"
+        :rules="[RULE_TEXT_REQUIRED]"
         required
       ></v-text-field>
 
@@ -48,19 +48,17 @@
   </v-container>
 </template>
 <script setup>
-import { RULES } from '../../helpers/rules';
+import { RULES } from '../../helpers/rules.js';
+import { SERVICES } from '../../constants/services.js';
 import { ref } from 'vue';
-import { useAccountStore } from '@/stores/docugen-web/accountStore'
+import { useAccountStore } from '@/stores/docugen-web/accountStore.js';
 
-const account = useAccountStore()
-const accountData = ref({
-  username: '',
-  name: '',
-  lastname: '',
-  email: '',
-  password: '',
-  repeatedPassword: '',
-});
+const RULE_TEXT_REQUIRED = RULES.text.input.required;
+const RULE_EMAIL_INPUT = RULES.text.input.email;
+const account = useAccountStore();
+const accountDefaultData = SERVICES.payload.docugen_web.admission.account;
+const accountData = ref(accountDefaultData);
+const passwordConfirmation = ref('');
 const form = ref(null);
 
 const register = async () => {
@@ -69,15 +67,21 @@ const register = async () => {
     const { valid } = await form.value.validate();
     if (valid) {
       console.log({ valid: valid });
-      if (accountData.value.password === accountData.value.repeatedPassword) {
-        const response0 = account.resetAccount()
-        const response1 = account.setAccount(accountData.value)
-        accountData.value = {} // cleaning the form entries
-        const response2 = account.registerAccount(accountData.value)
-        console.log('Sending data to the server.');
+      if (accountData.value.password === passwordConfirmation.value) {
+        const accountStoreReset = account.resetAccount();
+        const accountStoreSet = account.setAccount(accountData.value);
+        const accountStored = account.getAccount;
+        accountData.value = accountDefaultData;
+        const response = await account.registerAccount(accountStored);
+        if(response){
+          account.resetAccount();
+          console.log('Data was sent to the server.');
+          console.log('Registration response:', response.data);
+        }
       } else {
         console.log("The passwords aren't the same.");
       }
+       passwordConfirmation.value = '' 
     } else {
       console.log('Input data is incorrect.');
     }

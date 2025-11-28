@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { login } from './docugen-web/admissionLogin';
-import { register } from './docugen-web/admissionRegister';
+import { login } from './docugen-web/admissionLogin.js';
+import { register } from './docugen-web/admissionRegister.js';
 
 const routes = [
   //Start page

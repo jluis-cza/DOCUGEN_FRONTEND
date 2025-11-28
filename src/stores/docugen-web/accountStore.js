@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { AdmissionService } from '@/services/docugen-web/AdmissionService';
+import { AdmissionService } from '@/services/docugen-web/AdmissionService.js';
 
 export const useAccountStore = defineStore('account', () => {
   // States
@@ -23,7 +23,8 @@ export const useAccountStore = defineStore('account', () => {
   async function registerAccount(data) {
     try {
       const response = await AdmissionService.registerAccount(data);
-      registeredAccount.value = response ? true : false;
+      registeredAccount.value = response.data ? true : false;
+      console.log("Register Account Response:", response.data);
       return response;
     } catch (error) {
       console.log('Error', error);

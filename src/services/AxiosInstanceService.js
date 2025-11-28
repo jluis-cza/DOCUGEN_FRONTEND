@@ -1,19 +1,21 @@
 import axios from 'axios';
-import { SERVICES } from '../constants/services';
+import { SERVICES } from '../constants/services.js';
+
+const ROOT_API_URL = SERVICES.base_url.api;
+const JSON_CONTENT_TYPE = SERVICES.content.type.json;
 
 // Axios instance to make HTTP requests
-const axiosInstance = (baseURL = SERVICES.base_url.api, headers = SERVICES.content.type.json) => {
-  return axios.create({
-    baseURL: baseURL,
+const axiosInstance = axios.create({
+    baseURL: ROOT_API_URL,
     timeout: 30000, //
     headers: {
-      ...headers,
-    },
+      ...JSON_CONTENT_TYPE
+    }
   });
-};
+
 
 // Out-Data interceptor
-axiosInstance().interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
     config.headers.Authorization = 'Bearer ' + (token ? token : '');
@@ -27,7 +29,7 @@ axiosInstance().interceptors.request.use(
 );
 
 //In-Data interceptor
-axiosInstance().interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => {
     console.log('Response:', response.status, response.config.url);
     return response;
