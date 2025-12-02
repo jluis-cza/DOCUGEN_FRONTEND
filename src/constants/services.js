@@ -37,6 +37,11 @@ export const SERVICES = {
           role: '',
           status: '',
         },
+        user_credentials:{
+          username: '',
+          email: '',
+          password: '',
+        }
       },
     },
     default: {},

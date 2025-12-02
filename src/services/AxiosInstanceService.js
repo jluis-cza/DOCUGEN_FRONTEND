@@ -32,6 +32,8 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     console.log('Response:', response.status, response.config.url);
+    console.log('Response Data:', response.data);
+    alert(response.data.message);
     return response;
   },
   (error) => {
@@ -52,11 +54,13 @@ axiosInstance.interceptors.response.use(
         default:
           console.error('Error:', error.response.status);
       }
+      console.error('Detalles del error:', error.response.data);
     } else if (error.request) {
       console.error('El servidor no respondió a la petición');
     } else {
       console.error('Error:', error.message);
     }
+    alert(error.response.data.message);
     return Promise.reject(error);
   }
 );
