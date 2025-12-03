@@ -17,7 +17,7 @@ const axiosInstance = axios.create({
 // Out-Data interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token'); // if there is a token stored, use it
     config.headers.Authorization = 'Bearer ' + (token ? token : '');
     console.log('Request:', config.method.toUpperCase(), config.url);
     return config;

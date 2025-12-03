@@ -49,8 +49,8 @@ const login = async () => {
       credentials.resetCredentials();
       credentials.setCredentials(userCredentialsData.value);
       const credentialsStored = credentials.getCredentials;
-      const response = await credentials.submitCredentials(credentialsStored); // Making the post request
       userCredentialsData.value = userCredentialsDefaultData; //cleaning form
+      const response = await credentials.submitCredentials(credentialsStored); // Making the post request
 
       if (response.data.success) {
         //Setting the LocalStorage
@@ -61,6 +61,7 @@ const login = async () => {
         const status = response.data.accountData.status;
         admissionLoginHelper.saveToken(token);
         admissionLoginHelper.saveBasicAccountInfo(accountId, username, role, status);
+        await router.push('/dashboard'); // Redirecting to dashboard
       }
 
       // //Notification of successfull login
@@ -69,7 +70,6 @@ const login = async () => {
       //   message: response.data.message,
       // });
 
-      router.push('/dashboard'); // Redirecting to dashboard
     } else {
       console.log('Input data is incorrect.');
     }
@@ -80,8 +80,8 @@ const login = async () => {
   }
 };
 
-onMounted(()=>{
-  admissionLoginHelper.clearLocalStorage()
-})
+// onMounted(()=>{
+//   admissionLoginHelper.clearLocalStorage()
+// })
 </script>
 <style scoped></style>

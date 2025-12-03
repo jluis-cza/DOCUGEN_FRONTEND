@@ -15,3 +15,14 @@ export function saveBasicAccountInfo(id, username, role, status) {
 export function clearLocalStorage() {
   localStorage.clear();
 }
+
+export function removeToken() {
+  localStorage.removeItem('token');
+}
+
+export function removeBasicAccountInfo() {
+  localStorage.removeItem('accountId');
+  localStorage.removeItem('username');
+  localStorage.removeItem('role');
+  localStorage.removeItem('status');
+}

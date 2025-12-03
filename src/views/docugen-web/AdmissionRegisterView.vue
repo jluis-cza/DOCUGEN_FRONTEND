@@ -76,14 +76,16 @@ const register = async () => {
         const accountStoreReset = account.resetAccount();
         const accountStoreSet = account.setAccount(accountData.value);
         const accountStored = account.getAccount;
-        const response = await account.registerAccount(accountStored);
         accountData.value = accountDefaultData; //cleaning form
+        const response = await account.registerAccount(accountStored);
+         if (response.data.success) {
+           await router.push('/'); // Redirecting to home
+         }
         // //Notification of successfull login
         // notification.setNotification({
         //   type: response.data.success,
         //   message: response.data.message,
         // });
-        router.push('/'); // Redirecting to home
       } else {
         console.log("The passwords aren't the same.");
       }
