@@ -14,7 +14,7 @@
         <aside class="navegationBar">
           <h3>Bienvenido</h3>
           <h4>{{ username }}</h4>
-          <br/>
+          <br />
           <ul>
             <li v-if="role === administrator">
               <RouterLink to="/dashboard/system">Parámetros del Sistema</RouterLink>
@@ -36,27 +36,30 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useSessionStore } from '../../stores/docugen-web/sessionStore.js';
 import { retrieveBasicAccountInfo } from '../../helpers/docugen-web/administrationManagementDashboardHelper.js';
 import {
   removeToken,
   removeBasicAccountInfo,
 } from '../../helpers/docugen-web/admissionLoginHelper.js';
-import { USERS } from '../../constants/users.js'
+import { USERS } from '../../constants/users.js';
 import { useRouter } from 'vue-router';
 
 const username = ref('');
 const role = ref('');
-const administrator = USERS.type.server.role.administrator 
-const developer = USERS.type.client.role.developer
+const administrator = USERS.type.server.role.administrator;
+const developer = USERS.type.client.role.developer;
 const router = useRouter();
+const session = useSessionStore();
 
 const logout = async () => {
-  removeToken();
-  removeBasicAccountInfo();
-  try{
+  try {
+    await session.closeSession({ username: username.value });
+    removeToken();
+    removeBasicAccountInfo();
     await router.push('/');
-  }catch(error){
-    console.log("Navigational error. ", error)
+  } catch (error) {
+    console.log('Navigational error. ', error);
   }
 };
 
@@ -67,8 +70,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.header-container {
-}
 .header {
   display: flex;
   justify-content: space-between;
