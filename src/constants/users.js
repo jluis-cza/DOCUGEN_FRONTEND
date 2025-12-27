@@ -1,5 +1,5 @@
 export const USERS = {
-  type:{
+  type: {
     client: {
       role: {
         guest: 'guest',
@@ -11,5 +11,5 @@ export const USERS = {
         administrator: 'admin',
       },
     },
-  }
+  },
 };

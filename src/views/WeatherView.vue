@@ -1,19 +1,15 @@
-<template>
- La temperatura en la pzz es: {{weather.temperature}} °c
-</template>
- 
+<template>La temperatura en la pzz es: {{ weather.temperature }} °c</template>
+
 <script setup>
 import { useWeatherComposable } from '../composables/weatherComposable';
-import { onMounted} from 'vue';
+import { onMounted } from 'vue';
 import { useWeatherStore } from '../stores/weatherStore';
 
 const weather = useWeatherStore();
 
-onMounted( () => {
-useWeatherComposable();
-})
-
-
+onMounted(() => {
+  useWeatherComposable();
+});
 </script>
- 
+
 <style scoped></style>

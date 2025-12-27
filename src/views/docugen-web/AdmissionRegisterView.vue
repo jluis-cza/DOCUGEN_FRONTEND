@@ -54,12 +54,9 @@ import { ref } from 'vue';
 import { useAccountStore } from '@/stores/docugen-web/accountStore.js';
 import { useRouter } from 'vue-router';
 
-
 const RULE_TEXT_REQUIRED = RULES.text.input.required;
 const RULE_EMAIL_INPUT = RULES.text.input.email;
 const account = useAccountStore();
-// const accountDefaultData = SERVICES.payload.docugen_web.admission.account;
-// const accountDefaultData = JSON.parse(JSON.stringify(SERVICES.payload.docugen_web.admission.account))
 const accountDefaultData = SERVICES.payload.docugen_web.admission.account;
 const accountData = ref(JSON.parse(JSON.stringify(accountDefaultData)));
 const passwordConfirmation = ref('');
@@ -73,19 +70,11 @@ const register = async () => {
     if (valid) {
       console.log({ valid: valid });
       if (accountData.value.password === passwordConfirmation.value) {
-        const accountStoreReset = account.resetAccount();
-        const accountStoreSet = account.setAccount(accountData.value);
-        const accountStored = account.getAccount;
+        await account.registerAccount(accountData.value);
         accountData.value = accountDefaultData; //cleaning form
-        const response = await account.registerAccount(accountStored);
-         if (response.data.success) {
-           await router.push('/'); // Redirecting to home
-         }
-        // //Notification of successfull login
-        // notification.setNotification({
-        //   type: response.data.success,
-        //   message: response.data.message,
-        // });
+        if (account.isRegisteredAccount) {
+          await router.push('/'); // Redirecting to home
+        }
       } else {
         console.log("The passwords aren't the same.");
       }
@@ -95,7 +84,6 @@ const register = async () => {
   } catch (error) {
     console.error('The entry could not have been verificated.', error);
   } finally {
-    account.resetAccount(); //cleaning account store
     passwordConfirmation.value = ''; //cleaning field
   }
 };

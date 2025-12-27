@@ -3,7 +3,7 @@
 import { USERS } from '../../constants/users.js';
 
 const ADMIN_ROLE = USERS.type.server.role.administrator;
-const DEV_ROLE = USERS.type.client.role.developer
+const DEV_ROLE = USERS.type.client.role.developer;
 
 export const dashboard = [
   {

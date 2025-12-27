@@ -26,15 +26,18 @@
 <script setup>
 import { RULES } from '../../helpers/rules.js';
 import { SERVICES } from '../../constants/services.js';
-import * as admissionLoginHelper from '../../helpers/docugen-web/admissionLoginHelper.js';
-import { ref, onMounted} from 'vue';
+import { ref, onMounted } from 'vue';
 import { useCredentialsStore } from '../../stores/docugen-web/credentialStore.js';
+import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
+import { useSessionStore } from '../../stores/docugen-web/sessionStore.js';
 // import { useNotificationStore } from '../../stores/notificationStore.js';
 import { useRouter } from 'vue-router';
 
 const RULE_TEXT_REQUIRED = RULES.text.input.required;
 const RULE_EMAIL_INPUT = RULES.text.input.email;
 const credentials = useCredentialsStore();
+const token = useTokenStore();
+const session = useSessionStore()
 // const notification = useNotificationStore();
 const userCredentialsDefaultData = SERVICES.payload.docugen_web.admission.user_credentials;
 const userCredentialsData = ref(JSON.parse(JSON.stringify(userCredentialsDefaultData)));
@@ -53,14 +56,21 @@ const login = async () => {
       const response = await credentials.submitCredentials(credentialsStored); // Making the post request
 
       if (response.data.success) {
-        //Setting the LocalStorage
-        const token = response.data.token;
-        const accountId = response.data.accountData._id;
-        const username = response.data.accountData.username;
-        const role = response.data.accountData.role;
-        const status = response.data.accountData.status;
-        admissionLoginHelper.saveToken(token);
-        admissionLoginHelper.saveBasicAccountInfo(accountId, username, role, status);
+        //Setting the token in memory
+        const tokenString = response.data.accessToken;
+        const accountInfo = {
+          accountId: response.data.accountData.id,
+          username: response.data.accountData.username,
+          role: response.data.accountData.role,
+          status: response.data.accountData.status,
+        };
+        const sessionInfo = {
+          sessionId: response.data.sessionData.id,
+          status: response.data.sessionData.status,
+        }
+        token.setToken(tokenString);
+        token.setInfo(accountInfo);
+        session.setSession(sessionInfo);
         await router.push('/dashboard'); // Redirecting to dashboard
       }
 
@@ -69,9 +79,8 @@ const login = async () => {
       //   type: response.data.success,
       //   message: response.data.message,
       // });
-
     } else {
-      console.log('Input data is incorrect.');
+      console.error('Input data is incorrect.');
     }
   } catch (error) {
     console.error('The entry could not have been verificated.', error);
@@ -79,9 +88,5 @@ const login = async () => {
     credentials.resetCredentials(); //Cleaning credential store
   }
 };
-
-// onMounted(()=>{
-//   admissionLoginHelper.clearLocalStorage()
-// })
 </script>
 <style scoped></style>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { login } from './docugen-web/admissionLogin.js';
 import { register } from './docugen-web/admissionRegister.js';
 import { dashboard } from './docugen-web/administrationManagementDashboard.js';
+import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
 
 const routes = [
   //Start page
@@ -45,23 +46,38 @@ const router = createRouter({
 });
 
 // Global guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  const token = useTokenStore();
   // Checking is autentication is needed to access the route
   if (to.meta.requiresAuth) {
     //Checking token existence
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.log('Access failed. No token found');
-      next('/login');
-    } else {
-      const role = localStorage.getItem('role');
-      if(to.meta.allowedRoles.includes(role)){
-        console.log('Access granted');
-        next();
-      }else{
-        console.log('Access failed. No role found.');
+    const tokenString = token.getToken;
+
+    if (!tokenString) {
+      console.error('Access failed. No token found.');
+      try {
+        console.log('Trying to renew token...');
+        await token.renewToken();
+        const newTokenString = token.getToken || '';
+        if (!newTokenString) {
+          console.error('No token found after renewing process. Sending to login');
+          next('/login');
+        }
+         console.log('The token successfully renewed.');
+      } catch (error) {
+        console.error('Error on renewing token.', error);
         next('/login');
       }
+    }
+
+    // Checking the user's role
+    const role = token.getInfo.role;
+    if (to.meta.allowedRoles.includes(role)) {
+      console.log(`Access granted. role: ${role}`);
+      next();
+    } else {
+      console.error('Access failed. No role found.');
+      next('/login');
     }
   } else {
     next();

@@ -37,11 +37,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useSessionStore } from '../../stores/docugen-web/sessionStore.js';
-import { retrieveBasicAccountInfo } from '../../helpers/docugen-web/administrationManagementDashboardHelper.js';
-import {
-  removeToken,
-  removeBasicAccountInfo,
-} from '../../helpers/docugen-web/admissionLoginHelper.js';
+import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
 import { USERS } from '../../constants/users.js';
 import { useRouter } from 'vue-router';
 
@@ -51,12 +47,13 @@ const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
 const router = useRouter();
 const session = useSessionStore();
+const token = useTokenStore();
 
 const logout = async () => {
   try {
     await session.closeSession({ username: username.value });
-    removeToken();
-    removeBasicAccountInfo();
+    token.resetToken();
+    token.resetInfo();
     await router.push('/');
   } catch (error) {
     console.log('Navigational error. ', error);
@@ -64,8 +61,8 @@ const logout = async () => {
 };
 
 onMounted(() => {
-  username.value = retrieveBasicAccountInfo().username;
-  role.value = retrieveBasicAccountInfo().role;
+  username.value = token.getInfo.username;
+  role.value = token.getInfo.role;
 });
 </script>
 

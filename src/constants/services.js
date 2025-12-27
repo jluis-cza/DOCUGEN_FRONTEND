@@ -18,6 +18,17 @@ export const SERVICES = {
         register_account: '/register',
         start_session: '/login',
         close_session: '/logout',
+        renew_access: '/refresh',
+      },
+      administration: {
+        base: '/admin',
+        monitor: '/monitor',
+        configuration: '/config',
+        resource: {
+          system_parameters: '/system',
+          accounts: '/accounts',
+          services: '/services',
+        },
       },
     },
     default: '/',
@@ -38,11 +49,11 @@ export const SERVICES = {
           role: '',
           status: '',
         },
-        user_credentials:{
+        user_credentials: {
           username: '',
           email: '',
           password: '',
-        }
+        },
       },
     },
     default: {},

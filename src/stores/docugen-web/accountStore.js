@@ -21,15 +21,16 @@ export const useAccountStore = defineStore('account', () => {
     return account;
   };
   async function registerAccount(data) {
+    resetAccount()
+    registeredAccount.value = null;
     try {
       const response = await AdmissionService.registerAccount(data);
-      registeredAccount.value = response.data ? true : false;
-      console.log("Register Account Response:", response.data);
-      return response;
+      if(response.data.success){
+        registeredAccount.value = true;
+        setAccount(response.data.data)
+      }
     } catch (error) {
       console.log('Error', error);
-      registeredAccount.value = false;
-      return error;
     }
   }
 

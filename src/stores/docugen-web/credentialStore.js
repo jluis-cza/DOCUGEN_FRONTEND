@@ -22,13 +22,9 @@ export const useCredentialsStore = defineStore('credentials', () => {
     try {
       const response = await AdmissionService.login(data);
       acceptedCredentials.value = response.data.success;
-      // {token, username, role} = response.data.data;
-      // if(response.data.success){
-      //   window.localStorage.setItem('token', token)
-      // }
       return response;
     } catch (error) {
-      console.log('Error', error);
+      console.error('Error', error);
       return error;
     }
   }

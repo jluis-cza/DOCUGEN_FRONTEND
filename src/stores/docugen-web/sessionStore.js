@@ -24,8 +24,10 @@ export const useSessionStore = defineStore('session', () => {
   async function closeSession(data) {
     try {
       const response = await AdmissionService.logout(data);
-      console.log('Register Account Response:', response.data);
-      return response;
+      if(!response.data.success){
+        console.error('It hasn´t been possible to close the current session.')
+      } 
+      resetSession()
     } catch (error) {
       console.log('Error', error);
       return error;
