@@ -49,10 +49,27 @@ export const SERVICES = {
           role: '',
           status: '',
         },
-        user_credentials: {
+        // registerAccount
+        account_registry: {
           username: '',
-          email: '',
+          user: {
+            name: '',
+            lastname: '',
+            email: '',
+          },
           password: '',
+        },
+        // sessionStarter
+        account_credentials: {
+          username: '',
+          user: {
+            email: '',
+          },
+          password: '',
+        },
+        // sessionCloser (internal call)
+        account_username: {
+          username: '',
         },
       },
     },

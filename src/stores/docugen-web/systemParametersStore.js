@@ -8,8 +8,10 @@ export const useSystemParametersStore = defineStore('systemParameters', () => {
   const systemParameters = ref([]);
   const loading = ref(false);
   const error = ref(null);
-  const pagination = ref({ ...TABLES.default.pagination });
-  const sort = ref({ ...TABLES.default.sort });
+  const defaultPagination = TABLES.default.pagination;
+  const pagination = ref({ ...defaultPagination });
+  const defaultSort = TABLES.default.sort;
+  const sort = ref({ ...defaultSort });
   const search = ref('');
 
   //Getters
@@ -39,18 +41,18 @@ export const useSystemParametersStore = defineStore('systemParameters', () => {
         search: search.value,
       };
       const response = await AdministrationService.monitorSystemParameters(params);
-      const success = response.data.success
-      const data= response.data.data
-      const pagination = response.data.pagination.
+      const success = response.data.success;
+      const data = response.data.data;
+      const paginationData = response.data.pagination;
       if (success) {
-        setSystemParameters(data)
+        setSystemParameters(data);
         pagination.value = {
           ...pagination.value,
-          total: pagination.total,
-          totalPages: pagination.totalPages,
+          total: paginationData.total,
+          totalPages: paginationData.totalPages,
         };
-      }else{
-        console.log("no se mando nada")
+      } else {
+        console.log('no se mando nada');
       }
     } catch (err) {
       error.value = err.message;
@@ -64,7 +66,7 @@ export const useSystemParametersStore = defineStore('systemParameters', () => {
   };
   const setLimit = (limit) => {
     pagination.value.limit = limit;
-    setPage(1);
+    // setPage(1);
   };
   const setSort = (by, order) => {
     sort.value.by = by;

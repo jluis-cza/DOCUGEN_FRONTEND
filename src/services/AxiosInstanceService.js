@@ -53,7 +53,6 @@ axiosInstance.interceptors.response.use(
   (response) => {
     console.log('Response:', response.status, response.config.url);
     console.log('Response Data:', response.data);
-    alert(response.data.message);
     return response;
   },
   async (error) => {
@@ -61,7 +60,6 @@ axiosInstance.interceptors.response.use(
 
     // 401 Status response treatment
     if (error.response?.status === 401 && !originalRequest._retry) {
-
       // If the instance is refreshing add current request to the queue
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -88,11 +86,10 @@ axiosInstance.interceptors.response.use(
         // const newToken = response.data.accessToken;
         const newToken = tokenStore.getToken || '';
         originalRequest.headers.Authorization = `Bearer ${newToken}`; // Update token bearer
-        processQueue(null, newToken);  // Process requests
+        processQueue(null, newToken); // Process requests
 
         return axiosInstance(originalRequest); // Retry request
       } catch (refreshError) {
-        
         processQueue(refreshError, null); // If error happens add error to the queue
 
         // Clean token info
@@ -122,15 +119,11 @@ axiosInstance.interceptors.response.use(
           console.error('Error:', error.response.status);
       }
       console.error('Detalles del error:', error.response.data);
-      if (error.response.data?.message) {
-        alert(error.response.data.message);
-      }
     } else if (error.request) {
       console.error('El servidor no respondió a la petición');
     } else {
       console.error('Error:', error.message);
     }
-    // alert(error.response.data.message);
     return Promise.reject(error);
   }
 );

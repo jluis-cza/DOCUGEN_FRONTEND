@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { AdmissionService } from '@/services/docugen-web/AdmissionService.js';
 
 export const useSessionStore = defineStore('session', () => {
   // States
@@ -18,30 +17,11 @@ export const useSessionStore = defineStore('session', () => {
     session.value = {};
     return session;
   };
-
-  // open session and others TO-DO
-
-  async function closeSession(data) {
-    try {
-      const response = await AdmissionService.logout(data);
-      if(!response.data.success){
-        console.error('It hasn´t been possible to close the current session.')
-      } 
-      resetSession()
-    } catch (error) {
-      console.log('Error', error);
-      return error;
-    }
-  }
-
   return {
-    //States
-    session,
     //Getters
     getSession,
     //Actions
     setSession,
     resetSession,
-    closeSession,
   };
 });

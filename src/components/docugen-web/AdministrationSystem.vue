@@ -9,7 +9,7 @@
     </v-row>
 
     <!-- Search bar -->
-    <v-row>
+    <!-- <v-row>
       <v-col cols="12">
         <v-card>
           <v-text-field
@@ -18,8 +18,42 @@
             prepend-inner-icon="mdi-magnify"
             clearable
             @update:modelValue="handleSearch"
+            @keyup.enter="onSearchClick"
+            @click:clear="onClearSearch"
             :loading="loading"
           ></v-text-field>
+        </v-card>
+      </v-col>
+    </v-row> -->
+
+    <v-row>
+      <v-col cols="12">
+        <v-card class="pa-4">
+          <v-row no-gutters align="center">
+            <v-col>
+              <v-text-field
+                v-model="searchTerm"
+                label="Buscar parámetro de sistema"
+                prepend-inner-icon="mdi-magnify"
+                clearable
+                hide-details
+                :loading="loading"
+                @keyup.enter="onSearchClick"
+                @click:clear="onClearSearch"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="auto" class="ml-4">
+              <v-btn
+                color="primary"
+                height="56"
+                prepend-icon="mdi-magnify"
+                @click="onSearchClick"
+                :loading="loading"
+              >
+                Buscar
+              </v-btn>
+            </v-col>
+          </v-row>
         </v-card>
       </v-col>
     </v-row>
@@ -29,8 +63,8 @@
       <v-col cols="12">
         <v-card>
           <v-data-table-server
-            v-model:items-per-page="itemsPerPage"
-            v-model:page="currentPage"
+            v-model:items-per-page="pagination.limit"
+            v-model:page="pagination.page"
             :headers="headers"
             :items="systemParameters"
             :items-length="totalItems"
@@ -49,7 +83,7 @@
       <v-col cols="12">
         <v-card>
           <v-alert type="info" variant="tonal" icon="mdi-information">
-            Mostrando página {{ currentPage }} de {{ totalPages }}. Total de parámetros:
+            Mostrando página {{ pagination.page }} de {{ totalPages }}. Total de parámetros:
             {{ totalItems }}
           </v-alert>
         </v-card>
@@ -87,8 +121,6 @@ const { systemParameters, loading, error, pagination, sort, search } =
 
 // Referencias para el componente
 const searchTerm = ref(search.value); // Usa el valor inicial del store
-const itemsPerPage = ref(pagination.value.limit); // Inicializa con el límite del store
-const currentPage = ref(pagination.value.page); // Inicializa con la página del store
 
 // Headers de la tabla
 const headers = [
@@ -111,23 +143,27 @@ const totalItems = computed(() => pagination.value.total);
 const totalPages = computed(() => pagination.value.totalPages);
 
 // Métodos
-const fetchSystemParameters = () => {
-  systemParametersStore.fetchSystemParameters();
-};
-
-const handleTableUpdate = ({ page, itemsPerPage: iol, sortBy }) => {
+const handleTableUpdate = async ({ page, itemsPerPage, sortBy }) => {
   // Actualizar ordenamiento si existe
   if (sortBy && sortBy.length > 0) {
-    const { key, order } = sortBy[0];
-    systemParametersStore.setSort(key, order);
+    systemParametersStore.setSort(sortBy[0].key, sortBy[0].order);
   } else {
     systemParametersStore.setSort(null, null);
   }
 
+  if (itemsPerPage !== pagination.value.limit) {
+    systemParametersStore.setLimit(itemsPerPage);
+    systemParametersStore.setPage(1);
+  } else {
+    systemParametersStore.setPage(page);
+  }
+
   // Actualizar la paginación en el store
-  systemParametersStore.setPage(page);
-  systemParametersStore.setLimit(iol);
-  fetchSystemParameters();
+  console.log({ page });
+  // systemParametersStore.setPage(page);
+  systemParametersStore.setLimit(itemsPerPage);
+
+  await systemParametersStore.fetchSystemParameters();
 };
 
 let searchTimeout = null;
@@ -136,20 +172,48 @@ const handleSearch = (value) => {
   if (searchTimeout) {
     clearTimeout(searchTimeout);
   }
-  searchTimeout = setTimeout(() => {
+  searchTimeout = setTimeout(async () => {
     systemParametersStore.setSearch(value);
-    fetchSystemParameters();
+    await systemParametersStore.fetchSystemParameters();
   }, 300);
 };
+
+// watch(searchTerm, (newValue) => {
+//   if (searchTimeout) clearTimeout(searchTimeout);
+
+//   searchTimeout = setTimeout(() => {
+//     // Actualizamos el store y disparamos la búsqueda
+//     systemParametersStore.setSearch(newValue || '');
+//     systemParametersStore.fetchSystemParameters();
+//   }, 400); // 400ms es un tiempo ideal para esperar a que el usuario deje de escribir
+// });
 
 // const refreshData = () => {
 //   fetchSystemParameters();
 // };
 
 // Cargar datos al montar el componente
-onMounted(() => {
-  fetchSystemParameters();
-});
+// onMounted(async () => {
+//   await systemParametersStore.fetchSystemParameters();
+//   console.log("entrando...")
+// });
+
+// 2. Función para disparar la búsqueda manualmente
+const onSearchClick = async () => {
+  // Sincronizamos el término local con el Store y reseteamos página a 1
+  systemParametersStore.setSearch(searchTerm.value || '');
+
+  // Ejecutamos la petición
+  await systemParametersStore.fetchSystemParameters();
+};
+
+// 3. Función para cuando el usuario limpia el campo con la "X"
+const onClearSearch = () => {
+  searchTerm.value = '';
+  // onSearchClick();
+};
+
+// IMPORTANTE: Elimina el watch(searchTerm, ...) que teníamos antes
 </script>
 
 <style scoped>

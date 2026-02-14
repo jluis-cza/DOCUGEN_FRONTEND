@@ -1,7 +1,7 @@
 export const TABLES = {
   default: {
     pagination: {
-      page: 1, //Currect page
+      page: 2, //Current page
       limit: 1, // Rows by page
       total: 0,
       totalPages: 0,

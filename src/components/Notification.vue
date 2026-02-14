@@ -1,68 +1,45 @@
-<!-- <template>
+<template>
   <v-snackbar
-    v-model="isShowing"
-    timeout="10000"
-    width="700"
-    color="transparent"
-    variant="flat"
-    location="right bottom"
+    v-model="showNotification"
+    :color="color"
+    location="bottom right"
     transition="fade-transition"
+    :timeout="5000"
+    @update:model-value="onClose"
   >
-    <v-card variant="elevated">
-      <v-card-item :class="notificationData.color">
-        <v-card-title>
-          {{ notificationData.title}}
-        </v-card-title>
-        <v-spacer />
-      </v-card-item>
-      <v-card-text class="text-justify pt-4 bg-background">
-        {{ notificationData.message }}
-      </v-card-text>
-    </v-card>
+    {{ message }}
   </v-snackbar>
 </template>
 <script setup>
-import { ref, computed } from 'vue'
-import { useNotificationStore } from '../stores/notificationStore.js'
-import { NOTIFICATION } from '../constants/notifications.js'
+import { ref, computed, watch } from 'vue';
+import { useNotificationStore } from '../stores/notificationStore.js';
 
-const isShowing = ref(false)
-const notification = useNotificationStore()
-const notificationData = ref()
-
-const isOpenAlert = computed(() => store.getters['alertas/isAlertOpen'])
-// control de la ventana
-const cerrarVentana = () => {
-  isShowing.value = false
-  store.dispatch('alertas/closeAlert')
-}
-//Computando las propiedades locales de color e icon
-const notification = computed(() => {
-  let icon = ''
-  let color = ''
-  switch (alert.value.type) {
-    case SUCCESS:
-      icon = 'mdi-check-circle'
-      color = 'bg-success'
-      break
-    case WARNING:
-      icon = 'mdi-alert-circle'
-      color = 'bg-warning'
-      break
-    case ERROR:
-      icon = 'mdi-close-circle'
-      color = 'bg-error'
-      break
-    case INFO:
-      icon = 'mdi-information'
-      color = 'bg-info'
-      break
+const notification = useNotificationStore();
+const showNotification = ref(false);
+const onReception = computed(() => notification.isNotificationReceived);
+const message = computed(() => notification.getNotification.message || 'NA');
+const code = computed(() => notification.getNotification.code || 'NA');
+const color = computed(() => {
+  const notificationType = code.value[0];
+  switch (notificationType) {
+    case 'S':
+      return 'success';
+    case 'W':
+      return 'warning';
+    case 'E':
+      return 'error';
+    case 'I':
+      return 'info';
     default:
-      icon = 'mdi-information'
-      color = 'bg-info'
-      break
+      return 'info';
   }
-  return { icon: icon, color: color }
-})
-
-</script> -->
+});
+watch(onReception, (newValue, oldValue) => {
+  if (oldValue === false && newValue === true) showNotification.value = true;
+});
+const onClose = async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  await sleep(2000); //2 seconds
+  notification.resetNotification();
+};
+</script>

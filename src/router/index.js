@@ -3,6 +3,9 @@ import { login } from './docugen-web/admissionLogin.js';
 import { register } from './docugen-web/admissionRegister.js';
 import { dashboard } from './docugen-web/administrationManagementDashboard.js';
 import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
+import { useAccountStore } from '../stores/docugen-web/accountStore.js';
+import { useSessionStore } from '../stores/docugen-web/sessionStore.js';
+import { useToken } from '../composables/docugen-web/useToken.js';
 
 const routes = [
   //Start page
@@ -47,40 +50,47 @@ const router = createRouter({
 
 // Global guard
 router.beforeEach(async (to, from, next) => {
-  const token = useTokenStore();
+  const tokenStore = useTokenStore();
+  const accountStore = useAccountStore();
+  const sessionStore = useSessionStore();
+  const { token, session, account, actions, success } = useToken();
   // Checking is autentication is needed to access the route
   if (to.meta.requiresAuth) {
     //Checking token existence
-    const tokenString = token.getToken;
-
-    if (!tokenString) {
+    let currentToken = tokenStore.getToken;
+    if (!currentToken) {
       console.error('Access failed. No token found.');
       try {
         console.log('Trying to renew token...');
-        await token.renewToken();
-        const newTokenString = token.getToken || '';
-        if (!newTokenString) {
-          console.error('No token found after renewing process. Sending to login');
-          next('/login');
+        await actions.renewToken();
+        if (success.value) {
+          tokenStore.setToken(token.value);
+          sessionStore.setSession(session.value);
+          accountStore.setAccount(account.value);
+          console.log('The token successfully renewed.');
+        } else {
+          throw new Error('Renewing token failed.');
         }
-         console.log('The token successfully renewed.');
       } catch (error) {
-        console.error('Error on renewing token.', error);
-        next('/login');
+        console.error('Error on renewing token.', error.message);
+        tokenStore.resetToken();
+        sessionStore.resetSession();
+        accountStore.resetAccount();
+        return next('/login');
       }
     }
-
     // Checking the user's role
-    const role = token.getInfo.role;
+    const role = accountStore.getAccount.role;
+    console.log({ role: role });
     if (to.meta.allowedRoles.includes(role)) {
       console.log(`Access granted. role: ${role}`);
-      next();
+      return next();
     } else {
       console.error('Access failed. No role found.');
-      next('/login');
+      return next('/login');
     }
   } else {
-    next();
+    return next();
   }
 });
 
