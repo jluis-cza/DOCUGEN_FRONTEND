@@ -1,23 +1,21 @@
 import axios from 'axios';
 import { SERVICES } from '../constants/services.js';
 import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
+import { accessRenewer, accessRemover } from '../helpers/docugen-web/accessHelper.js';
 
 const ROOT_API_URL = SERVICES.base_url.api;
 const JSON_CONTENT_TYPE = SERVICES.content.type.json;
+const timeout = 30000;
 
 // Axios instance to make HTTP requests
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
   baseURL: ROOT_API_URL,
-  timeout: 30000, //
+  timeout: timeout,
   headers: {
     ...JSON_CONTENT_TYPE,
   },
   withCredentials: true, // For sending and receiving cookies
 });
-
-// Refresh process variables
-let isRefreshing = false;
-let failedRequestsQueue = [];
 
 // Out-Data interceptor
 axiosInstance.interceptors.request.use(
@@ -35,6 +33,10 @@ axiosInstance.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Refresh process variables
+let isRefreshing = false;
+let failedRequestsQueue = [];
 
 // Process failed requests
 const processQueue = (error, token = null) => {
@@ -58,7 +60,8 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // 401 Status response treatment
+    // 401 status treatment
+    console.error('Not authenticated.');
     if (error.response?.status === 401 && !originalRequest._retry) {
       // If the instance is refreshing add current request to the queue
       if (isRefreshing) {
@@ -78,28 +81,19 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const tokenStore = useTokenStore();
-
       try {
-        // Renew token
-        await tokenStore.renewToken();
-        // const newToken = response.data.accessToken;
+        await accessRenewer(); // Renew access
+        // Update token bearer
+        const tokenStore = useTokenStore();
         const newToken = tokenStore.getToken || '';
-        originalRequest.headers.Authorization = `Bearer ${newToken}`; // Update token bearer
-        processQueue(null, newToken); // Process requests
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
+        processQueue(null, newToken); // Process requests
         return axiosInstance(originalRequest); // Retry request
       } catch (refreshError) {
+        console.error('Error on renewing token.', error.message);
         processQueue(refreshError, null); // If error happens add error to the queue
-
-        // Clean token info
-        tokenStore.resetToken();
-        tokenStore.resetInfo();
-
-        // Redirigir al login (descomenta si usas vue-router)
-        // import router from '@/router';
-        // router.push('/login');
-
+        accessRemover(); // Clear access info
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -107,25 +101,34 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response) {
-      // El servidor respondió con un código de error
       switch (error.response.status) {
+        case 400:
+          console.error('Bad request');
+          break;
+        case 403:
+          console.error('Forbidden');
+          break;
         case 404:
-          console.error('Recurso no encontrado');
+          console.error('Not found.');
+          break;
+        case 408:
+          console.error('Request timeout.');
+          break;
+        case 429:
+          console.error('Too many requests.');
           break;
         case 500:
-          console.error('Error del servidor');
+          console.error('Internal server Error.');
           break;
         default:
           console.error('Error:', error.response.status);
       }
-      console.error('Detalles del error:', error.response.data);
+      console.error('Error details:', error.response.data);
     } else if (error.request) {
-      console.error('El servidor no respondió a la petición');
+      console.error('The server did not respond.');
     } else {
       console.error('Error:', error.message);
     }
     return Promise.reject(error);
   }
 );
-
-export default axiosInstance;

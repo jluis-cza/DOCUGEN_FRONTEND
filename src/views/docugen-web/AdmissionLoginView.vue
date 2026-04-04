@@ -1,6 +1,6 @@
 <template>
-  <v-container>
-    <v-card class="mx-auto" max-width="400" :loading="loading" variant="elevated">
+  <v-container class="d-flex w-100 h-100 align-center justify-center">
+    <v-card min-width="400" :loading="loading" variant="elevated">
       <v-card-title>Inicio de sesión</v-card-title>
       <v-form ref="form" validate-on="submit lazy" @submit.prevent="login">
         <v-card-text>
@@ -15,9 +15,13 @@
           <v-text-field
             v-model="credentialsData.password"
             label="Contraseña"
+            :type="showPassword ? 'text' : 'password'"
             type="password"
             autocomplete="current-password"
             :rules="[RULE_TEXT_REQUIRED, RULE_PASSWORD_INPUT]"
+            required
+            :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+            @click:append-inner="showPassword = !showPassword"
           ></v-text-field>
         </v-card-text>
         <v-card-actions>
@@ -52,6 +56,7 @@ const identifier = ref('');
 const form = ref(null);
 const router = useRouter();
 const { session, account, token, actions, loading, success } = useSession();
+const showPassword = ref(false);
 
 const RULE_TEXT_IDENTIFIER = (value) => {
   const mailRuleVerdict = RULE_EMAIL_INPUT(value);

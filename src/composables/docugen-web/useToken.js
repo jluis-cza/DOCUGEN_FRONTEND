@@ -8,16 +8,14 @@ export const useToken = () => {
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    renewToken: async () => {
+    // This verifies the token parameter within the verification email
+    verifyToken: async () => {
       try {
         loading.value = true;
-        const response = await AdmissionService.renew();
-        session.value = response.data.data.session;
-        account.value = response.data.data.account;
-        token.value = response.data.data.token;
-        success.value = response?.data?.success || true;
+        const response = await AdmissionService.verify();
+        success.value = response?.data?.success;
       } catch (err) {
-        success.value = err.response?.data?.success || false;
+        success.value = err.response?.data?.success;
       } finally {
         loading.value = false;
       }

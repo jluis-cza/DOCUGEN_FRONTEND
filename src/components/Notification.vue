@@ -4,42 +4,63 @@
     :color="color"
     location="bottom right"
     transition="fade-transition"
-    :timeout="5000"
-    @update:model-value="onClose"
+    :timeout="timeout"
   >
     {{ message }}
+    <template v-slot:actions>
+      <v-btn
+        color="white"
+        variant="text"
+        density="compact"
+        icon="mdi-close"
+        @click="showNotification = false"
+      ></v-btn>
+    </template>
   </v-snackbar>
 </template>
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useNotificationStore } from '../stores/notificationStore.js';
 
-const notification = useNotificationStore();
+const notificationStore = useNotificationStore();
 const showNotification = ref(false);
-const onReception = computed(() => notification.isNotificationReceived);
-const message = computed(() => notification.getNotification.message || 'NA');
-const code = computed(() => notification.getNotification.code || 'NA');
-const color = computed(() => {
-  const notificationType = code.value[0];
+const message = ref('');
+const color = ref('');
+const timeout = ref(3000); //default timeout
+const onReception = computed(() => notificationStore.isNotificationReceived);
+
+const setNotification = () => {
+  message.value = notificationStore.getNotification.message;
+  const code = notificationStore.getNotification.code;
+  const notificationType = code[0];
   switch (notificationType) {
     case 'S':
-      return 'success';
+      color.value = 'success';
+      break;
     case 'W':
-      return 'warning';
+      color.value = 'warning';
+      break;
     case 'E':
-      return 'error';
+      color.value = 'error';
+      break;
     case 'I':
-      return 'info';
+      color.value = 'info';
+      break;
     default:
-      return 'info';
+      color.value = 'error';
+      break;
   }
-});
-watch(onReception, (newValue, oldValue) => {
-  if (oldValue === false && newValue === true) showNotification.value = true;
-});
-const onClose = async () => {
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  await sleep(2000); //2 seconds
-  notification.resetNotification();
+  const mode = notificationStore.getNotification.mode;
+  if(mode === "persistent") timeout.value = -1
+  showNotification.value = true;
 };
+
+watch(onReception, (newValue, oldValue) => {
+  if (oldValue === false && newValue === true) setNotification();
+});
+
+// Cleaning the notification store when removed
+watch(showNotification, (newValue, oldValue) => {
+  if (oldValue === true && newValue === false) notificationStore.resetNotification();
+});
 </script>

@@ -24,4 +24,3 @@ export const useTokenStore = defineStore('token', () => {
     resetToken,
   };
 });
-// ******************************************************************************

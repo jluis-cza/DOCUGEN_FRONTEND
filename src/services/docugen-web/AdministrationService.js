@@ -1,6 +1,6 @@
 // Admission HTTP services using the axios instance
 
-import axiosInstance from '../AxiosInstanceService.js';
+import { axiosInstance } from '../AxiosInstanceService.js';
 import { SERVICES } from '@/constants/services.js';
 
 const ADMINISTRATION_BASE_PATH = SERVICES.path.docugen_web.administration.base;
@@ -13,7 +13,7 @@ const RESOURCE_ACCOUNTS_PATH = SERVICES.path.docugen_web.administration.resource
 const RESOURCE_SERVICES_PATH = SERVICES.path.docugen_web.administration.resource.services;
 
 export const AdministrationService = {
-  configSystemParameters: (payload) => {
+  configSystemParameter: (payload) => {
     return axiosInstance.post(
       ADMINISTRATION_BASE_PATH + CONFIGURATION_PATH + RESOURCE_SYSTEM_PARAMETERS_PATH,
       payload

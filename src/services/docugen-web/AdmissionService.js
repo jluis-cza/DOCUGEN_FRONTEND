@@ -1,6 +1,6 @@
 // Admission HTTP services using the axios instance
 
-import axiosInstance from '../AxiosInstanceService.js';
+import { axiosInstance } from '../AxiosInstanceService.js';
 import { SERVICES } from '@/constants/services.js';
 
 const ADMISSION_BASE_PATH = SERVICES.path.docugen_web.admission.base;

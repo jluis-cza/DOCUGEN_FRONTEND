@@ -31,8 +31,12 @@ export const useSession = () => {
         const data = {
           message: message.value,
           code: code.value,
+          mode: "automatic"
         };
         notification.setNotification(data);
+        //         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        // await sleep(2000); //2 seconds
+        // notification.resetNotification();
         loading.value = false;
       }
     },
@@ -58,6 +62,5 @@ export const useSession = () => {
     },
   };
 
-  const bundle = { session, account, token, actions, loading, success };
-  return bundle;
+  return { session, account, token, actions, loading, success };
 };

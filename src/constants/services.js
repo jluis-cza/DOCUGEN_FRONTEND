@@ -74,6 +74,13 @@ export const SERVICES = {
       },
     },
     default: {},
+    general:{
+      notification: {
+        message: '', 
+        code: '', 
+        mode: '', // persistent or else
+      },
+    }
   },
   params: {
     query: {

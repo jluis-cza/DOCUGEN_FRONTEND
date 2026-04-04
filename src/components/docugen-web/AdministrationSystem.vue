@@ -1,43 +1,25 @@
 <!-- frontend/src/views/SystemParametersView.vue -->
 <template>
   <v-container>
-    <!-- Title-->
+    <!-- title -->
     <v-row>
       <v-col cols="12">
-        <h5>Parámetros del sistema</h5>
+        <h4>Parámetros del sistema</h4>
       </v-col>
     </v-row>
-
-    <!-- Search bar -->
-    <!-- <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-text-field
-            v-model="searchTerm"
-            label="Buscar parámetro de sistema"
-            prepend-inner-icon="mdi-magnify"
-            clearable
-            @update:modelValue="handleSearch"
-            @keyup.enter="onSearchClick"
-            @click:clear="onClearSearch"
-            :loading="loading"
-          ></v-text-field>
-        </v-card>
-      </v-col>
-    </v-row> -->
-
+    <!-- search bar -->
     <v-row>
       <v-col cols="12">
         <v-card class="pa-4">
           <v-row no-gutters align="center">
             <v-col>
               <v-text-field
-                v-model="searchTerm"
+                v-model="params.search"
                 label="Buscar parámetro de sistema"
                 prepend-inner-icon="mdi-magnify"
                 clearable
                 hide-details
-                :loading="loading"
+                :loading="system_parameters_loading"
                 @keyup.enter="onSearchClick"
                 @click:clear="onClearSearch"
               ></v-text-field>
@@ -48,7 +30,7 @@
                 height="56"
                 prepend-icon="mdi-magnify"
                 @click="onSearchClick"
-                :loading="loading"
+                :loading="system_parameters_loading"
               >
                 Buscar
               </v-btn>
@@ -57,50 +39,55 @@
         </v-card>
       </v-col>
     </v-row>
-
-    <!-- System parameters table-->
+    <!-- table -->
     <v-row>
       <v-col cols="12">
         <v-card>
           <v-data-table-server
-            v-model:items-per-page="pagination.limit"
-            v-model:page="pagination.page"
+            v-model:items-per-page="params.limit"
+            v-model:page="params.page"
             :headers="headers"
             :items="systemParameters"
-            :items-length="totalItems"
-            :loading="loading"
-            :search="search"
+            :items-length="system_parameters_table.pagination.total"
+            :loading="system_parameters_loading"
             @update:options="handleTableUpdate"
             :items-per-page-options="[10, 25, 50]"
           >
+            <template #item.status="{ item }">
+              <v-switch
+                :model-value="item.status === 'followed'"
+                color="primary"
+                label="Monitorear"
+                inset
+                @update:modelValue="(value) => onSwitchStatus(value, item)"
+              ></v-switch>
+            </template>
           </v-data-table-server>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Page info -->
-    <v-row v-if="!loading">
+    <v-row v-if="!system_parameters_loading">
       <v-col cols="12">
         <v-card>
           <v-alert type="info" variant="tonal" icon="mdi-information">
-            Mostrando página {{ pagination.page }} de {{ totalPages }}. Total de parámetros:
-            {{ totalItems }}
+            Mostrando página {{ system_parameters_table.pagination.page }} de
+            {{ system_parameters_table.pagination.totalPages }}. Total de parámetros:
+            {{ system_parameters_table.pagination.total }}
           </v-alert>
         </v-card>
       </v-col>
     </v-row>
-
-    <!-- Manejo de errores -->
-    <v-row v-if="error">
+    <v-row v-if="!(system_parameters_success ?? true)">
       <v-col cols="12">
         <v-alert
           type="error"
           variant="tonal"
           icon="mdi-alert-circle"
-          @click="fetchSystemParameters"
+          @click="system_parameters_actions.systemParametersGetter"
           style="cursor: pointer"
         >
-          Error: {{ error }}
+          Error: {{ system_parameters_message }}
           <br />
           <small>Haz clic para reintentar</small>
         </v-alert>
@@ -110,19 +97,24 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, watch } from 'vue';
-import { useSystemParametersStore } from '../../stores/docugen-web/systemParametersStore.js';
-import { storeToRefs } from 'pinia';
+import { ref } from 'vue';
+import { useSystemParameters } from '../../composables/docugen-web/useSystemParameters.js';
+import { useSystemParameter } from '../../composables/docugen-web/useSystemParameter.js';
+import { useTablesStore } from '../../stores/tablesStore.js';
 
-// Usar el store
-const systemParametersStore = useSystemParametersStore();
-const { systemParameters, loading, error, pagination, sort, search } =
-  storeToRefs(systemParametersStore);
-
-// Referencias para el componente
-const searchTerm = ref(search.value); // Usa el valor inicial del store
-
-// Headers de la tabla
+const tableId = 1;
+const tablesStore = useTablesStore();
+tablesStore.resetTable(tableId);
+const {
+  systemParameters,
+  table: system_parameters_table,
+  message: system_parameters_message,
+  actions: system_parameters_actions,
+  loading: system_parameters_loading,
+  success: system_parameters_success,
+} = useSystemParameters();
+const { actions: system_parameter_actions } = useSystemParameter();
+// Table headers
 const headers = [
   {
     title: 'Nombre',
@@ -134,86 +126,52 @@ const headers = [
     title: 'Estado',
     key: 'status',
     align: 'start',
-    sortable: true,
+    sortable: false,
   },
 ];
 
-// Computadas
-const totalItems = computed(() => pagination.value.total);
-const totalPages = computed(() => pagination.value.totalPages);
+const params = ref({
+  page: tablesStore.getTable(tableId).pagination.page,
+  limit: tablesStore.getTable(tableId).pagination.limit,
+  sortBy: tablesStore.getTable(tableId).sort.by,
+  sortOrder: tablesStore.getTable(tableId).sort.order,
+  search: tablesStore.getTable(tableId).search,
+});
 
 // Métodos
 const handleTableUpdate = async ({ page, itemsPerPage, sortBy }) => {
-  // Actualizar ordenamiento si existe
   if (sortBy && sortBy.length > 0) {
-    systemParametersStore.setSort(sortBy[0].key, sortBy[0].order);
+    params.value.sortBy = sortBy[0].key;
+    params.value.sortOrder = sortBy[0].order;
   } else {
-    systemParametersStore.setSort(null, null);
+    params.value.sortBy = null;
+    params.value.sortOrder = null;
   }
-
-  if (itemsPerPage !== pagination.value.limit) {
-    systemParametersStore.setLimit(itemsPerPage);
-    systemParametersStore.setPage(1);
+  if (itemsPerPage !== params.value.limit) {
+    params.value.limit = itemsPerPage;
+    params.value.page = 1;
   } else {
-    systemParametersStore.setPage(page);
+    params.value.page = page;
   }
-
-  // Actualizar la paginación en el store
-  console.log({ page });
-  // systemParametersStore.setPage(page);
-  systemParametersStore.setLimit(itemsPerPage);
-
-  await systemParametersStore.fetchSystemParameters();
+  // params.value.limit = itemsPerPage;
+  await system_parameters_actions.systemParametersGetter(params.value);
 };
 
-let searchTimeout = null;
-const handleSearch = (value) => {
-  searchTerm.value = value;
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
-  searchTimeout = setTimeout(async () => {
-    systemParametersStore.setSearch(value);
-    await systemParametersStore.fetchSystemParameters();
-  }, 300);
+const onSwitchStatus = async (value, item) => {
+  const status = value ? 'followed' : 'unfollowed';
+  const parameterId = item._id;
+  const payload = { id: parameterId, property: 'status', value: status };
+  await system_parameter_actions.systemParameterSetter(payload);
+  await system_parameters_actions.systemParametersGetter(params.value);
 };
 
-// watch(searchTerm, (newValue) => {
-//   if (searchTimeout) clearTimeout(searchTimeout);
-
-//   searchTimeout = setTimeout(() => {
-//     // Actualizamos el store y disparamos la búsqueda
-//     systemParametersStore.setSearch(newValue || '');
-//     systemParametersStore.fetchSystemParameters();
-//   }, 400); // 400ms es un tiempo ideal para esperar a que el usuario deje de escribir
-// });
-
-// const refreshData = () => {
-//   fetchSystemParameters();
-// };
-
-// Cargar datos al montar el componente
-// onMounted(async () => {
-//   await systemParametersStore.fetchSystemParameters();
-//   console.log("entrando...")
-// });
-
-// 2. Función para disparar la búsqueda manualmente
 const onSearchClick = async () => {
-  // Sincronizamos el término local con el Store y reseteamos página a 1
-  systemParametersStore.setSearch(searchTerm.value || '');
-
-  // Ejecutamos la petición
-  await systemParametersStore.fetchSystemParameters();
+  await system_parameters_actions.systemParametersGetter(params.value);
 };
 
-// 3. Función para cuando el usuario limpia el campo con la "X"
 const onClearSearch = () => {
-  searchTerm.value = '';
-  // onSearchClick();
+  params.value.search = '';
 };
-
-// IMPORTANTE: Elimina el watch(searchTerm, ...) que teníamos antes
 </script>
 
 <style scoped>

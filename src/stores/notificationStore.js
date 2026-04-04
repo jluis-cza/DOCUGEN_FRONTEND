@@ -1,9 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { SERVICES } from '../constants/services.js';
+
+const notificationDefaultData = {...SERVICES.payload.general.notification}
 
 export const useNotificationStore = defineStore('notification', () => {
   // States
-  const notification = ref({});
+  const notification = ref(notificationDefaultData);
   const notificationReceived = ref(false);
 
   //Getters
@@ -15,7 +18,7 @@ export const useNotificationStore = defineStore('notification', () => {
     notificationReceived.value = true;
   };
   const resetNotification = () => {
-    notification.value = {};
+    notification.value = notificationDefaultData;
     notificationReceived.value = false;
   };
 

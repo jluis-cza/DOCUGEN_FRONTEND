@@ -1,6 +1,6 @@
 <template>
-  <v-container>
-    <v-card class="mx-auto" max-width="400" :loading="loading" variant="elevated">
+  <v-container class="d-flex w-100 h-100 align-center justify-center">
+    <v-card class="mx-auto" min-width="400" :loading="loading" variant="elevated">
       <v-card-title> Registro </v-card-title>
       <v-form ref="form" validate-on="submit lazy" @submit.prevent="register">
         <v-card-text>
@@ -68,6 +68,8 @@ import { SERVICES } from '../../constants/services.js';
 import { ref } from 'vue';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
 import { useRouter } from 'vue-router';
+import { useNotificationStore } from '../../stores/notificationStore.js';
+
 const registryDefaultData = SERVICES.payload.docugen_web.admission.account_registry;
 const registryData = ref(JSON.parse(JSON.stringify(registryDefaultData)));
 const passwordConfirmation = ref('');
@@ -83,6 +85,7 @@ const RULE_PASSWORD_MATCH = RULES.text.input.match(
 );
 const router = useRouter();
 const { actions, loading, success } = useAccount();
+const notificationStore = useNotificationStore()
 
 const register = async () => {
   try {
@@ -93,6 +96,12 @@ const register = async () => {
         registryData.value = registryDefaultData; //cleaning form
         passwordConfirmation.value = ''; //cleaning field
         await router.push('/'); // Redirecting to home
+        const data = {
+          message: "Para completar su registro por favor revise su correo y siga las instrucciones.",
+          code: "IXXX",
+          mode: "persistent"
+        };
+        notificationStore.setNotification(data);
       }
     }
   } catch (error) {
