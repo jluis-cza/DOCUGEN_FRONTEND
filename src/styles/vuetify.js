@@ -177,7 +177,7 @@ const indigoDark = {
 
 const vuetify = createVuetify({
   theme: {
-    defaultTheme: 'ocean',
+    defaultTheme: 'tema1',
     themes: {
       tema1,
       ocean,

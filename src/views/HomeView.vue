@@ -39,10 +39,12 @@
     </v-main>
     <footer class="text-center bg-secondary">
       <p>DOCUGEN 2026</p>
-      <div >
-        <RouterLink to="/manual" style="text-decoration: none; color: inherit;">Ayuda</RouterLink>
+      <div>
+        <RouterLink to="/manual" style="text-decoration: none; color: inherit">Ayuda</RouterLink>
         |
-        <RouterLink to="/information" style="text-decoration: none; color: inherit;">Acerca</RouterLink>
+        <RouterLink to="/information" style="text-decoration: none; color: inherit"
+          >Acerca</RouterLink
+        >
       </div>
       <p>Diseñado por JL</p>
     </footer>

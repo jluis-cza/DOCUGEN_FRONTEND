@@ -1,33 +1,30 @@
 <template>
-  <p v-if = "success">Verificación exitosa. Ya puede ingresar al sistema utilizando sus credenciales.</p>
-  <p v-else>Verificación fallida. Por favor registrese de nuevo.</p>
+  <p v-if="loading">Verificando el email...</p>
+  <div v-else>
+    <p v-if="success">
+      Verificación exitosa. El correo electrónico: {{ email }} ha sido verificado exitosamente. Ya
+      puede ingresar al sistema utilizando sus credenciales.
+    </p>
+    <div v-else>
+      <p>Verificación fallida. Por favor espere unos minutos y registrese de nuevo.</p>
+      <p>Mensaje del error: {{ message }}</p>
+      <p>Código del error: {{ code }}</p>
+    </div>
+  </div>
 </template>
 <script setup>
-import { useRouter } from 'vue-router';
-import { useToken } from '../../composables/docugen-web/useToken.js';
-import { onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { onMounted, computed } from 'vue';
+import { useEmail } from '../../composables/docugen-web/useEmail.js';
 
-const route = useRouter();
-const {actions, success} = useToken()
-const token = route.query.token;
-
+// Default values
+const route = useRoute();
+const { email, actions, loading, success, message, code } = useEmail();
+const token = computed(() => route.query.token); // parameter from the email link
 
 onMounted(async () => {
-  try {
-    await axios.post('/api/auth/verify', { token });
-    alert("¡Cuenta verificada con éxito!");
-  } catch (error) {
-    alert("El token es inválido o ha expirado.");
-  }
-
-
-// Catch the param
-
-// Send the param
-// receive the response
-onMounted(async()=>{
-  actions.
-})
+  await actions.emailVerifier({ token: token.value });
+});
 </script>
 
 <style scoped></style>

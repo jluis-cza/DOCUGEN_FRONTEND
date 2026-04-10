@@ -14,11 +14,12 @@ export const SERVICES = {
     docugen_app: {},
     docugen_web: {
       admission: {
-        base: '/auth',
+        base: '/adm',
         register_account: '/register',
         start_session: '/login',
         close_session: '/logout',
         renew_access: '/refresh',
+        verify_email: '/verify-email',
       },
       administration: {
         base: '/admin',
@@ -37,20 +38,7 @@ export const SERVICES = {
     docugen_app: {},
     docugen_web: {
       admission: {
-        account: {
-          username: '',
-          user: {
-            name: '',
-            lastname: '',
-            email: '',
-          },
-          services: [],
-          password: '',
-          role: '',
-          status: '',
-        },
-        // registerAccount
-        account_registry: {
+        register_account: {
           username: '',
           user: {
             name: '',
@@ -59,28 +47,22 @@ export const SERVICES = {
           },
           password: '',
         },
-        // sessionStarter
-        account_credentials: {
+        start_session: {
           username: '',
           user: {
             email: '',
           },
           password: '',
-        },
-        // sessionCloser (internal call)
-        account_username: {
-          username: '',
         },
       },
     },
-    default: {},
-    general:{
+    general: {
       notification: {
-        message: '', 
-        code: '', 
+        message: '',
+        code: '',
         mode: '', // persistent or else
       },
-    }
+    },
   },
   params: {
     query: {

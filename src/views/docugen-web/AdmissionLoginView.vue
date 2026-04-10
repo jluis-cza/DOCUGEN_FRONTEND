@@ -1,6 +1,6 @@
 <template>
   <v-container class="d-flex w-100 h-100 align-center justify-center">
-    <v-card min-width="400" :loading="loading" variant="elevated">
+    <v-card width="400" :loading="loading" variant="elevated">
       <v-card-title>Inicio de sesión</v-card-title>
       <v-form ref="form" validate-on="submit lazy" @submit.prevent="login">
         <v-card-text>
@@ -38,24 +38,19 @@ import { RULES } from '../../helpers/rules.js';
 import { SERVICES } from '../../constants/services.js';
 import { ref } from 'vue';
 import { useSession } from '../../composables/docugen-web/useSession.js';
-import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
-import { useSessionStore } from '../../stores/docugen-web/sessionStore.js';
-import { useAccountStore } from '../../stores/docugen-web/accountStore.js';
 import { useRouter } from 'vue-router';
 
 const RULE_TEXT_REQUIRED = RULES.text.input.required;
 const RULE_EMAIL_INPUT = RULES.text.input.email;
 const RULE_USERNAME_INPUT = RULES.text.input.username;
 const RULE_PASSWORD_INPUT = RULES.text.input.password;
-const tokenStore = useTokenStore();
-const sessionStore = useSessionStore();
-const accountStore = useAccountStore();
-const credentialsDefaultData = SERVICES.payload.docugen_web.admission.account_credentials;
+
+const credentialsDefaultData = SERVICES.payload.docugen_web.admission.start_session;
 const credentialsData = ref(JSON.parse(JSON.stringify(credentialsDefaultData)));
 const identifier = ref('');
 const form = ref(null);
 const router = useRouter();
-const { session, account, token, actions, loading, success } = useSession();
+const { actions, loading, success } = useSession();
 const showPassword = ref(false);
 
 const RULE_TEXT_IDENTIFIER = (value) => {
@@ -82,9 +77,6 @@ const login = async () => {
     if (valid) {
       await actions.sessionStarter(credentialsData.value);
       if (success.value) {
-        tokenStore.setToken(token.value);
-        sessionStore.setSession(session.value);
-        accountStore.setAccount(account.value);
         credentialsData.value = credentialsDefaultData;
         await router.push('/dashboard'); // Redirecting to dashboard
       }

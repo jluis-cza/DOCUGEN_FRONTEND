@@ -48,7 +48,7 @@
             v-model:page="params.page"
             :headers="headers"
             :items="systemParameters"
-            :items-length="system_parameters_table.pagination.total"
+            :items-length="table.pagination.total"
             :loading="system_parameters_loading"
             @update:options="handleTableUpdate"
             :items-per-page-options="[10, 25, 50]"
@@ -71,9 +71,9 @@
       <v-col cols="12">
         <v-card>
           <v-alert type="info" variant="tonal" icon="mdi-information">
-            Mostrando página {{ system_parameters_table.pagination.page }} de
-            {{ system_parameters_table.pagination.totalPages }}. Total de parámetros:
-            {{ system_parameters_table.pagination.total }}
+            Mostrando página {{ table.pagination.page }} de {{ table.pagination.totalPages }}. Total
+            de parámetros:
+            {{ table.pagination.total }}
           </v-alert>
         </v-card>
       </v-col>
@@ -97,17 +97,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useTablesStore } from '../../stores/tablesStore.js';
 import { useSystemParameters } from '../../composables/docugen-web/useSystemParameters.js';
 import { useSystemParameter } from '../../composables/docugen-web/useSystemParameter.js';
-import { useTablesStore } from '../../stores/tablesStore.js';
 
-const tableId = 1;
 const tablesStore = useTablesStore();
+const tableId = 1;
 tablesStore.resetTable(tableId);
+const table = computed(() => tablesStore.getTable(tableId));
 const {
   systemParameters,
-  table: system_parameters_table,
   message: system_parameters_message,
   actions: system_parameters_actions,
   loading: system_parameters_loading,

@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { login } from './docugen-web/admissionLogin.js';
-import { register } from './docugen-web/admissionRegister.js';
-import { verification } from './docugen-web/admissionVerification.js';
-import { dashboard } from './docugen-web/administrationManagementDashboard.js';
+import { admission } from './docugen-web/admission.js';
+import { administrationManagement } from './docugen-web/administrationManagement.js';
+
 import guard from './guard.js';
 
 const routes = [
@@ -13,13 +12,13 @@ const routes = [
     meta: {},
     component: () => import('../views/HomeView.vue'),
   },
-    {
+  {
     path: '/information',
     name: 'information',
     meta: {},
     component: () => import('../views/InformationView.vue'),
   },
-    {
+  {
     path: '/manual',
     name: 'manual',
     meta: {},
@@ -27,11 +26,9 @@ const routes = [
   },
 
   //docugen-web
-  ...login,
-  ...register,
-  ...dashboard,
-  ...verification,
-  
+  ...admission,
+  ...administrationManagement,
+
   //docugen-app
 
   //Exceptions

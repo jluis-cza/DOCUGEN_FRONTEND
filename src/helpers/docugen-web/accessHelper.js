@@ -9,7 +9,7 @@ export const accessRenewer = async () => {
   const sessionStore = useSessionStore();
   const tokenStore = useTokenStore();
   console.log('Renewing access...');
-  const response = await AdmissionService.renew();
+  const response = await AdmissionService.renewAccess();
   tokenStore.setToken(response.data.data.token);
   sessionStore.setSession(response.data.data.session);
   accountStore.setAccount(response.data.data.account);

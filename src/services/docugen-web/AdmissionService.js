@@ -8,6 +8,7 @@ const REGISTER_ACCOUNT_PATH = SERVICES.path.docugen_web.admission.register_accou
 const START_SESSION_PATH = SERVICES.path.docugen_web.admission.start_session;
 const CLOSE_SESSION_PATH = SERVICES.path.docugen_web.admission.close_session;
 const RENEW_ACCESS_PATH = SERVICES.path.docugen_web.admission.renew_access;
+const VERIFY_EMAIL_PATH = SERVICES.path.docugen_web.admission.verify_email;
 
 export const AdmissionService = {
   registerAccount: (payload) => {
@@ -19,7 +20,10 @@ export const AdmissionService = {
   logout: (payload) => {
     return axiosInstance.post(ADMISSION_BASE_PATH + CLOSE_SESSION_PATH, payload);
   },
-  renew: () => {
+  renewAccess: () => {
     return axiosInstance.post(ADMISSION_BASE_PATH + RENEW_ACCESS_PATH);
+  },
+  verifyEmail: (payload) => {
+    return axiosInstance.post(ADMISSION_BASE_PATH + VERIFY_EMAIL_PATH, payload);
   },
 };

@@ -3,13 +3,18 @@ import { ref, computed } from 'vue';
 import { useSystemParametersStore } from '../../stores/docugen-web/systemParametersStore.js';
 import { useTablesStore } from '../../stores/tablesStore.js';
 
-const message = ref(null);
-const tablesStore = useTablesStore();
-const systemParametersStore = useSystemParametersStore();
-const tableId = 1; // SystemParameters
-
 export const useSystemParameters = () => {
-  const table = computed(() => tablesStore.getTable(tableId));
+  // Notification settings
+  const message = ref(null);
+  const code = ref(null);
+
+  // Default settings
+  const systemParametersStore = useSystemParametersStore();
+  // Table
+  const tablesStore = useTablesStore();
+  const tableId = 1; // SystemParameters
+
+  // Petition settings
   const systemParameters = computed(() => systemParametersStore.getSystemParameters);
   const loading = ref(false);
   const success = ref(null);
@@ -27,10 +32,12 @@ export const useSystemParameters = () => {
         tablesStore.setTable(tableId, payload);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success;
+        code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         console.error(err);
         message.value = err.response?.data?.message || err.response.statusText;
         success.value = err.response?.data?.success;
+        code.value = err.response?.data?.code || 'EXXX';
       } finally {
         loading.value = false;
       }
@@ -38,10 +45,10 @@ export const useSystemParameters = () => {
   };
   return {
     systemParameters,
-    table,
-    message,
     actions,
     loading,
     success,
+    message,
+    code,
   };
 };

@@ -36,30 +36,23 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useSession } from '../../composables/docugen-web/useSession.js';
-import { useSessionStore } from '../../stores/docugen-web/sessionStore.js';
-import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
 import { useAccountStore } from '../../stores/docugen-web/accountStore.js';
-import { USERS } from '../../constants/users.js';
+import { useSession } from '../../composables/docugen-web/useSession.js';
 import { useRouter } from 'vue-router';
+import { USERS } from '../../constants/users.js';
 
+const accountStore = useAccountStore();
+const router = useRouter();
 const username = ref('');
 const role = ref('');
+const { actions } = useSession();
 const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
-const router = useRouter();
-const accountStore = useAccountStore();
-const sessionStore = useSessionStore();
-const tokenStore = useTokenStore();
 const account_username = { username: accountStore.getAccount.username };
-const { actions } = useSession();
 
 const logout = async () => {
   try {
     await actions.sessionCloser(account_username);
-    tokenStore.resetToken();
-    accountStore.resetAccount();
-    sessionStore.resetSession();
     await router.push('/');
   } catch (error) {
     console.log('Error in logout process. ', error.message);

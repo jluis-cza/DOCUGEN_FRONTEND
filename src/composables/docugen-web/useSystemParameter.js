@@ -2,11 +2,12 @@ import { AdministrationService } from '../../services/docugen-web/Administration
 import { ref } from 'vue';
 import { useNotificationStore } from '../../stores/notificationStore.js';
 
-const notificationStore = useNotificationStore();
-const message = ref(null);
-const code = ref(null);
-
 export const useSystemParameter = () => {
+  //  Notification settings
+  const notificationStore = useNotificationStore();
+  const message = ref(null);
+  const code = ref(null);
+  //  Petition settings
   const systemParameter = ref({});
   const loading = ref(false);
   const success = ref(null);
@@ -27,6 +28,7 @@ export const useSystemParameter = () => {
         const data = {
           message: message.value,
           code: code.value,
+          mode: 'automatic',
         };
         notificationStore.setNotification(data);
         loading.value = false;
@@ -38,5 +40,7 @@ export const useSystemParameter = () => {
     actions,
     loading,
     success,
+    message,
+    code,
   };
 };

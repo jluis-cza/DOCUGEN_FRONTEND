@@ -5,7 +5,7 @@ import { accessRenewer, accessRemover } from '../helpers/docugen-web/accessHelpe
 
 const ROOT_API_URL = SERVICES.base_url.api;
 const JSON_CONTENT_TYPE = SERVICES.content.type.json;
-const timeout = 30000;
+const timeout = 60000;
 
 // Axios instance to make HTTP requests
 export const axiosInstance = axios.create({
@@ -59,73 +59,77 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-
-    // 401 status treatment
-    console.error('Not authenticated.');
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // If the instance is refreshing add current request to the queue
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedRequestsQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return axiosInstance(originalRequest);
+    if (!originalRequest.url.includes(SERVICES.path.docugen_web.admission.base + '/')) {
+      // 401 status treatment - Authenticated endpoints
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        console.error('Not authenticated.');
+        // If the instance is refreshing add current request to the queue
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedRequestsQueue.push({ resolve, reject });
           })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
+            .then((token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return axiosInstance(originalRequest);
+            })
+            .catch((err) => {
+              return Promise.reject(err);
+            });
+        }
 
-      // Avoiding infinite loops
-      originalRequest._retry = true;
-      isRefreshing = true;
+        // Avoiding infinite loops
+        originalRequest._retry = true;
+        isRefreshing = true;
 
-      try {
-        await accessRenewer(); // Renew access
-        // Update token bearer
-        const tokenStore = useTokenStore();
-        const newToken = tokenStore.getToken || '';
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        try {
+          await accessRenewer(); // Renew access
+          // Update token bearer
+          const tokenStore = useTokenStore();
+          const newToken = tokenStore.getToken || '';
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-        processQueue(null, newToken); // Process requests
-        return axiosInstance(originalRequest); // Retry request
-      } catch (refreshError) {
-        console.error('Error on renewing token.', error.message);
-        processQueue(refreshError, null); // If error happens add error to the queue
-        accessRemover(); // Clear access info
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+          processQueue(null, newToken); // Process requests
+          return axiosInstance(originalRequest); // Retry request
+        } catch (refreshError) {
+          console.error('Error on renewing token.', error.message);
+          processQueue(refreshError, null); // If error happens add error to the queue
+          accessRemover(); // Clear access info
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
       }
     }
 
     if (error.response) {
       switch (error.response.status) {
         case 400:
-          console.error('Bad request');
+          console.error('Error: Bad request');
+          break;
+        case 401:
+          console.error('Error: Unauthorized');
           break;
         case 403:
-          console.error('Forbidden');
+          console.error('Error: Forbidden');
           break;
         case 404:
-          console.error('Not found.');
+          console.error('Error: Not found.');
           break;
         case 408:
-          console.error('Request timeout.');
+          console.error('Error: Request timeout.');
           break;
         case 429:
-          console.error('Too many requests.');
+          console.error('Error: Too many requests.');
           break;
         case 500:
-          console.error('Internal server Error.');
+          console.error('Error: Internal server Error.');
           break;
         default:
           console.error('Error:', error.response.status);
       }
       console.error('Error details:', error.response.data);
     } else if (error.request) {
-      console.error('The server did not respond.');
+      console.error('Error: The server did not respond.');
     } else {
       console.error('Error:', error.message);
     }
