@@ -1,58 +1,141 @@
 <!-- This view is part of the Administration and Management modules of DOCUGEN-->
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12">
-        <div class="header">
-          <h2>DOCUGEN</h2>
-          <v-btn @click="logout()">Salir</v-btn>
+  <v-app>
+    <v-app-bar color="primary" elevation="2" height="56">
+      <template #prepend>
+        <v-app-bar-nav-icon color="white" @click="drawerOpen = !drawerOpen"> </v-app-bar-nav-icon>
+      </template>
+      <v-app-bar-title class="text-white font-weight-semibold"> DOCUGEN </v-app-bar-title>
+      <template #append>
+        <div class="d-flex align-center ga-3 mr-2">
+          <v-avatar color="accent">
+            <span class="text-primary font-weight-bold text-caption">{{ userInitials }}</span>
+          </v-avatar>
+          <v-menu
+            v-model="accountMenuOpen"
+            :close-on-content-click="false"
+            location="bottom end"
+            offset="20"
+            transition="fade-transition"
+          >
+            <template #activator="{ props }">
+              <v-btn
+                v-bind="props"
+                icon
+                variant="text"
+                color="white"
+                size="x-small"
+                density="comfortable"
+              >
+                <v-icon :icon="accountMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
+              </v-btn>
+            </template>
+            <v-card min-width="240" rounded="lg" elevation="3">
+              <v-card-item>
+                <template #prepend>
+                  <v-avatar color="accent">
+                    <span class="text-primary font-weight-bold text-caption">{{
+                      userInitials
+                    }}</span>
+                  </v-avatar>
+                </template>
+                <v-card-title> {{ username }} </v-card-title>
+                <v-card-subtitle>
+                  <v-chip size="small" outlined>{{ role }}</v-chip>
+                </v-card-subtitle>
+              </v-card-item>
+              <v-divider />
+              <v-list density="compact" nav>
+                <v-list-item
+                  prepend-icon="mdi-account-outline"
+                  title="Mi Perfil"
+                  rounded="lg"
+                  @click="accountMenuOpen = false"
+                />
+              </v-list>
+              <v-divider />
+              <v-card-actions class="pa-2">
+                <v-btn
+                  color="error"
+                  variant="tonal"
+                  prepend-icon="mdi-logout"
+                  size="small"
+                  block
+                  @click="logout"
+                >
+                  Cerrar Sesión
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-menu>
         </div>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="3">
-        <aside class="navegationBar">
-          <h3>Bienvenido</h3>
-          <h4>{{ username }}</h4>
-          <br />
-          <ul>
-            <li v-if="role === administrator">
-              <RouterLink to="/dashboard/system">Parámetros del Sistema</RouterLink>
-            </li>
-            <li v-if="role === developer">
-              <RouterLink to="/dashboard/template-management">Gestor de Plantillas</RouterLink>
-            </li>
-          </ul>
-        </aside>
-      </v-col>
-      <v-col cols="9">
-        <main class="mainPanel">
-          <RouterView />
-        </main>
-      </v-col>
-    </v-row>
-  </v-container>
+      </template>
+    </v-app-bar>
+    <v-navigation-drawer
+      v-model="drawerOpen"
+      :permanent="true"
+      color="surface"
+      border="end"
+      width="240"
+    >
+      <v-list nav density="compact" class="px-2 pt-3">
+        <template v-if="role === administrator">
+          <v-divider class="py-1"></v-divider>
+          <v-list-subheader class="text-uppercase ls-wide"> Administración </v-list-subheader>
+          <v-list-item
+            to="/dashboard/system"
+            prepend-icon="mdi-cog-outline"
+            title="Parámetros del Sistema"
+            color="primary"
+            rounded="lg"
+          />
+        </template>
+        <template v-if="role === developer">
+          <v-divider class="py-1"></v-divider>
+          <v-list-subheader class="text-uppercase ls-wide"> Gestión </v-list-subheader>
+          <v-list-item
+            to="/dashboard/template-management"
+            prepend-icon="mdi-file-document-outline"
+            title="Gestor de Plantillas"
+            color="primary"
+            rounded="lg"
+          />
+        </template>
+      </v-list>
+    </v-navigation-drawer>
+    <v-main>
+      <v-container fluid class="pa-7">
+        <RouterView />
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAccountStore } from '../../stores/docugen-web/accountStore.js';
 import { useSession } from '../../composables/docugen-web/useSession.js';
-import { useRouter } from 'vue-router';
 import { USERS } from '../../constants/users.js';
 
-const accountStore = useAccountStore();
+// General values
 const router = useRouter();
-const username = ref('');
-const role = ref('');
+const accountStore = useAccountStore();
 const { actions } = useSession();
 const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
-const account_username = { username: accountStore.getAccount.username };
+// Layout values
+const username = ref('');
+const role = ref('');
+const drawerOpen = ref(true);
+const accountMenuOpen = ref(false);
+const userInitials = computed(() =>
+  username.value ? username.value.slice(0, 2).toUpperCase() : 'NA'
+);
 
 const logout = async () => {
   try {
-    await actions.sessionCloser(account_username);
+    await actions.sessionCloser({ username: accountStore.getAccount.username });
     await router.push('/');
   } catch (error) {
     console.log('Error in logout process. ', error.message);
@@ -67,18 +150,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.header {
-  display: flex;
-  justify-content: space-between;
-  background-color: aquamarine;
-}
-.navegationBar {
-  background-color: azure;
-}
-.mainPanel {
-  background-color: beige;
-}
-ul {
-  list-style: none;
+.ls-wide {
+  letter-spacing: 1.5px;
 }
 </style>
