@@ -1,6 +1,6 @@
 <!-- frontend/src/views/SystemParametersView.vue -->
 <template>
-  <v-container>
+  <v-container fluid class="pa-7">
     <!-- title -->
     <v-row>
       <v-col cols="12">
@@ -61,6 +61,9 @@
                 inset
                 @update:modelValue="(value) => onSwitchStatus(value, item)"
               ></v-switch>
+            </template>
+            <template #item.actions="{ item }">
+
             </template>
           </v-data-table-server>
         </v-card>
@@ -128,6 +131,12 @@ const headers = [
     align: 'start',
     sortable: false,
   },
+    {
+    title: 'Acciones',
+    key: 'actions',
+    align: 'start',
+    sortable: false,
+  },
 ];
 
 const params = ref({
@@ -159,9 +168,9 @@ const handleTableUpdate = async ({ page, itemsPerPage, sortBy }) => {
 
 const onSwitchStatus = async (value, item) => {
   const status = value ? 'followed' : 'unfollowed';
-  const parameterId = item._id;
-  const payload = { id: parameterId, property: 'status', value: status };
-  await system_parameter_actions.systemParameterSetter(payload);
+  const id = item._id;
+  const payload = { property: 'status', value: status };
+  await system_parameter_actions.systemParameterSetter(id, payload);
   await system_parameters_actions.systemParametersGetter(params.value);
 };
 

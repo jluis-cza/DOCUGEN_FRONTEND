@@ -12,10 +12,10 @@ export const useSystemParameter = () => {
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    systemParameterSetter: async (payload) => {
+    systemParameterSetter: async (id, payload) => {
       try {
         loading.value = true;
-        const response = await AdministrationService.configSystemParameter(payload);
+        const response = await AdministrationService.configSystemParameter(id, payload);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success;
         code.value = response?.data?.code || 'EXXX';

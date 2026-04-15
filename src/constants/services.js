@@ -26,9 +26,18 @@ export const SERVICES = {
         monitor: '/monitor',
         configuration: '/config',
         resource: {
-          system_parameters: '/system',
-          accounts: '/accounts',
-          services: '/services',
+          system_parameters: {
+            base: '/system',
+            id: '/:system-parameter-id',
+          },
+          accounts: {
+            base: '/accounts',
+            id: '/:account-id',
+          },
+          services: {
+            base: '/services',
+            id: '/:service-id',
+          },
         },
       },
     },

@@ -60,13 +60,13 @@ const RULE_TEXT_IDENTIFIER = (value) => {
   if (mailRuleVerdict === true) {
     credentialsData.value.user.email = identifier.value;
     credentialsData.value.username = '';
-    console.log('Es un email!');
+    // console.log('Es un email!');
     return true;
   }
   if (usernameRuleVerdict === true) {
     credentialsData.value.user.email = '';
     credentialsData.value.username = identifier.value;
-    console.log('Es un username!');
+    // console.log('Es un username!');
     return true;
   }
   return mailRuleVerdict.replace(' no válido.', ' o ') + usernameRuleVerdict;

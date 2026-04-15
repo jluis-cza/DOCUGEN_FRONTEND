@@ -65,7 +65,6 @@ const setNotification = async () => {
       break;
   }
   const mode = notificationStore.getNotification.mode;
-  console.log({ mode });
   timeout.value = mode === 'persistent' ? -1 : 3000;
   showNotification.value = true;
 };
