@@ -131,12 +131,12 @@ const headers = [
     align: 'start',
     sortable: false,
   },
-    {
-    title: 'Acciones',
-    key: 'actions',
-    align: 'start',
-    sortable: false,
-  },
+  //   {
+  //   title: 'Acciones',
+  //   key: 'actions',
+  //   align: 'start',
+  //   sortable: false,
+  // },
 ];
 
 const params = ref({
