@@ -14,22 +14,27 @@ const RESOURCE_SERVICES_PATH = SERVICES.path.docugen_web.administration.resource
 
 export const AdministrationService = {
   configSystemParameter: (id, payload) => {
-    const SYSTEM_PARAMETER_ID_PARAM_PATH = `/${id}`
+    const SYSTEM_PARAMETER_ID_PARAM_PATH = `/${id}`;
     return axiosInstance.post(
-      ADMINISTRATION_BASE_PATH + CONFIGURATION_PATH + RESOURCE_SYSTEM_PARAMETERS_PATH + SYSTEM_PARAMETER_ID_PARAM_PATH,
+      ADMINISTRATION_BASE_PATH +
+        CONFIGURATION_PATH +
+        RESOURCE_SYSTEM_PARAMETERS_PATH +
+        SYSTEM_PARAMETER_ID_PARAM_PATH,
       payload
     );
   },
-  monitorSystemParameters: (params) => {
+  monitorSystemParameters: () => {
     return axiosInstance.get(
-      ADMINISTRATION_BASE_PATH + MONITOR_PATH + RESOURCE_SYSTEM_PARAMETERS_PATH,
-      { params }
+      ADMINISTRATION_BASE_PATH + MONITOR_PATH + RESOURCE_SYSTEM_PARAMETERS_PATH
     );
   },
-  configAccounts: (id, payload) => {
-    const ACCOUNT_ID_PARAM_PATH = `/${id}`
+  configAccount: (id, payload) => {
+    const ACCOUNT_ID_PARAM_PATH = `/${id}`;
     return axiosInstance.post(
-      ADMINISTRATION_BASE_PATH + CONFIGURATION_PATH + RESOURCE_ACCOUNTS_PATH + ACCOUNT_ID_PARAM_PATH,
+      ADMINISTRATION_BASE_PATH +
+        CONFIGURATION_PATH +
+        RESOURCE_ACCOUNTS_PATH +
+        ACCOUNT_ID_PARAM_PATH,
       payload
     );
   },
@@ -38,16 +43,17 @@ export const AdministrationService = {
       params,
     });
   },
-  configServices: (id, payload) => {
-    const SERVICE_ID_PARAM_PATH = `/${id}`
+  configService: (id, payload) => {
+    const SERVICE_ID_PARAM_PATH = `/${id}`;
     return axiosInstance.post(
-      ADMINISTRATION_BASE_PATH + CONFIGURATION_PATH + RESOURCE_SERVICES_PATH + SERVICE_ID_PARAM_PATH,
+      ADMINISTRATION_BASE_PATH +
+        CONFIGURATION_PATH +
+        RESOURCE_SERVICES_PATH +
+        SERVICE_ID_PARAM_PATH,
       payload
     );
   },
-  monitorServices: (params) => {
-    return axiosInstance.get(ADMINISTRATION_BASE_PATH + MONITOR_PATH + RESOURCE_SERVICES_PATH, {
-      params,
-    });
+  monitorServices: () => {
+    return axiosInstance.get(ADMINISTRATION_BASE_PATH + MONITOR_PATH + RESOURCE_SERVICES_PATH);
   },
 };

@@ -66,7 +66,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAccount } from '../../composables/docugen-web/useAccount.js';
+import { useMyAccount } from '../../composables/docugen-web/useMyAccount.js';
 import { SERVICES } from '../../constants/services.js';
 import { RULES } from '../../helpers/rules.js';
 
@@ -74,7 +74,7 @@ import { RULES } from '../../helpers/rules.js';
 // Default values
 const registryDefaultData = SERVICES.payload.docugen_web.admission.register_account;
 const router = useRouter();
-const { actions, loading, success } = useAccount();
+const { actions, loading, success } = useMyAccount();
 // Layout
 const registryData = ref(JSON.parse(JSON.stringify(registryDefaultData)));
 const passwordConfirmation = ref('');
@@ -95,7 +95,7 @@ const register = async () => {
   try {
     const { valid } = await form.value.validate();
     if (valid) {
-      await actions.accountRegister(registryData.value);
+      await actions.myAccountRegister(registryData.value);
       if (success.value) {
         registryData.value = registryDefaultData; //cleaning form
         passwordConfirmation.value = ''; //cleaning field

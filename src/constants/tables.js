@@ -5,9 +5,11 @@ export const TABLES = {
       limit: 10, // Rows by page
       total: 0,
       totalPages: 0,
+      hasNextPage: null,
+      hasPrevPage: null,
     },
     sort: {
-      by: 'name', // The table must have a "name" property
+      by: null, // Name of the column
       order: 'asc', // "asc" or "desc"
     },
     search: '',

@@ -1,30 +1,30 @@
 import { AdmissionService } from '../../services/docugen-web/AdmissionService.js';
 import { ref, computed } from 'vue';
 import { useNotificationStore } from '../../stores/notificationStore.js';
-import { useAccountStore } from '../../stores/docugen-web/accountStore.js';
+import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
-import { useSessionStore } from '../../stores/docugen-web/sessionStore.js';
+import { useMySessionStore } from '../../stores/docugen-web/mySessionStore.js';
 
-export const useSession = () => {
+export const useMySession = () => {
   // Notification settings
-  const notification = useNotificationStore();
+  const notificationStore = useNotificationStore();
   const message = ref(null);
   const code = ref(null);
   // Default settings
   const tokenStore = useTokenStore();
-  const sessionStore = useSessionStore();
-  const accountStore = useAccountStore();
+  const mySessionStore = useMySessionStore();
+  const myAccountStore = useMyAccountStore();
   // Petition settings
-  const session = computed(() => sessionStore.getSession);
+  const mySession = computed(() => mySessionStore.getMySession);
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    sessionStarter: async (payload) => {
+    mySessionStarter: async (payload) => {
       try {
         loading.value = true;
         const response = await AdmissionService.login(payload);
-        sessionStore.setSession(response.data.data.session);
-        accountStore.setAccount(response.data.data.account);
+        mySessionStore.setMySession(response.data.data.session);
+        myAccountStore.setMyAccount(response.data.data.account);
         tokenStore.setToken(response.data.data.token);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || true;
@@ -39,19 +39,19 @@ export const useSession = () => {
           code: code.value,
           mode: 'automatic',
         };
-        notification.setNotification(data);
+        notificationStore.setNotification(data);
         //         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         // await sleep(2000); //2 seconds
         // notification.resetNotification();
         loading.value = false;
       }
     },
-    sessionCloser: async (payload) => {
+    mySessionCloser: async (payload) => {
       try {
         loading.value = true;
         const response = await AdmissionService.logout(payload);
-        sessionStore.resetSession();
-        accountStore.resetAccount();
+        mySessionStore.resetMySession();
+        myAccountStore.resetMyAccount();
         tokenStore.resetToken();
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || true;
@@ -66,11 +66,11 @@ export const useSession = () => {
           code: code.value,
           mode: 'automatic',
         };
-        notification.setNotification(data);
+        notificationStore.setNotification(data);
         loading.value = false;
       }
     },
   };
 
-  return { session, actions, loading, success, message, code };
+  return { mySession, actions, loading, success, message, code };
 };

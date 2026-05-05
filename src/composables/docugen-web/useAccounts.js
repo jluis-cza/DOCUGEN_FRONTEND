@@ -1,24 +1,34 @@
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { AdministrationService } from '../../services/docugen-web/AdministrationService.js';
-import { useNotificationStore } from '../../stores/notificationStore.js';
+import { useTablesStore } from '../../stores/tablesStore.js';
 import { useAccountsStore } from '../../stores/docugen-web/accountsStore.js';
 
-export const useAccount = () => {
+export const useAccounts = () => {
   // Notification setttings
-  const notificationStore = useNotificationStore();
   const message = ref(null);
   const code = ref(null);
-  //  Request settings
+  // Default settings
   const accountsStore = useAccountsStore();
-  const account = ref(null);
+  const tablesStore = useTablesStore();
+  const tableId = 2; //  Accounts table id
+  //  Request settings
+  const accounts = computed(() => accountsStore.getAccounts);
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    accountSetter: async (id, payload) => {
+    accountsGetter: async (params) => {
       try {
         loading.value = true;
-        const response = await AdministrationService.configAccount(id, payload);
-        accountsStore.setAccount(id, response.data.data.account);
+        const response = await AdministrationService.monitorAccounts(params);
+        accountsStore.resetAccounts;
+        accountsStore.setAccounts(response.data.data.accounts);
+        tablesStore.resetTable(tableId);
+        const tableData = {
+          pagination: response.data.metadata.accounts.pagination,
+          sort: response.data.metadata.accounts.sort,
+          search: response.data.metadata.accounts.search,
+        };
+        tablesStore.setTable(tableId, tableData);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
@@ -28,16 +38,10 @@ export const useAccount = () => {
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
-        const data = {
-          message: message.value,
-          code: code.value,
-          mode: 'automatic',
-        };
-        notificationStore.setNotification(data);
         loading.value = false;
       }
     },
   };
 
-  return { account, actions, loading, success, message, code };
+  return { accounts, actions, loading, success, message, code };
 };

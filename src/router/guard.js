@@ -1,12 +1,12 @@
 import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
-import { useAccountStore } from '../stores/docugen-web/accountStore.js';
+import { useMyAccountStore } from '../stores/docugen-web/myAccountStore.js';
 import { accessRemover, accessRenewer } from '../helpers/docugen-web/accessHelper.js';
 
 const guard = (router) => {
   // Global guard
   router.beforeEach(async (to, from, next) => {
     const tokenStore = useTokenStore();
-    const accountStore = useAccountStore();
+    const myAccountStore = useMyAccountStore();
     // Checking is autentication is needed to access the route
     if (to.meta.requiresAuth) {
       //Checking token existence
@@ -22,8 +22,7 @@ const guard = (router) => {
         }
       }
       // Checking the user's role
-      const role = accountStore.getAccount.role;
-      console.log({ role });
+      const role = myAccountStore.getMyAccount.role;
       if (to.meta.allowedRoles.includes(role)) {
         console.log(`Access granted. role: ${role}`);
         return next();

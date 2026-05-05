@@ -71,6 +71,19 @@ export const SERVICES = {
         code: '',
         mode: '', // persistent or else
       },
+      dialog_box: {
+        metadata: {
+          isResolved: null,
+          isRequested: false,
+          isShowing: false,
+        },
+        data: {
+          title: '',
+          icon: '',
+          text: '',
+          actions: [],
+        },
+      },
     },
   },
   params: {

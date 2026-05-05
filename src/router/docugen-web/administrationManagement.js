@@ -17,12 +17,24 @@ export const administrationManagement = [
         path: 'system',
         name: 'system',
         meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
-        component: () => import('../../components/docugen-web/AdministrationSystem.vue'),
+        component: () => import('../../components/docugen-web/AdministrationSystemParameters.vue'),
+      },
+      {
+        path: 'accounts',
+        name: 'accounts',
+        meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
+        component: () => import('../../components/docugen-web/AdministrationAccounts.vue'),
+      },
+      {
+        path: 'services',
+        name: 'services',
+        meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
+        component: () => import('../../components/docugen-web/AdministrationServices.vue'),
       },
       // Management subroutes
       {
-        path: 'template-management',
-        name: 'template-management',
+        path: 'templates',
+        name: 'templates',
         meta: { requiresAuth: true, allowedRoles: [DEV_ROLE] },
         component: () => import('../../components/docugen-web/ManagementTemplates.vue'),
       },

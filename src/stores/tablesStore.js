@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { TABLES } from '../constants/tables';
+import { TABLES } from '../constants/tables.js';
 import { deepMerge } from '../helpers/utils.js';
 import { toRaw } from 'vue';
 
@@ -9,10 +9,11 @@ export const useTablesStore = defineStore('tables', () => {
   const tables = ref([]);
   // Getters
   const getTables = computed(() => tables.value);
-  const getTable = computed(() => (id) => {
+  const getTable = (id) => {
     const table = tables.value.find((t) => t.id === id);
     return table;
-  });
+  };
+
   // Actions
   const setTable = (id, options) => {
     const index = tables.value.findIndex((t) => t.id === id);
@@ -26,7 +27,7 @@ export const useTablesStore = defineStore('tables', () => {
     const defaultOptions = structuredClone(TABLES.default);
     const index = tables.value.findIndex((t) => t.id === id);
     if (index !== -1) {
-      tables.value[index] = deepMerge(tables.value[index], defaultOptions);
+      tables.value[index] = deepMerge(toRaw(tables.value[index]), defaultOptions);
     } else {
       tables.value.push(deepMerge({ id }, defaultOptions));
     }
@@ -47,7 +48,8 @@ export const useTablesStore = defineStore('tables', () => {
 });
 
 // id
-//  1: systemParameters
-//
+//  1: systemParameters (will be static)
+//  2: accounts (dinamic)
+//  3: services (static)
 // Structure:
-// {id:0, pagination:{},sort:{}, search:''}
+//  {id:0, pagination:{},sort:{}, search:''}

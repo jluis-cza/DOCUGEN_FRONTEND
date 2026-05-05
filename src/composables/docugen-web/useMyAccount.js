@@ -1,37 +1,35 @@
 import { ref } from 'vue';
-import { AdministrationService } from '../../services/docugen-web/AdministrationService.js';
+import { AdmissionService } from '../../services/docugen-web/AdmissionService.js';
 import { useNotificationStore } from '../../stores/notificationStore.js';
-import { useAccountsStore } from '../../stores/docugen-web/accountsStore.js';
 
-export const useAccount = () => {
+export const useMyAccount = () => {
   // Notification setttings
   const notificationStore = useNotificationStore();
   const message = ref(null);
   const code = ref(null);
   //  Request settings
-  const accountsStore = useAccountsStore();
-  const account = ref(null);
+  const myAccount = ref(null);
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    accountSetter: async (id, payload) => {
+    myAccountRegister: async (payload) => {
       try {
         loading.value = true;
-        const response = await AdministrationService.configAccount(id, payload);
-        accountsStore.setAccount(id, response.data.data.account);
+        const response = await AdmissionService.registerMyAccount(payload);
+        myAccount.value = response.data.data.account;
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
-        console.error(err);
         message.value = err.response?.data?.message || err.response.statusText;
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
+        // Notification settings
         const data = {
           message: message.value,
           code: code.value,
-          mode: 'automatic',
+          mode: 'persistent',
         };
         notificationStore.setNotification(data);
         loading.value = false;
@@ -39,5 +37,5 @@ export const useAccount = () => {
     },
   };
 
-  return { account, actions, loading, success, message, code };
+  return { myAccount, actions, loading, success, message, code };
 };

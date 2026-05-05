@@ -7,29 +7,28 @@ export const useSystemParameters = () => {
   // Notification settings
   const message = ref(null);
   const code = ref(null);
-
   // Default settings
   const systemParametersStore = useSystemParametersStore();
-  // Table
   const tablesStore = useTablesStore();
   const tableId = 1; // SystemParameters
-
   // Petition settings
   const systemParameters = computed(() => systemParametersStore.getSystemParameters);
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    systemParametersGetter: async (params) => {
+    systemParametersGetter: async () => {
       try {
         loading.value = true;
-        const response = await AdministrationService.monitorSystemParameters(params);
+        const response = await AdministrationService.monitorSystemParameters();
+        systemParametersStore.resetSystemParameters;
         systemParametersStore.setSystemParameters(response.data.data.systemParameters);
-        const payload = {
+        tablesStore.resetTable(tableId);
+        const tableData = {
           pagination: response.data.metadata.systemParameters.pagination,
-          sort: { sortBy: params.sortBy, sortOrder: params.sortOrder },
-          search: params.search,
+          sort: response.data.metadata.systemParameters.sort,
+          search: response.data.metadata.systemParameters.search,
         };
-        tablesStore.setTable(tableId, payload);
+        tablesStore.setTable(tableId, tableData);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success;
         code.value = response?.data?.code || 'EXXX';

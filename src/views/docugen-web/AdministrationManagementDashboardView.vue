@@ -8,7 +8,7 @@
       <v-app-bar-title class="text-white font-weight-semibold"> DOCUGEN </v-app-bar-title>
       <template #append>
         <div class="d-flex align-center ga-3 mr-2">
-          <v-avatar color="accent">
+          <v-avatar color="surface">
             <span class="text-primary font-weight-bold text-caption">{{ userInitials }}</span>
           </v-avatar>
           <v-menu
@@ -33,7 +33,7 @@
             <v-card min-width="240" rounded="lg" elevation="3">
               <v-card-item>
                 <template #prepend>
-                  <v-avatar color="accent">
+                  <v-avatar color="surface">
                     <span class="text-primary font-weight-bold text-caption">{{
                       userInitials
                     }}</span>
@@ -89,12 +89,26 @@
             color="primary"
             rounded="lg"
           />
+          <v-list-item
+            to="/dashboard/accounts"
+            prepend-icon="mdi-account-multiple"
+            title="Cuentas"
+            color="primary"
+            rounded="lg"
+          />
+          <v-list-item
+            to="/dashboard/services"
+            prepend-icon="mdi-cogs"
+            title="Servicios"
+            color="primary"
+            rounded="lg"
+          />
         </template>
         <template v-if="role === developer">
           <v-divider class="py-1"></v-divider>
           <v-list-subheader class="text-uppercase ls-wide"> Gestión </v-list-subheader>
           <v-list-item
-            to="/dashboard/template-management"
+            to="/dashboard/templates"
             prepend-icon="mdi-file-document-outline"
             title="Gestor de Plantillas"
             color="primary"
@@ -114,14 +128,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAccountStore } from '../../stores/docugen-web/accountStore.js';
-import { useSession } from '../../composables/docugen-web/useSession.js';
+import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
+import { useMySession } from '../../composables/docugen-web/useMySession.js';
 import { USERS } from '../../constants/users.js';
 
 // General values
 const router = useRouter();
-const accountStore = useAccountStore();
-const { actions } = useSession();
+const myAccountStore = useMyAccountStore();
+const { actions } = useMySession();
 const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
 // Layout values
@@ -135,7 +149,7 @@ const userInitials = computed(() =>
 
 const logout = async () => {
   try {
-    await actions.sessionCloser({ username: accountStore.getAccount.username });
+    await actions.mySessionCloser({ username: myAccountStore.getMyAccount.username });
     await router.push('/');
   } catch (error) {
     console.log('Error in logout process. ', error.message);
@@ -144,8 +158,8 @@ const logout = async () => {
 };
 
 onMounted(() => {
-  username.value = accountStore.getAccount.username || 'NA';
-  role.value = accountStore.getAccount.role || 'NA';
+  username.value = myAccountStore.getMyAccount.username || 'NA';
+  role.value = myAccountStore.getMyAccount.role || 'NA';
 });
 </script>
 

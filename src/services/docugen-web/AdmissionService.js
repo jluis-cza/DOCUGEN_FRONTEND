@@ -11,7 +11,7 @@ const RENEW_ACCESS_PATH = SERVICES.path.docugen_web.admission.renew_access;
 const VERIFY_EMAIL_PATH = SERVICES.path.docugen_web.admission.verify_email;
 
 export const AdmissionService = {
-  registerAccount: (payload) => {
+  registerMyAccount: (payload) => {
     return axiosInstance.post(ADMISSION_BASE_PATH + REGISTER_ACCOUNT_PATH, payload);
   },
   login: (payload) => {

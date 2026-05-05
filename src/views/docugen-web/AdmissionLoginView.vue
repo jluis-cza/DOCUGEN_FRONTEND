@@ -37,7 +37,7 @@
 import { RULES } from '../../helpers/rules.js';
 import { SERVICES } from '../../constants/services.js';
 import { ref } from 'vue';
-import { useSession } from '../../composables/docugen-web/useSession.js';
+import { useMySession } from '../../composables/docugen-web/useMySession.js';
 import { useRouter } from 'vue-router';
 
 const RULE_TEXT_REQUIRED = RULES.text.input.required;
@@ -50,7 +50,7 @@ const credentialsData = ref(JSON.parse(JSON.stringify(credentialsDefaultData)));
 const identifier = ref('');
 const form = ref(null);
 const router = useRouter();
-const { actions, loading, success } = useSession();
+const { actions, loading, success } = useMySession();
 const showPassword = ref(false);
 
 const RULE_TEXT_IDENTIFIER = (value) => {
@@ -75,7 +75,7 @@ const login = async () => {
   try {
     const { valid } = await form.value.validate(); // Checking mistakes in imput data
     if (valid) {
-      await actions.sessionStarter(credentialsData.value);
+      await actions.mySessionStarter(credentialsData.value);
       if (success.value) {
         credentialsData.value = credentialsDefaultData;
         await router.push('/dashboard'); // Redirecting to dashboard
