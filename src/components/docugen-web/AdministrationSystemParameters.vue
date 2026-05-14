@@ -1,6 +1,6 @@
 <!-- frontend/src/views/SystemParametersView.vue -->
 <template>
-  <v-container fluid>
+  <v-container fluid v-if="!isItemDetailActive">
     <!-- Title -->
     <div class="text-left">
       <h3>Parámetros del sistema</h3>
@@ -21,21 +21,29 @@
             }}</v-chip>
           </template>
           <template #[`item.actions`]="{ item }">
-            <v-switch
-              :model-value="item.status === 'followed'"
-              color="primary"
-              :label="
-                item.status === 'followed'
-                  ? 'Dejar de monitorear'
-                  : item.status === 'unfollowed'
-                    ? 'Monitorear'
-                    : ''
-              "
-              inset
-              density="compact"
-              hide-details
-              @update:modelValue="(value) => onSwitchStatus(value, item)"
-            ></v-switch>
+            <div class="d-flex justify-space-between align-center">
+              <v-switch
+                :model-value="item.status === 'followed'"
+                color="primary"
+                :label="
+                  item.status === 'followed'
+                    ? 'Dejar de monitorear'
+                    : item.status === 'unfollowed'
+                      ? 'Monitorear'
+                      : ''
+                "
+                inset
+                density="compact"
+                hide-details
+                @update:modelValue="(value) => onSwitchStatus(value, item)"
+              ></v-switch>
+              <v-btn @click="viewItemDetail(item._id)" class="bg-info" size="small" variant="tonal">
+                <template #prepend>
+                  <v-icon icon="mdi-eye"></v-icon>
+                </template>
+                Ver
+              </v-btn>
+            </div>
           </template>
         </v-data-table>
       </v-card>
@@ -57,13 +65,19 @@
       </v-card>
     </div>
   </v-container>
+  <RouterView />
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useSystemParameters } from '../../composables/docugen-web/useSystemParameters.js';
 import { useSystemParameter } from '../../composables/docugen-web/useSystemParameter.js';
 import { useTablesStore } from '../../stores/tablesStore.js';
+
+const router = useRouter();
+const route = useRoute();
+const isItemDetailActive = computed(() => !!route.params.id);
 
 // Table headers
 const headers = [
@@ -123,6 +137,11 @@ const onSwitchStatus = async (value, item) => {
   const id = item._id;
   const payload = { status };
   await system_parameter_actions.systemParameterSetter(id, { data: payload });
+};
+
+const viewItemDetail = (id) => {
+  if (!id) throw new Error('There is no item id');
+  router.push(`/dashboard/system/${id}`);
 };
 
 watch(sortBy, (newValue, oldValue) => {

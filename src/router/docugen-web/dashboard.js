@@ -5,31 +5,61 @@ import { USERS } from '../../constants/users.js';
 const ADMIN_ROLE = USERS.type.server.role.administrator;
 const DEV_ROLE = USERS.type.client.role.developer;
 
-export const administrationManagement = [
+export const dashboard = [
   {
     path: '/dashboard',
     name: 'dashboard',
+    redirect: '/dashboard/home',
     meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
-    component: () => import('../../views/docugen-web/AdministrationManagementDashboardView.vue'),
+    component: () => import('../../views/docugen-web/DashboardView.vue'),
     children: [
+      // Home
+      {
+        path: 'home',
+        name: 'dashboard-home',
+        meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
+        component: () => import('../../components/docugen-web/DashboardHome.vue'),
+      },
       // Administration subroutes
       {
         path: 'system',
         name: 'system',
         meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
         component: () => import('../../components/docugen-web/AdministrationSystemParameters.vue'),
+        children: [
+          {
+            path: ':id',
+            name: 'system-parameter-detail',
+            component: () =>
+              import('../../components/docugen-web/AdministrationSystemParameter.vue'),
+          },
+        ],
       },
       {
         path: 'accounts',
         name: 'accounts',
         meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
         component: () => import('../../components/docugen-web/AdministrationAccounts.vue'),
+        children: [
+          {
+            path: ':id',
+            name: 'account-detail',
+            component: () => import('../../components/docugen-web/AdministrationAccount.vue'),
+          },
+        ],
       },
       {
         path: 'services',
         name: 'services',
         meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
         component: () => import('../../components/docugen-web/AdministrationServices.vue'),
+        children: [
+          {
+            path: ':id',
+            name: 'service-detail',
+            component: () => import('../../components/docugen-web/AdministrationService.vue'),
+          },
+        ],
       },
       // Management subroutes
       {

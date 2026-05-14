@@ -1,66 +1,64 @@
 <template>
-  <v-container fluid>
-    <!-- Title -->
-    <div class="text-left">
-      <h3>Servicios</h3>
-    </div>
-    <!-- Table -->
-    <div class="my-4">
-      <v-card>
-        <v-data-table
-          :items="services"
-          :headers="headers"
-          :loading="loading"
-          v-model:sort-by="sortBy"
-          hide-default-footer
-        >
-          <template #[`item.status`]="{ item }">
-            <v-chip :color="status(item.status).color" variant="flat" size="small">{{
-              status(item.status).text
-            }}</v-chip>
-          </template>
-          <template #[`item.actions`]="{ item }">
-            <v-switch
-              :model-value="item.status === 'running'"
-              color="primary"
-              :label="
-                item.status === 'running'
-                  ? 'Desactivar servicio'
-                  : item.status === 'stopped'
-                    ? 'Activar servicio'
-                    : ''
-              "
-              inset
-              density="compact"
-              hide-details
-              :disabled="switchingItemId === item._id"
-              @update:modelValue="
-                (value) => {
-                  onSwitchStatus(value, item);
-                }
-              "
-            ></v-switch>
-          </template>
-        </v-data-table>
-      </v-card>
-    </div>
-    <!-- Notifications -->
-    <div>
-      <v-card v-if="!(success ?? true)">
-        <v-alert
-          type="error"
-          variant="tonal"
-          icon="mdi-alert-circle"
-          @click="actions.servicesGetter()"
-          style="cursor: pointer"
-        >
-          Error: {{ message }}
-          <br />
-          <small>Haz clic para reintentar</small>
-        </v-alert>
-      </v-card>
-    </div>
-  </v-container>
+  <!-- Title -->
+  <div class="text-left">
+    <h3>Servicios</h3>
+  </div>
+  <!-- Table -->
+  <div class="my-4">
+    <v-card>
+      <v-data-table
+        :items="services"
+        :headers="headers"
+        :loading="loading"
+        v-model:sort-by="sortBy"
+        hide-default-footer
+      >
+        <template #[`item.status`]="{ item }">
+          <v-chip :color="status(item.status).color" variant="flat" size="small">{{
+            status(item.status).text
+          }}</v-chip>
+        </template>
+        <template #[`item.actions`]="{ item }">
+          <v-switch
+            :model-value="item.status === 'running'"
+            color="primary"
+            :label="
+              item.status === 'running'
+                ? 'Desactivar servicio'
+                : item.status === 'stopped'
+                  ? 'Activar servicio'
+                  : ''
+            "
+            inset
+            density="compact"
+            hide-details
+            :disabled="switchingItemId === item._id"
+            @update:modelValue="
+              (value) => {
+                onSwitchStatus(value, item);
+              }
+            "
+          ></v-switch>
+        </template>
+      </v-data-table>
+    </v-card>
+  </div>
+  <!-- Notifications -->
+  <div>
+    <v-card v-if="!(success ?? true)">
+      <v-alert
+        type="error"
+        variant="tonal"
+        icon="mdi-alert-circle"
+        @click="actions.servicesGetter()"
+        style="cursor: pointer"
+      >
+        Error: {{ message }}
+        <br />
+        <small>Haz clic para reintentar</small>
+      </v-alert>
+    </v-card>
+  </div>
   <DialogBox />
 </template>
 

@@ -23,7 +23,7 @@ export const useEmail = () => {
         console.error(err);
         success.value = err.response?.data?.success || false;
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in verifying email.';
+          err.response?.data?.message || err.response.statusText || 'Error in emailVerifier';
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
         loading.value = false;

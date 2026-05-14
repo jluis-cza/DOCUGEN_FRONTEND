@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { admission } from './docugen-web/admission.js';
-import { administrationManagement } from './docugen-web/administrationManagement.js';
+import { dashboard } from './docugen-web/dashboard.js';
 
 import guard from './guard.js';
 
@@ -27,7 +27,7 @@ const routes = [
 
   //docugen-web
   ...admission,
-  ...administrationManagement,
+  ...dashboard,
 
   //docugen-app
 

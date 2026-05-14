@@ -34,7 +34,10 @@ export const useSystemParameters = () => {
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         console.error(err);
-        message.value = err.response?.data?.message || err.response.statusText;
+        message.value =
+          err.response?.data?.message ||
+          err.response.statusText ||
+          'Error in systemParametersGetter';
         success.value = err.response?.data?.success;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {

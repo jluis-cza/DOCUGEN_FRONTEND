@@ -1,11 +1,14 @@
 <!-- This view is part of the Administration and Management modules of DOCUGEN-->
 <template>
   <v-app>
+    <!-- NavBar -->
     <v-app-bar color="primary" elevation="2" height="56">
+      <!-- NavBar logo -->
       <template #prepend>
         <v-app-bar-nav-icon color="white" @click="drawerOpen = !drawerOpen"> </v-app-bar-nav-icon>
       </template>
       <v-app-bar-title class="text-white font-weight-semibold"> DOCUGEN </v-app-bar-title>
+      <!-- NavBar menu -->
       <template #append>
         <div class="d-flex align-center ga-3 mr-2">
           <v-avatar color="surface">
@@ -71,6 +74,7 @@
         </div>
       </template>
     </v-app-bar>
+    <!-- Drawer nav -->
     <v-navigation-drawer
       v-model="drawerOpen"
       :permanent="true"
@@ -78,12 +82,22 @@
       border="end"
       width="240"
     >
-      <v-list nav density="compact" class="px-2 pt-3">
+      <v-list nav density="compact" class="px-2 pt-3" v-model:selected="selectedItem">
+        <v-list-item
+          to="/dashboard/home"
+          value="/dashboard/home"
+          exact
+          prepend-icon="mdi-home"
+          title="Inicio"
+          color="primary"
+          rounded="lg"
+        />
         <template v-if="role === administrator">
           <v-divider class="py-1"></v-divider>
           <v-list-subheader class="text-uppercase ls-wide"> Administración </v-list-subheader>
           <v-list-item
             to="/dashboard/system"
+            value="/dashboard/system"
             prepend-icon="mdi-cog-outline"
             title="Parámetros del Sistema"
             color="primary"
@@ -91,6 +105,7 @@
           />
           <v-list-item
             to="/dashboard/accounts"
+            value="/dashboard/accounts"
             prepend-icon="mdi-account-multiple"
             title="Cuentas"
             color="primary"
@@ -98,6 +113,7 @@
           />
           <v-list-item
             to="/dashboard/services"
+            value="/dashboard/services"
             prepend-icon="mdi-cogs"
             title="Servicios"
             color="primary"
@@ -109,6 +125,7 @@
           <v-list-subheader class="text-uppercase ls-wide"> Gestión </v-list-subheader>
           <v-list-item
             to="/dashboard/templates"
+            value="/dashboard/templates"
             prepend-icon="mdi-file-document-outline"
             title="Gestor de Plantillas"
             color="primary"
@@ -127,13 +144,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useMySession } from '../../composables/docugen-web/useMySession.js';
 import { USERS } from '../../constants/users.js';
 
 // General values
 const router = useRouter();
+const route = useRoute();
 const myAccountStore = useMyAccountStore();
 const { actions } = useMySession();
 const administrator = USERS.type.server.role.administrator;
@@ -146,6 +164,7 @@ const accountMenuOpen = ref(false);
 const userInitials = computed(() =>
   username.value ? username.value.slice(0, 2).toUpperCase() : 'NA'
 );
+const selectedItem = ref([]); //Default view
 
 const logout = async () => {
   try {

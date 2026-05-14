@@ -9,7 +9,14 @@ export const useSystemParametersStore = defineStore('systemParameters', () => {
 
   //Getters
   const getSystemParameters = computed(() => systemParameters.value);
-
+  const getSystemParameter = (id) => {
+    const index = systemParameters.value.findIndex((s) => s._id === id);
+    if (index !== -1) {
+      return systemParameters.value[index];
+    } else {
+      return {};
+    }
+  };
   // Actions
   const setSystemParameters = (data) => {
     systemParameters.value = data || [];
@@ -19,7 +26,8 @@ export const useSystemParametersStore = defineStore('systemParameters', () => {
     if (index !== -1) {
       systemParameters.value[index] = deepMerge(toRaw(systemParameters.value[index]), options);
     } else {
-      console.error('It was intented to update a document!!!');
+      systemParameters.value.push(options);
+      console.log('Se insertó un nuevo documento en el store de parametros del sistema!!!');
     }
   };
   const resetSystemParameters = () => {
@@ -29,6 +37,7 @@ export const useSystemParametersStore = defineStore('systemParameters', () => {
   return {
     //Getters
     getSystemParameters,
+    getSystemParameter,
     //Actions
     setSystemParameters,
     setSystemParameter,

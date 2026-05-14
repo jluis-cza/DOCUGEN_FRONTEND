@@ -29,7 +29,7 @@ export const useAccounts = () => {
           search: response.data.metadata.accounts.search,
         };
         tablesStore.setTable(tableId, tableData);
-        message.value = response?.data?.message || response.statusText;
+        message.value = response?.data?.message || response.statusText || 'Error in accountsGetter';
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
