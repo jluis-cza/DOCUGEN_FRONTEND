@@ -77,7 +77,9 @@ import { useTablesStore } from '../../stores/tablesStore.js';
 
 const router = useRouter();
 const route = useRoute();
-const isItemDetailActive = computed(() => !!route.params.id);
+const isItemDetailActive = computed(() =>
+  route.name === 'system-parameter-detail' ? true : false
+);
 
 // Table headers
 const headers = [

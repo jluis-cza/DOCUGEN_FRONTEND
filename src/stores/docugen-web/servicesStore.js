@@ -10,9 +10,13 @@ export const useServicesStore = defineStore('services', () => {
   //Getters
   const getServices = computed(() => services.value);
   const getService = (id) => {
-    return services.value.find((s) => s.id === id);
+    const index = services.value.findIndex((s) => s._id === id);
+    if (index !== -1) {
+      return services.value[index];
+    } else {
+      return {};
+    }
   };
-
   // Actions
   const setServices = (data) => {
     services.value = data || [];
@@ -22,7 +26,8 @@ export const useServicesStore = defineStore('services', () => {
     if (index !== -1) {
       services.value[index] = deepMerge(toRaw(services.value[index]), options);
     } else {
-      console.error('It was intented to update a document!!!');
+      services.value.push(options);
+      console.log('Se insertó un nuevo documento en el serviceStore!!!');
     }
   };
   const resetServices = () => {

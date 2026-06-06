@@ -11,7 +11,6 @@ export const SERVICES = {
     },
   },
   path: {
-    docugen_app: {},
     docugen_web: {
       admission: {
         base: '/adm',
@@ -22,9 +21,11 @@ export const SERVICES = {
         verify_email: '/verify-email',
       },
       administration: {
+        home: '/home',
         base: '/admin',
         monitor: '/monitor',
         configuration: '/config',
+        lookup: '/categories',
         resource: {
           system_parameters: {
             base: '/system',
@@ -33,6 +34,12 @@ export const SERVICES = {
           accounts: {
             base: '/accounts',
             id: '/:account_id',
+            resource: {
+              sessions: {
+                base: '/sessions',
+                id: '/:session_id',
+              },
+            },
           },
           services: {
             base: '/services',
@@ -40,8 +47,24 @@ export const SERVICES = {
           },
         },
       },
+      utils: {
+        default: '/',
+        health: '/health',
+        time: '/time',
+      },
     },
-    default: '/',
+    docugen_app: {},
+    utils: {
+      time: '/time',
+      notifications: {
+        base: '/notifications',
+        id: '/:notification_id',
+      },
+      activities: {
+        base: '/activities',
+        id: '/:activity',
+      },
+    },
   },
   payload: {
     docugen_app: {},

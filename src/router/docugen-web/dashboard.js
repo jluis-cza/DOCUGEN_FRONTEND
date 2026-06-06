@@ -28,7 +28,7 @@ export const dashboard = [
         component: () => import('../../components/docugen-web/AdministrationSystemParameters.vue'),
         children: [
           {
-            path: ':id',
+            path: ':systemParameterId',
             name: 'system-parameter-detail',
             component: () =>
               import('../../components/docugen-web/AdministrationSystemParameter.vue'),
@@ -42,22 +42,49 @@ export const dashboard = [
         component: () => import('../../components/docugen-web/AdministrationAccounts.vue'),
         children: [
           {
-            path: ':id',
+            path: ':accountId',
             name: 'account-detail',
+            meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
             component: () => import('../../components/docugen-web/AdministrationAccount.vue'),
+            children: [
+              {
+                path: 'sessions',
+                name: 'sessions',
+                meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
+                component: () =>
+                  import('../../components/docugen-web/AdministrationAccountSessions.vue'),
+                children: [
+                  {
+                    path: ':sessionId',
+                    name: 'session-detail',
+                    meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
+                    component: () =>
+                      import('../../components/docugen-web/AdministrationAccountSession.vue'),
+                  },
+                ],
+              },
+              {
+                path: 'services',
+                name: 'account-services',
+                meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
+                component: () =>
+                  import('../../components/docugen-web/AdministrationAccountServices.vue'),
+              },
+            ],
           },
         ],
       },
       {
         path: 'services',
-        name: 'services',
+        name: 'service-lookups',
         meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
-        component: () => import('../../components/docugen-web/AdministrationServices.vue'),
+        component: () => import('../../components/docugen-web/AdministrationServiceLookups.vue'),
         children: [
           {
-            path: ':id',
-            name: 'service-detail',
-            component: () => import('../../components/docugen-web/AdministrationService.vue'),
+            path: ':serviceId',
+            name: 'service-lookup-detail',
+            meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
+            component: () => import('../../components/docugen-web/AdministrationServiceLookup.vue'),
           },
         ],
       },

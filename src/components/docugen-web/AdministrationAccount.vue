@@ -1,149 +1,99 @@
 <template>
-  <v-container fluid>
-    <div class="text-left">
-      <h3>{{ item.name }}</h3>
-    </div>
-    <div>
-      <v-card class="d-flex my-4 pa-2">
-        <v-text-field
-          v-model="params.search"
-          label="Buscar cuenta"
-          prepend-inner-icon="mdi-magnify"
-          clearable
-          hide-details
-          :loading="accounts_loading"
-          @keyup.enter="onSearchClick"
-          @click:clear="onClearSearch"
-        >
-        </v-text-field>
-        <v-btn
-          color="primary"
-          height="56"
-          prepend-icon="mdi-magnify"
-          @click="onSearchClick"
-          :loading="accounts_loading"
-        >
-          Buscar
-        </v-btn>
-      </v-card>
-    </div>
-    <div class="my-4">
+  <v-container fluid v-if="!isAccountSessionsInfoActive && !isAccountServicesInfoActive">
+    <template v-if="!loading">
+      <!-- Breadcrums -->
+      <v-breadcrumbs :items="breadcrumbs" class="pa-0 mb-4 font-weight-bold">
+        <template #divider>
+          <v-icon icon="mdi-chevron-right" size="small" />
+        </template>
+        <template #title="{ item }">
+          <span @click="!item.disabled && router.push(item.to)">
+            {{ item.title }}
+          </span>
+        </template>
+      </v-breadcrumbs>
+      <!-- Account info -->
       <v-card>
-        <v-data-table-server
-          :items-per-page="params.limit"
-          :page="params.page"
-          :headers="headers"
-          :items="accounts"
-          :items-length="table?.pagination?.total || 1"
-          :loading="accounts_loading"
-          @update:options="handleTableUpdate"
-          :items-per-page-options="[5, 10, 25, 50]"
-        >
-          <template #[`item.status`]="{ item }">
-            <v-chip :color="status(item.status).color" variant="flat" size="small">{{
-              status(item.status).text
-            }}</v-chip>
+        <!-- Title -->
+        <v-card-item>
+          <template #prepend>
+            <v-icon icon="mdi-account"></v-icon>
           </template>
-          <template #[`item.actions`]="{ item }">
-            <v-switch
-              :model-value="item.status === 'active'"
-              color="primary"
-              :label="
-                item.status === 'active'
-                  ? 'Suspender cuenta'
-                  : item.status === 'suspended'
-                    ? 'Activar cuenta'
-                    : ''
-              "
-              inset
-              density="compact"
-              hide-details
-              :disabled="switchingItemId === item._id || item.status === 'inactive'"
-              @update:modelValue="
-                (value) => {
-                  onSwitchStatus(value, item);
-                }
-              "
-            ></v-switch>
-          </template>
-        </v-data-table-server>
+          <v-card-title> {{ account.username }}</v-card-title>
+        </v-card-item>
+        <!-- Review info -->
+        <v-card-item>
+          <v-list density="compact">
+            <template v-for="(item, i) in cardInfo" :key="i">
+              <v-list-item>
+                <div class="d-flex justify-space-between align-center">
+                  <span class="font-weight-medium text-secondary">{{ item.label }}</span>
+                  <span class="font-weight-light">
+                    <template v-if="item.label === 'Estado'">
+                      <v-chip size="small" :color="item.data[1]" variant="flat">{{
+                        item.data[0]
+                      }}</v-chip>
+                    </template>
+                    <template v-else-if="item.label === 'Sesiones'">
+                      <span
+                        class="text-info cursor-pointer text-decoration-underline"
+                        @click="viewAccountSessions(accountId)"
+                        >Ver sesiones</span
+                      >
+                    </template>
+                    <template v-else-if="item.label === 'Servicios'">
+                      <span
+                        class="text-info cursor-pointer text-decoration-underline"
+                        @click="viewAccountServices(accountId)"
+                        >Ver servicios</span
+                      >
+                    </template>
+                    <template v-else>
+                      {{ item.data }}
+                    </template>
+                  </span>
+                </div>
+              </v-list-item>
+              <v-divider></v-divider>
+            </template>
+          </v-list>
+        </v-card-item>
       </v-card>
-    </div>
-    <div>
-      <v-card v-if="!(account_success ?? true)">
-        <v-alert
-          type="error"
-          variant="tonal"
-          icon="mdi-alert-circle"
-          @click="accounts_actions.accountsGetter(params)"
-          style="cursor: pointer"
-        >
-          Error: {{ accounts_message }}
-          <br />
-          <small>Haz clic para reintentar</small>
-        </v-alert>
-      </v-card>
-    </div>
+      <!-- Account Sessions Info -->
+      <AdministrationAccountSessions v-if="false" />
+    </template>
   </v-container>
-  <DialogBox />
+  <RouterView />
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import DialogBox from '../DialogBox.vue';
-import { useTablesStore } from '../../stores/tablesStore.js';
-import { useAccounts } from '../../composables/docugen-web/useAccounts.js';
+import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
-import { useDialogBoxStore } from '../../stores/dialogBoxStore.js';
-import { TABLES } from '../../constants/tables.js';
+import AdministrationAccountSessions from './AdministrationAccountSessions.vue';
+import { extractTime } from '../../helpers/utils.js';
 
-const headers = [
+const route = useRoute();
+const router = useRouter();
+const accountId = ref('');
+const isAccountSessionsInfoActive = computed(() => (route.name === 'sessions' ? true : false));
+const isAccountServicesInfoActive = computed(() =>
+  route.name === 'account-services' ? true : false
+);
+const { account, actions, loading } = useAccount();
+const breadcrumbs = computed(() => [
   {
-    title: 'Nombre de usuario',
-    key: 'username',
-    align: 'start',
-    sortable: true,
-    headerProps: {
-      class: 'bg-accent font-weight-bold',
-    },
+    title: 'Cuentas',
+    disabled: false,
+    to: '/dashboard/accounts',
   },
   {
-    title: 'Nombre',
-    key: 'user.name',
-    align: 'start',
-    sortable: true,
-    headerProps: {
-      class: 'bg-accent font-weight-bold',
-    },
+    title: account.value?.username ?? '',
+    disabled: true,
   },
-  {
-    title: 'Apellido',
-    key: 'user.lastname',
-    align: 'start',
-    sortable: true,
-    headerProps: {
-      class: 'bg-accent font-weight-bold',
-    },
-  },
-  {
-    title: 'Estado',
-    key: 'status',
-    align: 'start',
-    sortable: true,
-    headerProps: {
-      class: 'bg-accent font-weight-bold',
-    },
-  },
-  {
-    title: 'Acciones',
-    key: 'actions',
-    align: 'start',
-    sortable: false,
-    headerProps: {
-      class: 'bg-accent font-weight-bold',
-    },
-  },
-];
+]);
+
+// Review info
 const status = (itemStatus) => {
   return {
     color:
@@ -164,82 +114,58 @@ const status = (itemStatus) => {
             : 'Sin estado',
   };
 };
-const switchingItemId = ref(null);
-const dialogBoxStore = useDialogBoxStore();
-const tablesStore = useTablesStore();
-const table = computed(() => tablesStore.getTable(2));
-const params = ref({
-  page: 1,
-  limit: 10,
-  sortBy: 'username',
-  sortOrder: 'asc',
-  search: '',
+const role = (itemRole) => {
+  return {
+    text:
+      itemRole === 'dev'
+        ? 'Desarrollador'
+        : itemRole === 'admin'
+          ? 'Administrador'
+          : 'Sin Información',
+  };
+};
+
+const cardInfo = computed(() => {
+  return [
+    { label: 'Nombre', data: account.value?.user?.name || '' },
+    { label: 'Apellido', data: account.value?.user?.lastname || '' },
+    { label: 'Email', data: account.value?.user?.email || '' },
+    { label: 'Rol', data: role(account.value.role).text },
+    {
+      label: 'Estado',
+      data: [status(account.value.status).text, status(account.value.status).color],
+    },
+    {
+      label: 'Servicios',
+      data: 'Ver servicios',
+    },
+    {
+      label: 'Fecha de creación',
+      data: `${extractTime(account.value.createdAt, 'America/La_Paz', 'long').date} - ${extractTime(account.value.createdAt, 'America/La_Paz', 'long').hour}`,
+    },
+    {
+      label: 'Fecha de actualización',
+      data: `${extractTime(account.value.updatedAt, 'America/La_Paz', 'long').date} - ${extractTime(account.value.updatedAt, 'America/La_Paz', 'long').hour}`,
+    },
+    { label: 'Sesiones', data: 'Ver sesiones' },
+  ];
 });
-const {
-  accounts,
-  actions: accounts_actions,
-  loading: accounts_loading,
-  success: account_success,
-  message: accounts_message,
-  code: accounts_code,
-} = useAccounts();
 
-const { account, actions: account_actions } = useAccount();
-const onSearchClick = async () => {
-  await accounts_actions.accountsGetter(params.value);
+const viewAccountSessions = (id) => {
+  if (!id) throw new Error('There is no account id');
+  router.push(`/dashboard/accounts/${id}/sessions`);
 };
 
-const onClearSearch = () => {
-  params.value.search = '';
+const viewAccountServices = (id) => {
+  if (!id) throw new Error('There is no account id');
+  router.push(`/dashboard/accounts/${id}/services`);
 };
 
-const handleTableUpdate = async ({ page, itemsPerPage, sortBy }) => {
-  params.value.page = itemsPerPage !== params.value.limit ? 1 : page;
-  params.value.limit = itemsPerPage;
-  params.value.sortBy = sortBy?.[0]?.key ?? 'username';
-  params.value.sortOrder = sortBy?.[0]?.order ?? 'asc';
-  await accounts_actions.accountsGetter(params.value);
-};
-
-const onSwitchStatus = async (value, item) => {
-  try {
-    if (switchingItemId.value === item._id) return;
-    switchingItemId.value = item._id;
-    const status = value ? 'active' : 'suspended';
-    if (status === 'suspended') {
-      const dialogBoxData = {
-        title: 'Suspención de usuario',
-        icon: 'mdi-account-off',
-        text: `¿Está seguro de suspender al usuario ${item.username}? El usuario no podrá seguir usando los servicios de DOCUGEN y tampoco podrá ingresar al sistema.`,
-        actions: [
-          { name: 'Continuar', key: 'y' },
-          { name: 'Cancelar', key: 'n' },
-        ],
-      };
-      item.status = null; // waiting entry
-      const selectedActionKey = await dialogBoxStore.openDialogBox(dialogBoxData);
-      dialogBoxStore.resetDialogBox();
-      if (selectedActionKey === 'n') {
-        item.status = 'active';
-        switchingItemId.value = null;
-        return;
-      }
-    }
-    // Setting the service
-    const id = item._id;
-    const payload = { status };
-    await account_actions.accountSetter(id, { data: payload });
-  } catch (err) {
-    console.log('Error switching the status', err);
-  } finally {
-    switchingItemId.value = null;
-  }
-};
+onMounted(async () => {
+  accountId.value = route.params.accountId;
+  await actions.accountGetter(accountId.value);
+  console.log('llamdo a la la info cuenta');
+});
 </script>
 
-<style scoped>
-.v-data-table-server {
-  border-radius: 8px;
-  overflow: hidden;
-}
-</style>
+<style scoped></style>

@@ -31,7 +31,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { normalizeDate } from '../../helpers/utils.js';
+import { extractTime } from '../../helpers/utils.js';
 import { Line } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -69,8 +69,10 @@ const status = (itemStatus) => {
 const chartData = computed(() => {
   return {
     labels: props.systemParameter.values.map((item) => {
-      const date = new Date(item.createdAt);
-      return normalizeDate(date);
+      return (
+        extractTime(item.createdAt, 'America/La_Paz', 'short2').date +
+        extractTime(item.createdAt, 'America/La_Paz', 'short2').hour
+      );
     }),
     datasets: [
       {

@@ -10,17 +10,25 @@ export const useAccountsStore = defineStore('accounts', () => {
 
   //Getters
   const getAccounts = computed(() => accounts.value);
-
+  const getAccount = (id) => {
+    const index = accounts.value.findIndex((a) => a._id === id);
+    if (index !== -1) {
+      return accounts.value[index];
+    } else {
+      return {};
+    }
+  };
   // Actions
   const setAccounts = (data) => {
     accounts.value = data || [];
   };
   const setAccount = (id, options) => {
-    const index = accounts.value.findIndex((s) => s._id === id);
+    const index = accounts.value.findIndex((a) => a._id === id);
     if (index !== -1) {
       accounts.value[index] = deepMerge(toRaw(accounts.value[index]), options);
     } else {
-      console.error('It was intented to update a document!!!');
+      accounts.value.push(options);
+      console.log('Se insertó un nuevo documento en el accountStore!!!');
     }
   };
   const resetAccounts = () => {
@@ -30,6 +38,7 @@ export const useAccountsStore = defineStore('accounts', () => {
   return {
     //Getters
     getAccounts,
+    getAccount,
     //Actions
     setAccounts,
     setAccount,

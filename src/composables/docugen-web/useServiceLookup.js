@@ -1,34 +1,34 @@
-import { ref, computed } from 'vue';
 import { AdministrationService } from '../../services/docugen-web/AdministrationService.js';
+import { ref, computed } from 'vue';
+import { useServiceLookupsStore } from '../../stores/docugen-web/serviceLookupsStore.js';
 import { useNotificationStore } from '../../stores/notificationStore.js';
-import { useAccountsStore } from '../../stores/docugen-web/accountsStore.js';
 
-export const useAccount = () => {
+export const useServiceLookup = () => {
   // Notification setttings
   const notificationStore = useNotificationStore();
   const message = ref(null);
   const code = ref(null);
+  // Default settings
+  const serviceLookupsStore = useServiceLookupsStore();
+  const serviceLookupId = ref('');
+  const serviceLookup = computed(() => serviceLookupsStore.getServiceLookup(serviceLookupId.value));
   //  Request settings
-  const accountsStore = useAccountsStore();
-  const accountId = ref('');
-  const account = computed(() => accountsStore.getAccount(accountId.value));
-  // Petition settings
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    accountSetter: async (id, payload) => {
+    serviceLookupSetter: async (id, payload) => {
       try {
         loading.value = true;
-        accountId.value = id;
-        const response = await AdministrationService.configAccount(id, payload);
-        accountsStore.setAccount(id, response.data.data.account);
+        serviceLookupId.value = id;
+        const response = await AdministrationService.configServiceLookup(id, payload);
+        serviceLookupsStore.setServiceLookup(id, response.data.data.serviceLookup);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         console.error(err);
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in accountSetter';
+          err.response?.data?.message || err.response.statusText || 'Error in serviceLookupSetter';
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
@@ -41,19 +41,19 @@ export const useAccount = () => {
         loading.value = false;
       }
     },
-    accountGetter: async (id) => {
+    serviceLookupGetter: async (id) => {
       try {
         loading.value = true;
-        accountId.value = id;
-        const response = await AdministrationService.monitorAccount(id);
-        accountsStore.setAccount(id, response.data.data.account);
+        serviceLookupId.value = id;
+        const response = await AdministrationService.monitorServiceLookup(id);
+        serviceLookupsStore.setServiceLookup(id, response.data.data.serviceLookup);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success;
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         console.error(err);
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in accountGetter';
+          err.response?.data?.message || err.response.statusText || 'Error in serviceLookupGetter';
         success.value = err.response?.data?.success;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
@@ -68,5 +68,5 @@ export const useAccount = () => {
     },
   };
 
-  return { account, actions, loading, success, message, code };
+  return { serviceLookup, actions, loading, success, message, code };
 };

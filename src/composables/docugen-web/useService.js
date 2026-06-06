@@ -10,14 +10,16 @@ export const useService = () => {
   const code = ref(null);
   // Default settings
   const servicesStore = useServicesStore();
+  const serviceId = ref('');
+  const service = computed(() => servicesStore.getService(serviceId.value));
   //  Request settings
-  const service = computed(() => servicesStore.getServices);
   const loading = ref(false);
   const success = ref(null);
   const actions = {
     serviceSetter: async (id, payload) => {
       try {
         loading.value = true;
+        serviceId.value = id;
         const response = await AdministrationService.configService(id, payload);
         servicesStore.setService(id, response.data.data.service);
         message.value = response?.data?.message || response.statusText;

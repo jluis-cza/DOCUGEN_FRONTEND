@@ -1,4 +1,3 @@
-<!-- frontend/src/views/SystemParametersView.vue -->
 <template>
   <v-container fluid>
     <template v-if="!loading">
@@ -49,7 +48,7 @@ const breadcrumbs = computed(() => [
 ]);
 
 onMounted(async () => {
-  const systemParameterId = route.params.id;
+  const systemParameterId = route.params.systemParameterId;
   await actions.systemParameterGetter(systemParameterId);
 });
 </script>

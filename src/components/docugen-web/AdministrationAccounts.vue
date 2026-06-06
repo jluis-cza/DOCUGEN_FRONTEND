@@ -1,8 +1,13 @@
 <template>
-  <v-container fluid>
+  <v-container
+    fluid
+    v-if="!isItemDetailActive && !isAccountSessionsInfoActive && !isAccountServicesInfoActive"
+  >
+    <!-- title -->
     <div class="text-left">
       <h3>Cuentas</h3>
     </div>
+    <!-- search bar -->
     <div>
       <v-card class="d-flex my-4 pa-2">
         <v-text-field
@@ -27,6 +32,7 @@
         </v-btn>
       </v-card>
     </div>
+    <!-- table -->
     <div class="my-4">
       <v-card>
         <v-data-table-server
@@ -45,32 +51,44 @@
             }}</v-chip>
           </template>
           <template #[`item.actions`]="{ item }">
-            <v-switch
-              :model-value="item.status === 'active'"
-              color="primary"
-              :label="
-                item.status === 'active'
-                  ? 'Suspender cuenta'
-                  : item.status === 'suspended'
-                    ? 'Activar cuenta'
-                    : ''
-              "
-              inset
-              density="compact"
-              hide-details
-              :disabled="switchingItemId === item._id || item.status === 'inactive'"
-              @update:modelValue="
-                (value) => {
-                  onSwitchStatus(value, item);
-                }
-              "
-            ></v-switch>
+            <div class="d-flex justify-space-between align-center">
+              <v-switch
+                :model-value="item.status === 'active'"
+                color="primary"
+                :label="
+                  item.status === 'active'
+                    ? 'Suspender cuenta'
+                    : item.status === 'suspended'
+                      ? 'Activar cuenta'
+                      : ''
+                "
+                inset
+                density="compact"
+                hide-details
+                :disabled="
+                  switchingItemId === item._id ||
+                  (item.status !== 'active' && item.status !== 'suspended')
+                "
+                @update:modelValue="
+                  (value) => {
+                    onSwitchStatus(value, item);
+                  }
+                "
+              ></v-switch>
+              <v-btn @click="viewItemDetail(item._id)" class="bg-info" size="small" variant="tonal">
+                <template #prepend>
+                  <v-icon icon="mdi-eye"></v-icon>
+                </template>
+                Ver
+              </v-btn>
+            </div>
           </template>
         </v-data-table-server>
       </v-card>
     </div>
+    <!-- alert notification -->
     <div>
-      <v-card v-if="!(account_success ?? true)">
+      <v-card v-if="!(accounts_success ?? true)">
         <v-alert
           type="error"
           variant="tonal"
@@ -84,12 +102,14 @@
         </v-alert>
       </v-card>
     </div>
+    <DialogBox />
   </v-container>
-  <DialogBox />
+  <RouterView />
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import DialogBox from '../DialogBox.vue';
 import { useTablesStore } from '../../stores/tablesStore.js';
 import { useAccounts } from '../../composables/docugen-web/useAccounts.js';
@@ -97,6 +117,15 @@ import { useAccount } from '../../composables/docugen-web/useAccount.js';
 import { useDialogBoxStore } from '../../stores/dialogBoxStore.js';
 import { TABLES } from '../../constants/tables.js';
 
+const router = useRouter();
+const route = useRoute();
+const isItemDetailActive = computed(() => (route.name === 'account-detail' ? true : false));
+const isAccountSessionsInfoActive = computed(() => (route.name === 'sessions' ? true : false));
+const isAccountServicesInfoActive = computed(() =>
+  route.name === 'account-services' ? true : false
+);
+
+// Table headers
 const headers = [
   {
     title: 'Nombre de usuario',
@@ -144,6 +173,7 @@ const headers = [
     },
   },
 ];
+
 const status = (itemStatus) => {
   return {
     color:
@@ -179,7 +209,7 @@ const {
   accounts,
   actions: accounts_actions,
   loading: accounts_loading,
-  success: account_success,
+  success: accounts_success,
   message: accounts_message,
   code: accounts_code,
 } = useAccounts();
@@ -234,6 +264,11 @@ const onSwitchStatus = async (value, item) => {
   } finally {
     switchingItemId.value = null;
   }
+};
+
+const viewItemDetail = (id) => {
+  if (!id) throw new Error('There is no item id');
+  router.push(`/dashboard/accounts/${id}`);
 };
 </script>
 

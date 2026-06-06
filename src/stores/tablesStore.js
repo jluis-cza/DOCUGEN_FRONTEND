@@ -48,8 +48,10 @@ export const useTablesStore = defineStore('tables', () => {
 });
 
 // id
-//  1: systemParameters (will be static)
+//  1: systemParameters (static)
 //  2: accounts (dinamic)
-//  3: services (static)
+//  3: serviceLookups (static)
+//  4: sessions (dinamic)
+//  5: service (dinamic)
 // Structure:
 //  {id:0, pagination:{},sort:{}, search:''}
