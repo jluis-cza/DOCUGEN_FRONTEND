@@ -68,7 +68,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessions } from '../../composables/docugen-web/useSessions.js';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
-import { useTablesStore } from '../../stores/tablesStore.js';
+import { useTablesStore } from '../../stores/utils/tablesStore.js';
 import { extractTime } from '../../helpers/utils.js';
 
 const route = useRoute();

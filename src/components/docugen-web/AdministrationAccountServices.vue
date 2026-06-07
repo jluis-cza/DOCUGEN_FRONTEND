@@ -99,8 +99,8 @@ import DialogBox from '../DialogBox.vue';
 import { useServices } from '../../composables/docugen-web/useServices.js';
 import { useService } from '../../composables/docugen-web/useService.js';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
-import { useTablesStore } from '../../stores/tablesStore.js';
-import { useDialogBoxStore } from '../../stores/dialogBoxStore.js';
+import { useTablesStore } from '../../stores/utils/tablesStore.js';
+import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
 import { extractTime } from '../../helpers/utils.js';
 
 const route = useRoute();

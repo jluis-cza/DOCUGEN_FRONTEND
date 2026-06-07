@@ -1,7 +1,7 @@
 import { AdministrationService } from '../../services/docugen-web/AdministrationService.js';
 import { ref, computed } from 'vue';
 import { useSystemParametersStore } from '../../stores/docugen-web/systemParametersStore.js';
-import { useTablesStore } from '../../stores/tablesStore.js';
+import { useTablesStore } from '../../stores/utils/tablesStore.js';
 
 export const useSystemParameters = () => {
   // Notification settings

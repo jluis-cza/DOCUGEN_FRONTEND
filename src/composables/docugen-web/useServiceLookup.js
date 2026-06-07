@@ -1,7 +1,7 @@
 import { AdministrationService } from '../../services/docugen-web/AdministrationService.js';
 import { ref, computed } from 'vue';
 import { useServiceLookupsStore } from '../../stores/docugen-web/serviceLookupsStore.js';
-import { useNotificationStore } from '../../stores/notificationStore.js';
+import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 
 export const useServiceLookup = () => {
   // Notification setttings

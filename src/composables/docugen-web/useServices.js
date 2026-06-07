@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import { AdministrationService } from '../../services/docugen-web/AdministrationService.js';
-import { useTablesStore } from '../../stores/tablesStore.js';
+import { useTablesStore } from '../../stores/utils/tablesStore.js';
 import { useServicesStore } from '../../stores/docugen-web/servicesStore.js';
 
 export const useServices = () => {

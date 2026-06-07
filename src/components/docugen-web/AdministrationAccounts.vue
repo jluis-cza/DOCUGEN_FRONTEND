@@ -111,10 +111,10 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import DialogBox from '../DialogBox.vue';
-import { useTablesStore } from '../../stores/tablesStore.js';
+import { useTablesStore } from '../../stores/utils/tablesStore.js';
 import { useAccounts } from '../../composables/docugen-web/useAccounts.js';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
-import { useDialogBoxStore } from '../../stores/dialogBoxStore.js';
+import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
 import { TABLES } from '../../constants/tables.js';
 
 const router = useRouter();

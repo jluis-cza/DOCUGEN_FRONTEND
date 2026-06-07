@@ -73,7 +73,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useSystemParameters } from '../../composables/docugen-web/useSystemParameters.js';
 import { useSystemParameter } from '../../composables/docugen-web/useSystemParameter.js';
-import { useTablesStore } from '../../stores/tablesStore.js';
+import { useTablesStore } from '../../stores/utils/tablesStore.js';
 
 const router = useRouter();
 const route = useRoute();

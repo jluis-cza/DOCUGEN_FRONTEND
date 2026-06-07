@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { TABLES } from '../constants/tables.js';
-import { deepMerge } from '../helpers/utils.js';
+import { TABLES } from '../../constants/tables.js';
+import { deepMerge } from '../../helpers/utils.js';
 import { toRaw } from 'vue';
 
 export const useTablesStore = defineStore('tables', () => {

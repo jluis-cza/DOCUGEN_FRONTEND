@@ -1,6 +1,6 @@
 import { AdmissionService } from '../../services/docugen-web/AdmissionService.js';
 import { ref, computed } from 'vue';
-import { useNotificationStore } from '../../stores/notificationStore.js';
+import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
 import { useMySessionStore } from '../../stores/docugen-web/mySessionStore.js';

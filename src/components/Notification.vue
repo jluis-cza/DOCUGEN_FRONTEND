@@ -23,7 +23,7 @@
 </template>
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
-import { useNotificationStore } from '../stores/notificationStore.js';
+import { useNotificationStore } from '../stores/utils/notificationStore.js';
 
 const notificationStore = useNotificationStore();
 const onReception = computed(() => notificationStore.isNotificationReceived);

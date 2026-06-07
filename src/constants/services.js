@@ -50,7 +50,6 @@ export const SERVICES = {
       utils: {
         default: '/',
         health: '/health',
-        time: '/time',
       },
     },
     docugen_app: {},
@@ -88,7 +87,8 @@ export const SERVICES = {
         },
       },
     },
-    general: {
+    utils: {
+      // Frontend resources
       notification: {
         message: '',
         code: '',
@@ -107,6 +107,8 @@ export const SERVICES = {
           actions: [],
         },
       },
+      // Backend resourses
+      time: '', //ISO UTC time
     },
   },
   params: {

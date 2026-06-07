@@ -24,7 +24,7 @@
 </template>
 <script setup>
 import { ref, computed, watch, toRaw } from 'vue';
-import { useDialogBoxStore } from '../stores/dialogBoxStore.js';
+import { useDialogBoxStore } from '../stores/utils/dialogBoxStore.js';
 
 const dialogBoxStore = useDialogBoxStore();
 const onReception = computed(() => dialogBoxStore.getDialogBox.metadata.isRequested);

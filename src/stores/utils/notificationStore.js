@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { SERVICES } from '../constants/services.js';
+import { SERVICES } from '../../constants/services.js';
 
-const notificationDefaultData = { ...SERVICES.payload.general.notification };
+const notificationDefaultData = { ...SERVICES.payload.utils.notification };
 
 export const useNotificationStore = defineStore('notification', () => {
   // States

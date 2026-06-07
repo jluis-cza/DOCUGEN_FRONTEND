@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { SERVICES } from '../constants/services.js';
-import { deepMerge } from '../helpers/utils.js';
+import { SERVICES } from '../../constants/services.js';
+import { deepMerge } from '../../helpers/utils.js';
 import { toRaw } from 'vue';
 
-const dialogBoxDefaultData = { ...SERVICES.payload.general.dialog_box };
+const dialogBoxDefaultData = { ...SERVICES.payload.utils.dialog_box };
 
 export const useDialogBoxStore = defineStore('dialogBox', () => {
   // States

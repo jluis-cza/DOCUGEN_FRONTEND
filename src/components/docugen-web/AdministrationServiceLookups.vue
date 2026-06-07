@@ -110,8 +110,8 @@ import { useRoute, useRouter } from 'vue-router';
 import DialogBox from '../DialogBox.vue';
 import { useServiceLookups } from '../../composables/docugen-web/useServiceLookups.js';
 import { useServiceLookup } from '../../composables/docugen-web/useServiceLookup.js';
-import { useTablesStore } from '../../stores/tablesStore.js';
-import { useDialogBoxStore } from '../../stores/dialogBoxStore.js';
+import { useTablesStore } from '../../stores/utils/tablesStore.js';
+import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
 
 const router = useRouter();
 const route = useRoute();

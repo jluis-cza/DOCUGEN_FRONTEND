@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { AdmissionService } from '../../services/docugen-web/AdmissionService.js';
-import { useNotificationStore } from '../../stores/notificationStore.js';
+import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 
 export const useMyAccount = () => {
   // Notification setttings
