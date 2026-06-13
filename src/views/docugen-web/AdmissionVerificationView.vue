@@ -10,10 +10,12 @@
       <p>Mensaje del error: {{ message }}</p>
       <p>Código del error: {{ code }}</p>
     </div>
+    <!-- Home link -->
+    <RouterLink to="/">Ir al inicio</RouterLink>
   </div>
 </template>
 <script setup>
-import { useRoute } from 'vue-router';
+import { RouterLink, useRoute } from 'vue-router';
 import { onMounted, computed } from 'vue';
 import { useEmail } from '../../composables/docugen-web/useEmail.js';
 

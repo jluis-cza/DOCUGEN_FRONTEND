@@ -16,7 +16,7 @@ export const useTimeStore = defineStore('time', () => {
   // Actions
   const setTime = (data) => {
     time.value = data || {};
-    isTimeReceived.value = true;
+    timeReceived.value = true;
   };
   const resetTime = () => {
     time.value = timeDefaultData;
