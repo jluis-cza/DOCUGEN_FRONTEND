@@ -1,31 +1,32 @@
 import { computed, ref } from 'vue';
 import { UtilsService } from '../../services/UtilsService.js';
-import { useTimeStore } from '../../stores/utils/timeStore.js';
+import { useActivitiesStore } from '../../stores/utils/activitiesStore.js';
 
-export const useTime = () => {
+export const useActivities = () => {
   // Notification setttings
   const message = ref(null);
   const code = ref(null);
   // Store settings
-  const timeStore = useTimeStore();
-  const time = computed(() => timeStore.getTime);
+  const activitiesStore = useActivitiesStore();
+  const activities = computed(() => activitiesStore.getAllActivities);
   // Request settings
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    serverTimeGetter: async () => {
+    activitiesGetter: async (params) => {
       try {
         loading.value = true;
-        const response = await UtilsService.getServerTime();
-        timeStore.setTime(response.data.data.time);
-        success.value = response?.data?.success || false;
+        const response = await UtilsService.getActivities(params);
+        activitiesStore.resetActivities;
+        activitiesStore.setActivities(response.data.data.activities);
         message.value = response?.data?.message || response.statusText;
+        success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         console.error(err);
         success.value = err.response?.data?.success || false;
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in serverTimeGetter';
+          err.response?.data?.message || err.response.statusText || 'Error in activitiesGetter';
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
         loading.value = false;
@@ -33,5 +34,5 @@ export const useTime = () => {
     },
   };
 
-  return { time, actions, loading, success, message, code };
+  return { activities, actions, loading, success, message, code };
 };

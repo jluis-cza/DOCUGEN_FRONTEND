@@ -47,21 +47,23 @@ export const SERVICES = {
           },
         },
       },
-      utils: {
-        default: '/',
-        health: '/health',
-      },
     },
     docugen_app: {},
     utils: {
+      base: '/utils',
       time: '/time',
+      routes_info: '/info',
       notifications: {
         base: '/notifications',
         id: '/:notification_id',
       },
       activities: {
         base: '/activities',
-        id: '/:activity',
+        id: '/:activity_id',
+      },
+      processes: {
+        base: '/processes',
+        id: '/:process_id',
       },
     },
   },

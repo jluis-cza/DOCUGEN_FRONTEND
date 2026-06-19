@@ -1,4 +1,4 @@
-// This store stores the accounts FETCHED from the database
+// This store stores the sessions FETCHED from the database
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { deepMerge } from '../../helpers/utils';
