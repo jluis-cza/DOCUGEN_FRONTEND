@@ -1,34 +1,33 @@
-import { AdministrationService } from '../../services/docugen-web/AdministrationService.js';
 import { ref, computed } from 'vue';
-import { useServiceLookupsStore } from '../../stores/docugen-web/serviceLookupsStore.js';
+import { ManagementService } from '../../services/docugen-web/ManagementService.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
+import { useMyProfileStore } from '../../stores/docugen-web/myProfileStore.js';
+import { useMyUsernameStore } from '../../stores/docugen-web/myUsernameStore.js';
 
-export const useServiceLookup = () => {
+export const useMyProfile = () => {
   // Notification setttings
   const notificationStore = useNotificationStore();
   const message = ref(null);
   const code = ref(null);
-  // Default settings
-  const serviceLookupsStore = useServiceLookupsStore();
-  const serviceLookupId = ref('');
-  const serviceLookup = computed(() => serviceLookupsStore.getServiceLookup(serviceLookupId.value));
   //  Request settings
+  const myProfileStore = useMyProfileStore();
+  const myProfile = computed(() => myProfileStore.getMyProfile);
+  // Petition settings
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    serviceLookupSetter: async (id, payload) => {
+    myProfileGetter: async (id) => {
       try {
         loading.value = true;
-        serviceLookupId.value = id;
-        const response = await AdministrationService.configServiceLookup(id, payload);
-        serviceLookupsStore.setServiceLookup(id, response.data.data.serviceLookup);
+        const response = await ManagementService.getProfile(id);
+        myProfileStore.setMyProfile(response.data.data.profile);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         console.error(err);
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in serviceLookupSetter';
+          err.response?.data?.message || err.response.statusText || 'Error in myProfileGetter';
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
@@ -41,19 +40,20 @@ export const useServiceLookup = () => {
         notificationStore.setNotification(data);
       }
     },
-    serviceLookupGetter: async (id) => {
+    myProfileSetter: async (id, payload) => {
       try {
+        const myUsernameStore = useMyUsernameStore()
         loading.value = true;
-        serviceLookupId.value = id;
-        const response = await AdministrationService.monitorServiceLookup(id);
-        serviceLookupsStore.setServiceLookup(id, response.data.data.serviceLookup);
+        const response = await ManagementService.setProfile(id, payload);
+        myProfileStore.setMyProfile(response.data.data.profile);
+        myUsernameStore.setMyUsername(response.data.data.profile.username)
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success;
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         console.error(err);
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in serviceLookupGetter';
+          err.response?.data?.message || err.response.statusText || 'Error in myProfileSetter';
         success.value = err.response?.data?.success;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
@@ -68,5 +68,5 @@ export const useServiceLookup = () => {
     },
   };
 
-  return { serviceLookup, actions, loading, success, message, code };
+  return { myProfile, actions, loading, success, message, code };
 };

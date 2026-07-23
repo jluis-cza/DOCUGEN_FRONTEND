@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { deepMerge } from '../../helpers/utils';
+import { deepMerge } from '../../helpers/utils.js';
 import { toRaw } from 'vue';
 
 export const useServicesStore = defineStore('services', () => {

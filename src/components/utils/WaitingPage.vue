@@ -1,4 +1,4 @@
-<template>account sessions view</template>
+<template></template>
 
 <script setup></script>
 

@@ -44,7 +44,31 @@ export const useSystemParameters = () => {
         loading.value = false;
       }
     },
+    systemParametersOverviewer: async () => {
+      try {
+        loading.value = true;
+        const response = await AdministrationService.overviewSystemParameters();
+        systemParametersStore.resetSystemParametersOverview;
+        systemParametersStore.setSystemParametersOverview(
+          response.data.data.systemParametersOverview
+        );
+        message.value = response?.data?.message || response.statusText;
+        success.value = response?.data?.success;
+        code.value = response?.data?.code || 'EXXX';
+      } catch (err) {
+        console.error(err);
+        message.value =
+          err.response?.data?.message ||
+          err.response.statusText ||
+          'Error in systemParametersOverviewer';
+        success.value = err.response?.data?.success;
+        code.value = err.response?.data?.code || 'EXXX';
+      } finally {
+        loading.value = false;
+      }
+    },
   };
+
   return {
     systemParameters,
     actions,

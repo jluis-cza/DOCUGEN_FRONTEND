@@ -11,6 +11,8 @@ export const SERVICES = {
     },
   },
   path: {
+    base: '/api',
+    version: '/v1',
     docugen_web: {
       admission: {
         base: '/adm',
@@ -19,12 +21,15 @@ export const SERVICES = {
         close_session: '/logout',
         renew_access: '/refresh',
         verify_email: '/verify-email',
+        verify_password: '/verify-pass',
+        check_username: '/check-user',
+        get_username: '/get-user',
       },
       administration: {
-        home: '/home',
         base: '/admin',
         monitor: '/monitor',
         configuration: '/config',
+        review: '/rev',
         lookup: '/categories',
         resource: {
           system_parameters: {
@@ -47,24 +52,35 @@ export const SERVICES = {
           },
         },
       },
+      management: {
+        base: '/manager',
+        monitor: '/monitor',
+        configuration: '/config', //Rarely used
+        resource: {
+          activities: {
+            base: '/activities',
+            id: '/:activity_id',
+          },
+          processes: {
+            base: '/processes',
+            id: '/:process_id',
+          },
+          notifications: {
+            base: '/notifications',
+            id: '/:notification_id',
+          },
+          profiles: {
+            base: '/profiles',
+            id: '/:profile_id',
+          },
+        },
+      },
     },
     docugen_app: {},
     utils: {
       base: '/utils',
-      time: '/time',
       routes_info: '/info',
-      notifications: {
-        base: '/notifications',
-        id: '/:notification_id',
-      },
-      activities: {
-        base: '/activities',
-        id: '/:activity_id',
-      },
-      processes: {
-        base: '/processes',
-        id: '/:process_id',
-      },
+      time: '/time',
     },
   },
   payload: {
@@ -98,14 +114,13 @@ export const SERVICES = {
       },
       dialog_box: {
         metadata: {
-          isResolved: null,
           isRequested: false,
-          isShowing: false,
         },
         data: {
           title: '',
           icon: '',
           text: '',
+          parameters:[],
           actions: [],
         },
       },

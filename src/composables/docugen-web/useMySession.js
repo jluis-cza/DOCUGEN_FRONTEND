@@ -35,16 +35,13 @@ export const useMySession = () => {
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
+        loading.value = false;
         const data = {
           message: message.value,
           code: code.value,
           mode: 'automatic',
         };
         notificationStore.setNotification(data);
-        //         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-        // await sleep(2000); //2 seconds
-        // notification.resetNotification();
-        loading.value = false;
       }
     },
     mySessionCloser: async (payload) => {
@@ -63,13 +60,13 @@ export const useMySession = () => {
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
+        loading.value = false;
         const data = {
           message: message.value,
           code: code.value,
           mode: 'automatic',
         };
         notificationStore.setNotification(data);
-        loading.value = false;
       }
     },
   };

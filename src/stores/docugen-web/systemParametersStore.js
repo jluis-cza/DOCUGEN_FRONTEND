@@ -6,6 +6,7 @@ import { toRaw } from 'vue';
 export const useSystemParametersStore = defineStore('systemParameters', () => {
   // States
   const systemParameters = ref([]);
+  const systemParametersOverview = ref({});
 
   //Getters
   const getSystemParameters = computed(() => systemParameters.value);
@@ -17,6 +18,8 @@ export const useSystemParametersStore = defineStore('systemParameters', () => {
       return {};
     }
   };
+  const getSystemParametersOverview = computed(() => systemParametersOverview.value);
+
   // Actions
   const setSystemParameters = (data) => {
     systemParameters.value = data || [];
@@ -30,17 +33,26 @@ export const useSystemParametersStore = defineStore('systemParameters', () => {
       console.log('Se insertó un nuevo documento en el store de parametros del sistema!!!');
     }
   };
+  const setSystemParametersOverview = (data) => {
+    systemParametersOverview.value = data || {};
+  };
   const resetSystemParameters = () => {
     systemParameters.value = [];
+  };
+  const resetSystemParametersOverview = () => {
+    systemParametersOverview.value = {};
   };
 
   return {
     //Getters
     getSystemParameters,
     getSystemParameter,
+    getSystemParametersOverview,
     //Actions
     setSystemParameters,
     setSystemParameter,
+    setSystemParametersOverview,
     resetSystemParameters,
+    resetSystemParametersOverview,
   };
 });

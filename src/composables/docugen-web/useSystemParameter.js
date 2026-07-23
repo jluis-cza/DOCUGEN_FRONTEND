@@ -36,13 +36,13 @@ export const useSystemParameter = () => {
         success.value = err.response?.data?.success;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
+        loading.value = false;
         const data = {
           message: message.value,
           code: code.value,
           mode: 'automatic',
         };
         notificationStore.setNotification(data);
-        loading.value = false;
       }
     },
     systemParameterGetter: async (id) => {
@@ -63,13 +63,13 @@ export const useSystemParameter = () => {
         success.value = err.response?.data?.success;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
+        loading.value = false;
         const data = {
           message: message.value,
           code: code.value,
           mode: 'automatic',
         };
         notificationStore.setNotification(data);
-        loading.value = false;
       }
     },
   };

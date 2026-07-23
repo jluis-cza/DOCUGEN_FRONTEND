@@ -1,13 +1,13 @@
 // This store stores the accounts FETCHED from the database
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { deepMerge } from '../../helpers/utils';
+import { deepMerge } from '../../helpers/utils.js';
 import { toRaw } from 'vue';
 
 export const useAccountsStore = defineStore('accounts', () => {
   // States
   const accounts = ref([]);
-
+  const accountsOverview = ref({});
   //Getters
   const getAccounts = computed(() => accounts.value);
   const getAccount = (id) => {
@@ -18,6 +18,7 @@ export const useAccountsStore = defineStore('accounts', () => {
       return {};
     }
   };
+  const getAccountsOverview = computed(() => accountsOverview.value);
   // Actions
   const setAccounts = (data) => {
     accounts.value = data || [];
@@ -31,17 +32,25 @@ export const useAccountsStore = defineStore('accounts', () => {
       console.log('Se insertó un nuevo documento en el accountStore!!!');
     }
   };
+  const setAccountsOverview = (data) => {
+    accountsOverview.value = data || {};
+  };
   const resetAccounts = () => {
     accounts.value = [];
   };
-
+  const resetAccountsOverview = () => {
+    accountsOverview.value = {};
+  };
   return {
     //Getters
     getAccounts,
     getAccount,
+    getAccountsOverview,
     //Actions
     setAccounts,
     setAccount,
+    setAccountsOverview,
     resetAccounts,
+    resetAccountsOverview,
   };
 });

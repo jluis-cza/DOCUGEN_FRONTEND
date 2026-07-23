@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { SERVICES } from '../constants/services.js';
 import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
-import { accessRenewer, accessRemover } from '../helpers/docugen-web/accessHelper.js';
+import { accessRenewer, accessRemover } from '../helpers/docugen-web/admissionAccessHelper.js';
 
 const ROOT_API_URL = SERVICES.base_url.api;
 const JSON_CONTENT_TYPE = SERVICES.content.type.json;

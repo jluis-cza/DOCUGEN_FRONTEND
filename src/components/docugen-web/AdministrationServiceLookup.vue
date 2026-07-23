@@ -106,7 +106,6 @@ const cardInfo = computed(() => {
 });
 
 onMounted(async () => {
-  console.log('llamado a la la info de servicio lookup');
   serviceLookupId.value = route.params.serviceId;
   await actions.serviceLookupGetter(serviceLookupId.value);
 });

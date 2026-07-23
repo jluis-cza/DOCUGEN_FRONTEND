@@ -1,25 +1,5 @@
 <template>
   <v-container fluid v-if="!isItemDetailActive">
-    <!-- Link -->
-    <!-- <div class="text-right"> -->
-    <!-- <span
-      ><v-icon
-          v-if="serviceSwitcherPromt === 'general'"
-          :icon="serviceSwitcher.icon.particular"
-        ></v-icon
-      ></span> -->
-    <!-- <span
-        class="text-info cursor-pointer text-decoration-underline"
-        @click="serviceSwitcher.transporter[serviceSwitcherPromt]"
-        >{{ serviceSwitcher.text[serviceSwitcherPromt] }}</span
-      > -->
-    <!-- <span
-      ><v-icon
-      v-if="serviceSwitcherPromt === 'particular'"
-      :icon="serviceSwitcher.icon.general"
-      ></v-icon
-      ></span> -->
-    <!-- </div> -->
     <!-- Title -->
     <div class="text-left">
       <h3>Servicios</h3>
@@ -92,14 +72,6 @@
         </v-alert>
       </v-card>
     </div>
-    <DialogBox />
-    <!-- </template> -->
-    <!-- Particular -->
-    <!-- <template v-else> -->
-    <!-- Description -->
-    <!-- <p class="text-left my-4">Configuración de servicios por cuenta.</p>
-      <RouterView />
-    </template> -->
   </v-container>
   <RouterView />
 </template>
@@ -107,11 +79,11 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import DialogBox from '../DialogBox.vue';
 import { useServiceLookups } from '../../composables/docugen-web/useServiceLookups.js';
 import { useServiceLookup } from '../../composables/docugen-web/useServiceLookup.js';
 import { useTablesStore } from '../../stores/utils/tablesStore.js';
 import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
+import { DIALOGS } from '../../constants/dialogs.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -153,32 +125,6 @@ const tablesStore = useTablesStore();
 const tableId = 3;
 const { serviceLookups, actions, loading, success, message, code } = useServiceLookups();
 const { serviceLookup, actions: serviceLookup_actions } = useServiceLookup();
-// const route = useRoute();
-// const router = useRouter();
-// const isServicesAccountsActive = computed(() =>
-//   route.name === 'services-accounts' ? true : false
-// );
-// const serviceSwitcherPromt = computed(() =>
-//   isServicesAccountsActive.value ? 'general' : 'particular'
-// );
-// const serviceSwitcher = {
-//   transporter: {
-//     general: () => {
-//       router.push('/dashboard/categories/services');
-//     },
-//     particular: () => {
-//       router.push('/dashboard/services/accounts');
-//     },
-//   },
-//   text: {
-//     general: 'Ir a la configuración global de servicios',
-//     particular: 'Ir a la configuración de servicios por cuenta',
-//   },
-//   icon: {
-//     general: 'mdi-arrow-right',
-//     particular: 'mdi-arrow-left',
-//   },
-// };
 
 const status = (itemStatus) => {
   return {
@@ -198,18 +144,17 @@ const onSwitchStatus = async (value, item) => {
     switchingItemId.value = item._id;
     const status = value ? 'running' : 'stopped';
     if (status === 'stopped') {
-      const dialogBoxData = {
-        title: 'Desactivación del servicio',
-        icon: 'mdi-power-off',
-        text: `¿Está seguro de poner fuera de servicio la ${item.name} de manera global?`,
-        actions: [
-          { name: 'Aceptar', key: 'y' },
-          { name: 'Cancelar', key: 'n' },
-        ],
+      let dialogBoxData = DIALOGS.docugen_web.administration.general_service_suspension;
+      dialogBoxData = {
+        ...dialogBoxData,
+        text: dialogBoxData.text.replace('<service>', item.name),
       };
       item.status = null; // waiting entry
-      const selectedActionKey = await dialogBoxStore.openDialogBox(dialogBoxData);
-      dialogBoxStore.resetDialogBox();
+      dialogBoxStore.setDialogBox({ data: dialogBoxData });
+      dialogBoxStore.openDialogBox();
+      const response = await dialogBoxStore.requestDialogBoxData();
+      const selectedActionKey = response.key;
+      dialogBoxStore.resolveDialogBoxProcedure(true);
       if (selectedActionKey === 'n') {
         item.status = 'running';
         switchingItemId.value = null;

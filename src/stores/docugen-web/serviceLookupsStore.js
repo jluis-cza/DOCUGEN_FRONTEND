@@ -6,13 +6,13 @@ import { toRaw } from 'vue';
 export const useServiceLookupsStore = defineStore('serviceLookups', () => {
   // States
   const serviceLookups = ref([]);
-
+  const serviceLookupsOverview = ref({});
   //Getters
   const getServiceLookups = computed(() => serviceLookups.value);
   const getServiceLookup = (id) => {
     return serviceLookups.value.find((s) => s._id === id);
   };
-
+  const getServiceLookupsOverview = computed(() => serviceLookupsOverview.value);
   // Actions
   const setServiceLookups = (data) => {
     serviceLookups.value = data || [];
@@ -26,17 +26,26 @@ export const useServiceLookupsStore = defineStore('serviceLookups', () => {
       console.log('A document was inserted in serviceLookups!');
     }
   };
+  const setServiceLookupsOverview = (data) => {
+    serviceLookupsOverview.value = data || {};
+  };
   const resetServiceLookups = () => {
     serviceLookups.value = [];
+  };
+  const resetServiceLookupsOverview = () => {
+    serviceLookupsOverview.value = {};
   };
 
   return {
     //Getters
     getServiceLookups,
     getServiceLookup,
+    getServiceLookupsOverview,
     //Actions
     setServiceLookups,
     setServiceLookup,
+    setServiceLookupsOverview,
     resetServiceLookups,
+    resetServiceLookupsOverview,
   };
 });

@@ -1,6 +1,6 @@
 import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
 import { useMyAccountStore } from '../stores/docugen-web/myAccountStore.js';
-import { accessRemover, accessRenewer } from '../helpers/docugen-web/accessHelper.js';
+import { accessRemover, accessRenewer } from '../helpers/docugen-web/admissionAccessHelper.js';
 
 const guard = (router) => {
   // Global guard
@@ -17,8 +17,7 @@ const guard = (router) => {
           await accessRenewer();
         } catch (error) {
           console.error('Error on renewing token.', error.message);
-          return accessRemover();
-          // return next('/login');
+          return accessRemover(); //It internally redirects to /login
         }
       }
       // Checking the user's role

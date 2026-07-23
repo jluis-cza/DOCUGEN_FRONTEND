@@ -55,7 +55,7 @@ import { RouterLink, useRouter } from 'vue-router';
 
 const router = useRouter();
 const getImageUrl = (name) => {
-  return new URL(`../assets/docugen-web/${name}`, import.meta.url).href;
+  return new URL(`../../assets/docugen-web/${name}`, import.meta.url).href;
 };
 const items = [
   { src: 'editor1.png', title: 'editor' },

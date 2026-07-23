@@ -1,4 +1,3 @@
-<!-- frontend/src/views/SystemParametersView.vue -->
 <template>
   <v-container fluid v-if="!isItemDetailActive">
     <!-- Title -->

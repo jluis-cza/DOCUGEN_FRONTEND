@@ -1,7 +1,7 @@
 // This store stores the sessions FETCHED from the database
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { deepMerge } from '../../helpers/utils';
+import { deepMerge } from '../../helpers/utils.js';
 import { toRaw } from 'vue';
 
 export const useSessionsStore = defineStore('sessions', () => {

@@ -1,24 +1,24 @@
 import { computed, ref } from 'vue';
-import { UtilsService } from '../../services/UtilsService.js';
-import { useActivitiesStore } from '../../stores/utils/activitiesStore.js';
+import { ManagementService } from '../../services/docugen-web/ManagementService.js';
+import { useProcessesStore } from '../../stores/docugen-web/processesStore.js';
 
-export const useActivities = () => {
+export const useProcesses = () => {
   // Notification setttings
   const message = ref(null);
   const code = ref(null);
   // Store settings
-  const activitiesStore = useActivitiesStore();
-  const activities = computed(() => activitiesStore.getAllActivities);
+  const processesStore = useProcessesStore();
+  const processes = computed(() => processesStore.getProcesses);
   // Request settings
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    activitiesGetter: async (params) => {
+    processesGetter: async (params) => {
       try {
         loading.value = true;
-        const response = await UtilsService.getActivities(params);
-        activitiesStore.resetActivities;
-        activitiesStore.setActivities(response.data.data.activities);
+        const response = await ManagementService.getProcesses(params);
+        processesStore.resetProcesses;
+        processesStore.setProcesses(response.data.data.processes);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
@@ -26,7 +26,7 @@ export const useActivities = () => {
         console.error(err);
         success.value = err.response?.data?.success || false;
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in activitiesGetter';
+          err.response?.data?.message || err.response.statusText || 'Error in processesGetter';
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
         loading.value = false;
@@ -34,5 +34,5 @@ export const useActivities = () => {
     },
   };
 
-  return { activities, actions, loading, success, message, code };
+  return { processes, actions, loading, success, message, code };
 };

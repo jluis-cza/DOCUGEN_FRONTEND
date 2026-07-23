@@ -1,26 +1,25 @@
-//This router configuration serves to both: Administration and Management subviews of the Dashboard view.
-
 import { USERS } from '../../constants/users.js';
 
 const ADMIN_ROLE = USERS.type.server.role.administrator;
 const DEV_ROLE = USERS.type.client.role.developer;
 
-export const dashboard = [
+export const administrationManagement = [
   {
     path: '/dashboard',
     name: 'dashboard',
     redirect: '/dashboard/home',
     meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
-    component: () => import('../../views/docugen-web/DashboardView.vue'),
+    component: () => import('../../views/docugen-web/AdministrationManagementDashboardView.vue'),
     children: [
-      // Home
+      // Dashboard - Home
       {
         path: 'home',
-        name: 'dashboard-home',
+        name: 'home',
         meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
-        component: () => import('../../components/docugen-web/DashboardHome.vue'),
+        component: () => import('../../components/docugen-web/AdministrationManagementHome.vue'),
       },
-      // Administration subroutes
+
+      // System Parameters
       {
         path: 'system',
         name: 'system',
@@ -35,6 +34,8 @@ export const dashboard = [
           },
         ],
       },
+
+      // Accounts
       {
         path: 'accounts',
         name: 'accounts',
@@ -53,15 +54,6 @@ export const dashboard = [
                 meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
                 component: () =>
                   import('../../components/docugen-web/AdministrationAccountSessions.vue'),
-                children: [
-                  {
-                    path: ':sessionId',
-                    name: 'session-detail',
-                    meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
-                    component: () =>
-                      import('../../components/docugen-web/AdministrationAccountSession.vue'),
-                  },
-                ],
               },
               {
                 path: 'services',
@@ -74,6 +66,8 @@ export const dashboard = [
           },
         ],
       },
+
+      // Services
       {
         path: 'services',
         name: 'service-lookups',
@@ -88,7 +82,16 @@ export const dashboard = [
           },
         ],
       },
-      // Management subroutes
+
+      // My Profile
+      {
+        path: 'my-profile',
+        name: 'my-profile',
+        meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
+        component: () => import('../../components/docugen-web/ManagementMyProfile.vue'),
+      },
+
+      // Templates
       {
         path: 'templates',
         name: 'templates',

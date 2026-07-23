@@ -2,6 +2,7 @@
   <v-app>
     <v-main>
       <RouterView />
+      <DialogBox />
       <Notification />
       <Overlay />
     </v-main>
@@ -9,8 +10,9 @@
 </template>
 
 <script setup>
-import Notification from './components/Notification.vue';
-import Overlay from './components/Overlay.vue';
+import Notification from './components/utils/Notification.vue';
+import DialogBox from './components/utils/DialogBox.vue';
+import Overlay from './components/utils/Overlay.vue';
 </script>
 
 <style scoped></style>

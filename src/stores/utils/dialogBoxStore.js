@@ -4,43 +4,59 @@ import { SERVICES } from '../../constants/services.js';
 import { deepMerge } from '../../helpers/utils.js';
 import { toRaw } from 'vue';
 
-const dialogBoxDefaultData = { ...SERVICES.payload.utils.dialog_box };
+// const dialogBoxDefaultData = { ...SERVICES.payload.utils.dialog_box };
+const getInitialData = () => JSON.parse(JSON.stringify(SERVICES.payload.utils.dialog_box));
 
 export const useDialogBoxStore = defineStore('dialogBox', () => {
   // States
-  const dialogBox = ref(JSON.parse(JSON.stringify(dialogBoxDefaultData)));
-  let _resolve = null;
+  // const dialogBox = ref(JSON.parse(JSON.stringify(dialogBoxDefaultData)));
+  const dialogBox = ref(getInitialData());
+  let _data = null;
+  let _procedure = null;
 
   //Getters
   const getDialogBox = computed(() => dialogBox.value);
+
   // Actions
   const setDialogBox = (options) => {
     dialogBox.value = deepMerge(toRaw(dialogBox.value), options || {});
   };
   const resetDialogBox = () => {
-    dialogBox.value = dialogBoxDefaultData;
-    _resolve = null;
+    dialogBox.value = getInitialData();
+    _data = null;
+    _procedure = null;
   };
-  const openDialogBox = (data) => {
+  const openDialogBox = () => {
     const dialogData = {
-      data,
       metadata: {
         isRequested: true,
-        isResolved: false,
       },
     };
     setDialogBox(dialogData);
+  };
+  const requestDialogBoxData = () => {
     return new Promise((resolve) => {
-      _resolve = resolve; // Saving the resolve function to use it in other place
+      _data = resolve;
     });
   };
-  const resolveDialogBox = (key) => {
-    if (_resolve) {
-      _resolve(key);
-      _resolve = null;
+  const resolveDialogBoxData = (key, parameters, isValid) => {
+    if (_data) {
+      _data({ key, parameters, isValid });
+      _data = null;
     }
-    setDialogBox({ metadata: { isRequested: false, isResolved: true } });
   };
+  const requestDialogBoxProcedure = () => {
+    return new Promise((resolve) => {
+      _procedure = resolve;
+    });
+  };
+  const resolveDialogBoxProcedure = (exit) => {
+    if (_procedure) {
+      _procedure(exit);
+      _procedure = null;
+    }
+  };
+
   return {
     //Getters
     getDialogBox,
@@ -48,21 +64,27 @@ export const useDialogBoxStore = defineStore('dialogBox', () => {
     setDialogBox,
     resetDialogBox,
     openDialogBox,
-    resolveDialogBox,
+    requestDialogBoxData,
+    resolveDialogBoxData,
+    requestDialogBoxProcedure,
+    resolveDialogBoxProcedure,
   };
 });
 
 // General structure
 // dialog_box:{
 //   metadata:{
-//     isResolved: false,
 //     isRequested: false,
-//     isShowing: false
 //   },
 //   data:{
 //     title:'',
 //     icon: '',
 //     text: '',
+//     parameters: [],
 //     actions: []
 //   }
 // }
+// Parameter general structure
+// [
+//  {key:'', label:'', hint:'', value, unit, valueSet:[], unitSet:[], ruleSet:[], group:'', member:'', type:'', class:'', enabled: false  },
+// ...]

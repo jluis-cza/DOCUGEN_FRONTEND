@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { useOverlayStore } from '../stores/utils/overlayStore.js';
+import { useOverlayStore } from '../../stores/utils/overlayStore.js';
 import { ref, computed, watch } from 'vue';
 
 const overlayStore = useOverlayStore();

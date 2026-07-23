@@ -70,8 +70,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
-import AdministrationAccountSessions from './AdministrationAccountSessions.vue';
 import { extractTime } from '../../helpers/utils.js';
+import AdministrationAccountSessions from './AdministrationAccountSessions.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -164,7 +164,6 @@ const viewAccountServices = (id) => {
 onMounted(async () => {
   accountId.value = route.params.accountId;
   await actions.accountGetter(accountId.value);
-  console.log('llamdo a la la info cuenta');
 });
 </script>
 

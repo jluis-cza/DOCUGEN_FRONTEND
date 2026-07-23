@@ -26,6 +26,7 @@ export const useMyAccount = () => {
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
+        loading.value = false;
         // Notification settings
         const data = {
           message: message.value,
@@ -33,7 +34,6 @@ export const useMyAccount = () => {
           mode: 'persistent',
         };
         notificationStore.setNotification(data);
-        loading.value = false;
       }
     },
   };

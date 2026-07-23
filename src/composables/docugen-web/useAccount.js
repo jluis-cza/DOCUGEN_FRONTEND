@@ -32,13 +32,13 @@ export const useAccount = () => {
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
+        loading.value = false;
         const data = {
           message: message.value,
           code: code.value,
           mode: 'automatic',
         };
         notificationStore.setNotification(data);
-        loading.value = false;
       }
     },
     accountGetter: async (id) => {
@@ -57,13 +57,13 @@ export const useAccount = () => {
         success.value = err.response?.data?.success;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
+        loading.value = false;
         const data = {
           message: message.value,
           code: code.value,
           mode: 'automatic',
         };
         notificationStore.setNotification(data);
-        loading.value = false;
       }
     },
   };

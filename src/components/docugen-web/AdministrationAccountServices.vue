@@ -88,20 +88,19 @@
         </v-alert>
       </v-card>
     </div>
-    <DialogBox />
   </v-container>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import DialogBox from '../DialogBox.vue';
 import { useServices } from '../../composables/docugen-web/useServices.js';
 import { useService } from '../../composables/docugen-web/useService.js';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
 import { useTablesStore } from '../../stores/utils/tablesStore.js';
 import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
 import { extractTime } from '../../helpers/utils.js';
+import { DIALOGS } from '../../constants/dialogs.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -210,18 +209,20 @@ const onSwitchStatus = async (value, item) => {
     switchingItemId.value = item._id;
     const status = value ? 'running' : 'stopped';
     if (status === 'stopped') {
-      const dialogBoxData = {
-        title: 'Desactivación del servicio',
-        icon: 'mdi-power-off',
-        text: `¿Está seguro de poner fuera de servicio la ${item.associated_service_lookup.name} para el usuario ${item.associated_account.username}?`,
-        actions: [
-          { name: 'Aceptar', key: 'y' },
-          { name: 'Cancelar', key: 'n' },
-        ],
+      let dialogBoxData = DIALOGS.docugen_web.administration.user_service_suspension;
+      dialogBoxData = {
+        ...dialogBoxData,
+        text: dialogBoxData.text
+          .replace('<service>', item.associated_service_lookup.name)
+          .replace('<username>', item.associated_account.username),
       };
       item.status = null; // waiting entry
-      const selectedActionKey = await dialogBoxStore.openDialogBox(dialogBoxData);
-      dialogBoxStore.resetDialogBox();
+      dialogBoxStore.setDialogBox({ data: dialogBoxData });
+      dialogBoxStore.openDialogBox();
+      const response = await dialogBoxStore.requestDialogBoxData();
+      const selectedActionKey = response.key;
+      dialogBoxStore.resolveDialogBoxProcedure(true);
+
       if (selectedActionKey === 'n') {
         item.status = 'running';
         switchingItemId.value = null;

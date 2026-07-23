@@ -102,7 +102,6 @@
         </v-alert>
       </v-card>
     </div>
-    <DialogBox />
   </v-container>
   <RouterView />
 </template>
@@ -110,12 +109,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import DialogBox from '../DialogBox.vue';
 import { useTablesStore } from '../../stores/utils/tablesStore.js';
 import { useAccounts } from '../../composables/docugen-web/useAccounts.js';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
 import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
 import { TABLES } from '../../constants/tables.js';
+import { DIALOGS } from '../../constants/dialogs.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -237,18 +236,17 @@ const onSwitchStatus = async (value, item) => {
     switchingItemId.value = item._id;
     const status = value ? 'active' : 'suspended';
     if (status === 'suspended') {
-      const dialogBoxData = {
-        title: 'Suspención de usuario',
-        icon: 'mdi-account-off',
-        text: `¿Está seguro de suspender al usuario ${item.username}? El usuario no podrá seguir usando los servicios de DOCUGEN y tampoco podrá ingresar al sistema.`,
-        actions: [
-          { name: 'Continuar', key: 'y' },
-          { name: 'Cancelar', key: 'n' },
-        ],
+      let dialogBoxData = DIALOGS.docugen_web.administration.user_suspension;
+      dialogBoxData = {
+        ...dialogBoxData,
+        text: dialogBoxData.text.replace('<username>', item.username),
       };
       item.status = null; // waiting entry
-      const selectedActionKey = await dialogBoxStore.openDialogBox(dialogBoxData);
-      dialogBoxStore.resetDialogBox();
+      dialogBoxStore.setDialogBox({ data: dialogBoxData });
+      dialogBoxStore.openDialogBox();
+      const response = await dialogBoxStore.requestDialogBoxData();
+      const selectedActionKey = response.key;
+      dialogBoxStore.resolveDialogBoxProcedure(true);
       if (selectedActionKey === 'n') {
         item.status = 'active';
         switchingItemId.value = null;

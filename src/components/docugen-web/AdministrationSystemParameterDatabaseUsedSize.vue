@@ -23,7 +23,7 @@
     <v-divider></v-divider>
     <!-- Chart Info -->
     <v-card-item>
-      <h3 class="text-center">Gráfico uso de Almacenamiento de Base de Datos</h3>
+      <h3 class="text-center">Gráfico uso de Almacenamiento usado de Base de Datos</h3>
       <div class="chart-wrapper"><Line :data="chartData" :options="chartOptions" /></div>
     </v-card-item>
   </v-card>
@@ -76,7 +76,7 @@ const chartData = computed(() => {
     }),
     datasets: [
       {
-        label: 'Tamaño de BD (MB)',
+        label: 'Espacio usado (MB)',
         backgroundColor: '#1867C0',
         borderRadius: 4,
         data: props.systemParameter.values.map((item) => parseFloat(item.value)),

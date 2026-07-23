@@ -42,6 +42,25 @@ export const useServiceLookups = () => {
         loading.value = false;
       }
     },
+    serviceLookupsOverviewer: async () => {
+      try {
+        loading.value = true;
+        const response = await AdministrationService.overviewServiceLookups();
+        serviceLookupsStore.resetServiceLookupsOverview;
+        serviceLookupsStore.setServiceLookupsOverview(response.data.data.serviceLookupsOverview);
+        message.value =
+          response?.data?.message || response.statusText || 'Error in serviceLookupsOverviewer';
+        success.value = response?.data?.success || false;
+        code.value = response?.data?.code || 'EXXX';
+      } catch (err) {
+        console.error(err);
+        message.value = err.response?.data?.message || err.response.statusText;
+        success.value = err.response?.data?.success || false;
+        code.value = err.response?.data?.code || 'EXXX';
+      } finally {
+        loading.value = false;
+      }
+    },
   };
   return { serviceLookups, actions, loading, success, message, code };
 };

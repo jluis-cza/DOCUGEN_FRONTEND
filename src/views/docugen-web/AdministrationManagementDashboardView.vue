@@ -42,9 +42,9 @@
                     }}</span>
                   </v-avatar>
                 </template>
-                <v-card-title> {{ username }} </v-card-title>
+                <v-card-title> {{ myUsername }} </v-card-title>
                 <v-card-subtitle>
-                  <v-chip size="small" outlined>{{ role }}</v-chip>
+                  <v-chip size="small" outlined>{{ myAccount.role }}</v-chip>
                 </v-card-subtitle>
               </v-card-item>
               <v-divider />
@@ -53,7 +53,7 @@
                   prepend-icon="mdi-account-outline"
                   title="Mi Perfil"
                   rounded="lg"
-                  @click="accountMenuOpen = false"
+                  @click="openMyProfile"
                 />
               </v-list>
               <v-divider />
@@ -92,7 +92,7 @@
           color="primary"
           rounded="lg"
         />
-        <template v-if="role === administrator">
+        <template v-if="myAccount.role === administrator">
           <v-divider class="py-1"></v-divider>
           <v-list-subheader class="text-uppercase ls-wide"> Administración </v-list-subheader>
           <v-list-item
@@ -120,7 +120,7 @@
             rounded="lg"
           />
         </template>
-        <template v-if="role === developer">
+        <template v-if="myAccount.role === developer">
           <v-divider class="py-1"></v-divider>
           <v-list-subheader class="text-uppercase ls-wide"> Gestión </v-list-subheader>
           <v-list-item
@@ -147,28 +147,30 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useMySession } from '../../composables/docugen-web/useMySession.js';
+import { useMyUsername } from '../../composables/docugen-web/useMyUsername.js';
 import { USERS } from '../../constants/users.js';
 
 // General values
 const router = useRouter();
 const route = useRoute();
 const myAccountStore = useMyAccountStore();
-const { actions } = useMySession();
+const { actions: mySession_actions } = useMySession();
+const {myUsername, actions: myUsername_actions} = useMyUsername()
 const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
 // Layout values
-const username = ref('');
-const role = ref('');
+const myAccount = computed(()=> myAccountStore.getMyAccount)
+
 const drawerOpen = ref(true);
 const accountMenuOpen = ref(false);
 const userInitials = computed(() =>
-  username.value ? username.value.slice(0, 2).toUpperCase() : 'NA'
+  myUsername.value ? myUsername.value.slice(0, 2).toUpperCase() : 'NA'
 );
 const selectedItem = ref([]); //Default view
 
 const logout = async () => {
   try {
-    await actions.mySessionCloser({ username: myAccountStore.getMyAccount.username });
+    await mySession_actions.mySessionCloser({ id: myAccount.value.id });
     await router.push('/');
   } catch (error) {
     console.log('Error in logout process. ', error.message);
@@ -176,9 +178,18 @@ const logout = async () => {
   }
 };
 
-onMounted(() => {
-  username.value = myAccountStore.getMyAccount.username || 'NA';
-  role.value = myAccountStore.getMyAccount.role || 'NA';
+const openMyProfile = async () => {
+  accountMenuOpen.value = false;
+  selectedItem.value = [];
+  try {
+    await router.push('/dashboard/my-profile');
+  } catch (error) {
+    console.log('Error in going to the my profile page. ', error.message);
+    throw error;
+  }
+};
+onMounted(async() => {
+  await myUsername_actions.usernameGetter({id: myAccount.value.id || ''})
 });
 </script>
 

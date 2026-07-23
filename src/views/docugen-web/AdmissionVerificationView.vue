@@ -1,17 +1,17 @@
 <template>
-  <p v-if="loading">Verificando el email...</p>
+  <p v-if="loading"><b>Verificando el email...</b></p>
   <div v-else>
     <p v-if="success">
-      Verificación exitosa. El correo electrónico: {{ email }} ha sido verificado exitosamente. Ya
-      puede ingresar al sistema utilizando sus credenciales.
+      <b>VERIFICACIÓN EXITOSA.</b> El correo electrónico: <b>{{ email }}</b> ha sido verificado
+      exitosamente. Ya puede ingresar al sistema utilizando sus credenciales.
     </p>
     <div v-else>
-      <p>Verificación fallida. Por favor espere unos minutos y registrese de nuevo.</p>
-      <p>Mensaje del error: {{ message }}</p>
-      <p>Código del error: {{ code }}</p>
+      <p><b>VERIFICACIÓN FALLIDA.</b> Por favor espere unos minutos y registrese de nuevo.</p>
+      <p><b>Mensaje del error:</b> {{ message }}</p>
+      <p><b>Código del error:</b> {{ code }}</p>
     </div>
     <!-- Home link -->
-    <RouterLink to="/">Ir al inicio</RouterLink>
+    <RouterLink to="/">Ir a la página de inicio</RouterLink>
   </div>
 </template>
 <script setup>

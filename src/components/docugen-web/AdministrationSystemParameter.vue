@@ -13,8 +13,8 @@
         </template>
       </v-breadcrumbs>
       <!-- System Parameter -->
-      <AdministrationSystemParameterDatabaseSize
-        v-if="systemParameter.name === 'database_size'"
+      <AdministrationSystemParameterDatabaseUsedSize
+        v-if="systemParameter.name === 'database_used_size'"
         :systemParameter="systemParameter"
       />
       <AdministrationSystemParameterSystemUptime
@@ -29,7 +29,7 @@
 import { onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSystemParameter } from '../../composables/docugen-web/useSystemParameter.js';
-import AdministrationSystemParameterDatabaseSize from './AdministrationSystemParameterDatabaseSize.vue';
+import AdministrationSystemParameterDatabaseUsedSize from './AdministrationSystemParameterDatabaseUsedSize.vue';
 import AdministrationSystemParameterSystemUptime from './AdministrationSystemParameterSystemUptime.vue';
 
 const route = useRoute();

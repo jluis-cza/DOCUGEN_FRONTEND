@@ -1,40 +1,37 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { admission } from './docugen-web/admission.js';
-import { dashboard } from './docugen-web/dashboard.js';
-
+import { administrationManagement } from './docugen-web/administrationManagement.js';
 import guard from './guard.js';
 
 const routes = [
-  //Start page
+  //  DOCUGEN-WEB
   {
     path: '/',
-    name: 'home',
+    name: 'welcome',
     meta: {},
-    component: () => import('../views/HomeView.vue'),
+    component: () => import('../views/docugen-web/WelcomeView.vue'),
   },
   {
     path: '/information',
     name: 'information',
     meta: {},
-    component: () => import('../views/InformationView.vue'),
+    component: () => import('../views/docugen-web/InformationView.vue'),
   },
   {
     path: '/manual',
     name: 'manual',
     meta: {},
-    component: () => import('../views/ManualView.vue'),
+    component: () => import('../views/docugen-web/ManualView.vue'),
   },
-
-  //docugen-web
   ...admission,
-  ...dashboard,
+  ...administrationManagement,
 
-  //docugen-app
+  //  DOCUGEN-APP
 
-  //Exceptions
+  //  EXCEPTIONS
   {
     path: '/:pathMatch(.*)*',
-    component: () => import('../views/NotFoundView.vue'),
+    component: () => import('../views/utils/NotFoundView.vue'),
   },
 ];
 

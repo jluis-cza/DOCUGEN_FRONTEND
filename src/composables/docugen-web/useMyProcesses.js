@@ -1,24 +1,24 @@
 import { computed, ref } from 'vue';
-import { UtilsService } from '../../services/UtilsService.js';
-import { useProcessesStore } from '../../stores/utils/processesStore.js';
+import { ManagementService } from '../../services/docugen-web/ManagementService.js';
+import { useMyProcessesStore } from '../../stores/docugen-web/myProcessesStore.js';
 
-export const useProcesses = () => {
+export const useMyProcesses = () => {
   // Notification setttings
   const message = ref(null);
   const code = ref(null);
   // Store settings
-  const processesStore = useProcessesStore();
-  const processes = computed(() => processesStore.getProcesses);
+  const myProcessesStore = useMyProcessesStore();
+  const myProcesses = computed(() => myProcessesStore.getMyProcesses);
   // Request settings
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    processesGetter: async (params) => {
+    myProcessesGetter: async (params) => {
       try {
         loading.value = true;
-        const response = await UtilsService.getProcesses(params);
-        processesStore.resetProcesses;
-        processesStore.setProcesses(response.data.data.processes);
+        const response = await ManagementService.getProcesses(params);
+        myProcessesStore.resetProcesses;
+        myProcessesStore.setMyProcesses(response.data.data.processes);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
@@ -26,7 +26,7 @@ export const useProcesses = () => {
         console.error(err);
         success.value = err.response?.data?.success || false;
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in processesGetter';
+          err.response?.data?.message || err.response.statusText || 'Error in myProcessesGetter';
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
         loading.value = false;
@@ -34,5 +34,5 @@ export const useProcesses = () => {
     },
   };
 
-  return { processes, actions, loading, success, message, code };
+  return { myProcesses, actions, loading, success, message, code };
 };
