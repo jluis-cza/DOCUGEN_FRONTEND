@@ -15,7 +15,7 @@ export const useUsername = () => {
       try {
         loading.value = true;
         const response = await AdmissionService.checkUsername(payload);
-        username.value = response.data
+        username.value = response.data;
         success.value = response?.data?.success || false;
         message.value = response?.data?.message || response.statusText;
         code.value = response?.data?.code || 'EXXX';

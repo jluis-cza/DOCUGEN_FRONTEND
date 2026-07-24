@@ -42,11 +42,11 @@ export const useMyProfile = () => {
     },
     myProfileSetter: async (id, payload) => {
       try {
-        const myUsernameStore = useMyUsernameStore()
+        const myUsernameStore = useMyUsernameStore();
         loading.value = true;
         const response = await ManagementService.setProfile(id, payload);
         myProfileStore.setMyProfile(response.data.data.profile);
-        myUsernameStore.setMyUsername(response.data.data.profile.username)
+        myUsernameStore.setMyUsername(response.data.data.profile.username);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success;
         code.value = response?.data?.code || 'EXXX';

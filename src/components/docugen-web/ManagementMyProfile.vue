@@ -31,6 +31,7 @@
                     <div
                       class="cursor-pointer text-decoration-underline text-info"
                       @click="setValue(item.key)"
+                      v-if="myProfile.role === 'dev'"
                     >
                       Cambiar
                     </div>
@@ -59,21 +60,15 @@
 import { computed, onMounted } from 'vue';
 import { extractTime } from '../../helpers/utils.js';
 import { useMyProfile } from '../../composables/docugen-web/useMyProfile.js';
-import { useMyPassword } from '../../composables/docugen-web/useMyPassword.js';
-import { useMyUsername } from '../../composables/docugen-web/useMyUsername.js';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
-import { useMyUsernameStore } from '../../stores/docugen-web/myUsernameStore.js';
 import { DIALOGS } from '../../constants/dialogs.js';
 
 const { myProfile, actions: myProfile_actions, success: myProfile_success } = useMyProfile();
-const { actions: myPassword_actions, success: myPassword_success } = useMyPassword();
-const { actions: myUsername_actions, success: myUsername_success } = useMyUsername();
 const myAccountStore = useMyAccountStore();
 const dialogBoxStore = useDialogBoxStore();
 const notificationStore = useNotificationStore();
-const myUsernameStore = useMyUsernameStore();
 const accountId = computed(() => myAccountStore.getMyAccount.id);
 const dialogBoxDataSet = {
   setUsername: DIALOGS.docugen_web.management.set_username,
@@ -112,7 +107,7 @@ const profileRole = (role) => {
 };
 
 const profileUpdateTime = computed(() => {
-  const updatedTime = extractTime(myProfile.value.updatedAt, 'America/La_Paz', 'long')
+  const updatedTime = extractTime(myProfile.value.updatedAt, 'America/La_Paz', 'long');
   return {
     date: updatedTime.date,
     hour: updatedTime.hour,

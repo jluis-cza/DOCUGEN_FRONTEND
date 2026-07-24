@@ -51,28 +51,28 @@ export const useMyProcessesStore = defineStore('myProcesses', () => {
         dataset.push({ date: processDate, count: 1 });
       }
     }
-    dataset.reverse() // ascending order
+    dataset.reverse(); // ascending order
     return dataset;
   };
-    const getMyHistoricalProcessesCountingWindow = (module, offset) => {
-      if (!module && !offset) throw new Error('There is no offset or module arguments input');
-      const modulePrefix = identifyModuleProcessPrefix(module); // Identifing the module
-      const processesByModule = myProcesses.value.filter((p) => p.code.slice(0, 3) === modulePrefix);
-      // Creating the dataset (date, count)
-      const dataset = [];
-      for (const process of processesByModule) {
-        const processDate = extractTime(process.createdAt, 'America/La_Paz', 'numeric').date;
-        const element = dataset.find((element) => element.date === processDate);
-        if (element) {
-          element.count = element.count + 1;
-        } else {
-          dataset.push({ date: processDate, count: 1 });
-        }
+  const getMyHistoricalProcessesCountingWindow = (module, offset) => {
+    if (!module && !offset) throw new Error('There is no offset or module arguments input');
+    const modulePrefix = identifyModuleProcessPrefix(module); // Identifing the module
+    const processesByModule = myProcesses.value.filter((p) => p.code.slice(0, 3) === modulePrefix);
+    // Creating the dataset (date, count)
+    const dataset = [];
+    for (const process of processesByModule) {
+      const processDate = extractTime(process.createdAt, 'America/La_Paz', 'numeric').date;
+      const element = dataset.find((element) => element.date === processDate);
+      if (element) {
+        element.count = element.count + 1;
+      } else {
+        dataset.push({ date: processDate, count: 1 });
       }
-      const subDataset = extractSubarray(dataset, offset, 7); // Extracting subarray up to 7 elements (1week)
-      subDataset.reverse(); // ascending order
-      return subDataset;
-    };
+    }
+    const subDataset = extractSubarray(dataset, offset, 7); // Extracting subarray up to 7 elements (1week)
+    subDataset.reverse(); // ascending order
+    return subDataset;
+  };
   // Actions
   const setMyProcesses = (data) => {
     myProcesses.value = data || [];

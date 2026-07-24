@@ -60,7 +60,6 @@ export const toSlug = (text) => {
 //   }
 // };
 
-
 export const extractTime = (utcDate, dateZone = 'America/La_Paz', format = 'numeric') => {
   if (!utcDate) return { date: '', hour: '' };
 
@@ -70,7 +69,7 @@ export const extractTime = (utcDate, dateZone = 'America/La_Paz', format = 'nume
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false
+    hour12: false,
   };
 
   if (format === 'numeric') {
@@ -95,24 +94,22 @@ export const extractTime = (utcDate, dateZone = 'America/La_Paz', format = 'nume
 
   if (match && match.length >= 2) {
     let cleanDate = match[0].trim();
-    
+
     // cleaning undesirable suffixes
     cleanDate = cleanDate
-      .replace(/,$/, '')         // Quita comas al final
+      .replace(/,$/, '') // Quita comas al final
       .replace(/\s+a\s+las$/, '') // Quita " a las" al final
-      .replace(/\s+de\s+las$/, '')// Por si acaso, quita " de las"
+      .replace(/\s+de\s+las$/, '') // Por si acaso, quita " de las"
       .trim();
 
     return {
       date: cleanDate,
-      hour: match[1].trim()
+      hour: match[1].trim(),
     };
   }
 
   return { date: formattedString, hour: '' };
 };
-
-
 
 // SUBARRAY EXTRACTOR
 // Selects a specific subarray of an array given the size(number of elements) and the offset(index of the first element)

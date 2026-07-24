@@ -5,10 +5,10 @@ import { accessRemover, accessRenewer } from '../helpers/docugen-web/admissionAc
 const guard = (router) => {
   // Global guard
   router.beforeEach(async (to, from, next) => {
-    const tokenStore = useTokenStore();
-    const myAccountStore = useMyAccountStore();
     // Checking is autentication is needed to access the route
     if (to.meta.requiresAuth) {
+      const myAccountStore = useMyAccountStore();
+      const tokenStore = useTokenStore();
       //Checking token existence
       let currentToken = tokenStore.getToken;
       if (!currentToken) {
@@ -17,7 +17,8 @@ const guard = (router) => {
           await accessRenewer();
         } catch (error) {
           console.error('Error on renewing token.', error.message);
-          return accessRemover(); //It internally redirects to /login
+          accessRemover();
+          return next('/login');
         }
       }
       // Checking the user's role
@@ -30,7 +31,16 @@ const guard = (router) => {
         return next('/login');
       }
     } else {
-      return next();
+      // Double checking user's authentication
+      try {
+        await accessRenewer();
+        console.error('User is authenticated.');
+        return next('/dashboard');
+      } catch (err) {
+        console.error('User is not authenticated.', err.message);
+        accessRemover();
+        return next();
+      }
     }
   });
 };

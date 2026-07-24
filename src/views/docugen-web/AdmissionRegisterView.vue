@@ -1,7 +1,7 @@
 <template>
   <v-container class="w-100 h-100 d-flex flex-column">
     <!-- Home link -->
-    <div >
+    <div>
       <RouterLink to="/">Ir a la página de inicio</RouterLink>
     </div>
     <!-- Form -->

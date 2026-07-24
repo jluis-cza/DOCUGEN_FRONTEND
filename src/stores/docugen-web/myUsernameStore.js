@@ -7,7 +7,7 @@ export const useMyUsernameStore = defineStore('myUsername', () => {
 
   //Getters
   const getMyUsername = computed(() => myUsername.value);
-  
+
   // Actions
   const setMyUsername = (data) => {
     myUsername.value = data || '';

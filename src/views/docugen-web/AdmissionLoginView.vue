@@ -5,7 +5,7 @@
       <RouterLink to="/">Ir a la página de inicio</RouterLink>
     </div>
     <!-- Form -->
-    <div class=" flex-grow-1 d-flex w-100 h-100 align-center justify-center">
+    <div class="flex-grow-1 d-flex w-100 h-100 align-center justify-center">
       <v-card width="400" :loading="loading" variant="elevated">
         <v-card-title>Inicio de sesión</v-card-title>
         <v-form ref="form" validate-on="submit lazy" @submit.prevent="login">
@@ -51,8 +51,9 @@ const RULE_EMAIL_INPUT = RULES.text.input.email;
 const RULE_USERNAME_INPUT = RULES.text.input.username;
 const RULE_PASSWORD_INPUT = RULES.text.input.password;
 
-const credentialsDefaultData = SERVICES.payload.docugen_web.admission.start_session;
-const credentialsData = ref(JSON.parse(JSON.stringify(credentialsDefaultData)));
+const getCredentialsDefaultData = () =>
+  JSON.parse(JSON.stringify(SERVICES.payload.docugen_web.admission.start_session));
+const credentialsData = ref(getCredentialsDefaultData());
 const identifier = ref('');
 const form = ref(null);
 const router = useRouter();
@@ -81,7 +82,7 @@ const login = async () => {
     if (valid) {
       await actions.mySessionStarter(credentialsData.value);
       if (success.value) {
-        credentialsData.value = credentialsDefaultData;
+        credentialsData.value = getCredentialsDefaultData();
         await router.push('/dashboard');
       }
     }

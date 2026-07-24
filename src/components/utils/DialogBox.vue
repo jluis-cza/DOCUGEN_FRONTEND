@@ -28,7 +28,7 @@
                     <v-text-field
                       v-model="parameter.value"
                       :label="parameter.label"
-                      :rules="getRules( parameter.ruleSet)"
+                      :rules="getRules(parameter.ruleSet)"
                       :validate-on="parameter.evaluateOn"
                       :type="parameter.type"
                       clearable
@@ -157,7 +157,7 @@ const processParameters = (receivedParameters) => {
 // };
 const getRules = (ruleSet) => {
   if (!ruleSet || !Array.isArray(ruleSet)) return [];
-  
+
   return ruleSet.map((ruleName) => {
     return (value) => {
       const ruleFn = rules[ruleName];

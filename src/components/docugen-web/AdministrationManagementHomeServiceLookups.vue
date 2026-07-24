@@ -14,7 +14,7 @@
         <v-list density="compact">
           <template v-for="(item, i) in cardInfo" :key="i">
             <v-list-item>
-              <div class="d-flex justify-space-between align-center  text-body-2">
+              <div class="d-flex justify-space-between align-center text-body-2">
                 <span class="font-weight-medium text-secondary">{{ item.label }}</span>
                 <span class="font-weight-light">
                   <v-chip

@@ -226,7 +226,7 @@ const charts = computed(() => {
 // Hooks
 onMounted(async () => {
   if (props.account.role === 'admin')
-    await processes_actions.processesGetter({requestedModules: ['edition', 'processing']});
+    await processes_actions.processesGetter({ requestedModules: ['edition', 'processing'] });
   // if (props.account.role === 'dev' && myProcesses_success === null)
   if (props.account.role === 'dev')
     await myProcesses_actions.myProcessesGetter({ associated_account: props.account.id });

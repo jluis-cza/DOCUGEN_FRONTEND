@@ -155,11 +155,11 @@ const router = useRouter();
 const route = useRoute();
 const myAccountStore = useMyAccountStore();
 const { actions: mySession_actions } = useMySession();
-const {myUsername, actions: myUsername_actions} = useMyUsername()
+const { myUsername, actions: myUsername_actions } = useMyUsername();
 const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
 // Layout values
-const myAccount = computed(()=> myAccountStore.getMyAccount)
+const myAccount = computed(() => myAccountStore.getMyAccount);
 
 const drawerOpen = ref(true);
 const accountMenuOpen = ref(false);
@@ -188,8 +188,8 @@ const openMyProfile = async () => {
     throw error;
   }
 };
-onMounted(async() => {
-  await myUsername_actions.usernameGetter({id: myAccount.value.id || ''})
+onMounted(async () => {
+  await myUsername_actions.usernameGetter({ id: myAccount.value.id || '' });
 });
 </script>
 

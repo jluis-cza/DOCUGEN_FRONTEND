@@ -8,7 +8,7 @@
     </v-col>
   </v-row>
 
-  <v-row >
+  <v-row>
     <!-- Services overview -->
     <v-col cols="8">
       <AdministrationManagementHomeServices :account="account" />

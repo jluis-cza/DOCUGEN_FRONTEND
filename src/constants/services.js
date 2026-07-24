@@ -120,7 +120,7 @@ export const SERVICES = {
           title: '',
           icon: '',
           text: '',
-          parameters:[],
+          parameters: [],
           actions: [],
         },
       },

@@ -30,11 +30,11 @@
               density="compact"
               :color="myProcessSuccess(myProcess.success).color"
             >
-              <div class="d-flex justify-space-between align-center pa-3 ">
-                <div class="text-body-2  font-weight-medium pr-6">
+              <div class="d-flex justify-space-between align-center pa-3">
+                <div class="text-body-2 font-weight-medium pr-6">
                   {{ myProcess.name }}
                 </div>
-                <div class="text-caption  font-weight-light text-no-wrap">
+                <div class="text-caption font-weight-light text-no-wrap">
                   {{ extractTime(myProcess.createdAt, 'America/La_Paz', 'long').hour }}
                 </div>
               </div>

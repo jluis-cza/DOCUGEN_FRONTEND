@@ -2,6 +2,7 @@ import axios from 'axios';
 import { SERVICES } from '../constants/services.js';
 import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
 import { accessRenewer, accessRemover } from '../helpers/docugen-web/admissionAccessHelper.js';
+import router from '../router/index.js';
 
 const ROOT_API_URL = SERVICES.base_url.api;
 const JSON_CONTENT_TYPE = SERVICES.content.type.json;
@@ -94,6 +95,7 @@ axiosInstance.interceptors.response.use(
           console.error('Error on renewing token.', error.message);
           processQueue(refreshError, null); // If error happens add error to the queue
           accessRemover(); // Clear access info
+          router.push('/login'); // login redirect
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

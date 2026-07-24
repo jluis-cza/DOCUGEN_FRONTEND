@@ -36,6 +36,6 @@ export const AdmissionService = {
     return axiosInstance.post(ADMISSION_BASE_PATH + CHECK_USERNAME_PATH, payload);
   },
   getUsername: (params) => {
-    return axiosInstance.get(ADMISSION_BASE_PATH + GET_USERNAME_PATH, {params} );
+    return axiosInstance.get(ADMISSION_BASE_PATH + GET_USERNAME_PATH, { params });
   },
 };

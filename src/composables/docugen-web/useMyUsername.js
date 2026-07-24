@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import { AdmissionService } from '../../services/docugen-web/AdmissionService.js';
-import { useMyUsernameStore } from '../../stores/docugen-web/myUsernameStore.js'; 
+import { useMyUsernameStore } from '../../stores/docugen-web/myUsernameStore.js';
 
 export const useMyUsername = () => {
   // Notification setttings

@@ -24,7 +24,9 @@ export const useMyNotifications = () => {
       } catch (err) {
         console.error(err);
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in myNotificationsGetter';
+          err.response?.data?.message ||
+          err.response.statusText ||
+          'Error in myNotificationsGetter';
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {

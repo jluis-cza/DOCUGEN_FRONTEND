@@ -39,7 +39,7 @@ export const RULES = {
       // Password rule
       password: (value) => {
         if (value) {
-          const isValidPassword = /^.{8,}$/.test(value)
+          const isValidPassword = /^.{8,}$/.test(value);
           // const isValidPassword =
           //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/.test(value);
           return isValidPassword || 'Contraseña no válida.';
@@ -49,11 +49,7 @@ export const RULES = {
       },
       usernameAvailability: async (value) => {
         if (!value) return 'Sin entrada';
-        const {
-          username,
-          actions,
-          success,
-        } = useUsername();
+        const { username, actions, success } = useUsername();
         await actions.usernameChecker({ data: { username: value } });
         if (success.value) {
           return (
@@ -66,11 +62,7 @@ export const RULES = {
       },
       passwordVerification: async (value) => {
         if (!value) return 'Sin entrada';
-        const {
-          myPassword,
-          actions,
-          success,
-        } = useMyPassword();
+        const { myPassword, actions, success } = useMyPassword();
         await actions.passwordVerifier({ data: { password: value } });
         if (success.value) {
           return (

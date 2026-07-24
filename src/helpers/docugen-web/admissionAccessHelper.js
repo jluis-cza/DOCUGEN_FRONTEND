@@ -2,7 +2,6 @@ import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useMySessionStore } from '../../stores/docugen-web/mySessionStore.js';
 import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
 import { AdmissionService } from '../../services/docugen-web/AdmissionService.js';
-import router from '../../router/index.js';
 
 export const accessRenewer = async () => {
   const myAccountStore = useMyAccountStore();
@@ -24,7 +23,7 @@ export const accessRemover = () => {
   tokenStore.resetToken();
   mySessionStore.resetMySession();
   myAccountStore.resetMyAccount();
-  router.push('/login'); // login redirect
+  // router.push('/login'); // login redirect
   // window.location.reload()
   console.log('Access removed');
 };
