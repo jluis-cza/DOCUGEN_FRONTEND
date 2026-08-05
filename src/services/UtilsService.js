@@ -1,4 +1,4 @@
-// Admission HTTP services using the axios instance
+// utils HTTP services using the axios instance
 
 import { axiosInstance } from './AxiosInstanceService.js';
 import { SERVICES } from '@/constants/services.js';

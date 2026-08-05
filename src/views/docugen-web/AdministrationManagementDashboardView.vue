@@ -11,66 +11,95 @@
       <!-- NavBar menu -->
       <template #append>
         <div class="d-flex align-center ga-3 mr-2">
-          <v-avatar color="surface">
-            <span class="text-primary font-weight-bold text-caption">{{ userInitials }}</span>
-          </v-avatar>
-          <v-menu
-            v-model="accountMenuOpen"
-            :close-on-content-click="false"
-            location="bottom end"
-            offset="20"
-            transition="fade-transition"
-          >
-            <template #activator="{ props }">
-              <v-btn
-                v-bind="props"
-                icon
-                variant="text"
-                color="white"
-                size="x-small"
-                density="comfortable"
-              >
-                <v-icon :icon="accountMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-              </v-btn>
-            </template>
-            <v-card min-width="240" rounded="lg" elevation="3">
-              <v-card-item>
-                <template #prepend>
-                  <v-avatar color="surface">
-                    <span class="text-primary font-weight-bold text-caption">{{
-                      userInitials
-                    }}</span>
-                  </v-avatar>
-                </template>
-                <v-card-title> {{ myUsername }} </v-card-title>
-                <v-card-subtitle>
-                  <v-chip size="small" outlined>{{ myAccount.role }}</v-chip>
-                </v-card-subtitle>
-              </v-card-item>
-              <v-divider />
-              <v-list density="compact" nav>
-                <v-list-item
-                  prepend-icon="mdi-account-outline"
-                  title="Mi Perfil"
-                  rounded="lg"
-                  @click="openMyProfile"
-                />
-              </v-list>
-              <v-divider />
-              <v-card-actions class="pa-2">
-                <v-btn
-                  color="error"
-                  variant="tonal"
-                  prepend-icon="mdi-logout"
-                  size="small"
-                  block
-                  @click="logout"
-                >
-                  Cerrar Sesión
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-menu>
+          <!-- My notifications -->
+          <div class="px-2">
+            <v-menu
+              v-model="notificationsMenuOpen"
+              :close-on-content-click="false"
+              location="bottom end"
+              offset="20"
+              transition="fade-transition"
+            >
+              <template #activator="{ props }">
+                <v-badge content="100" color="error" overlap :model-value="true">
+                  <v-icon icon="mdi-bell-outline" v-bind="props"></v-icon>
+                </v-badge>
+              </template>
+              <!-- <v-list-item title="Notificaciones" rounded="lg">
+                 <template #prepend>
+                   <v-badge content="5" color="error" overlap>
+                     <v-icon icon="mdi-bell-badge-outline"></v-icon>
+                   </v-badge>
+                 </template>
+               </v-list-item> -->
+              <v-card min-width="240" rounded="lg" elevation="3">
+                <ManagementMyNotifications />
+              </v-card>
+            </v-menu>
+          </div>
+          <!-- Account info -->
+          <div class="px-2">
+            <v-menu
+              v-model="accountMenuOpen"
+              :close-on-content-click="false"
+              location="bottom end"
+              offset="10"
+              transition="fade-transition"
+            >
+              <template #activator="{ props }">
+                <!-- <v-btn
+                   v-bind="props"
+                   icon
+                   variant="text"
+                   color="white"
+                   size="x-small"
+                   density="comfortable"
+                 >
+                   <v-icon :icon="accountMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
+                 </v-btn> -->
+                <v-avatar v-bind="props" color="surface">
+                  <span class="text-primary font-weight-bold text-caption">{{ userInitials }}</span>
+                </v-avatar>
+              </template>
+              <v-card min-width="240" rounded="lg" elevation="3">
+                <v-card-item>
+                  <template #prepend>
+                    <v-avatar color="surface">
+                      <span class="text-primary font-weight-bold text-caption">{{
+                        userInitials
+                      }}</span>
+                    </v-avatar>
+                  </template>
+                  <v-card-title> {{ myUsername }} </v-card-title>
+                  <v-card-subtitle>
+                    <v-chip size="small" outlined>{{ myAccount.role }}</v-chip>
+                  </v-card-subtitle>
+                </v-card-item>
+                <v-divider />
+                <v-list density="compact" nav>
+                  <v-list-item
+                    prepend-icon="mdi-account-outline"
+                    title="Mi Perfil"
+                    rounded="lg"
+                    @click="openMyProfile"
+                  />
+                </v-list>
+                <v-divider />
+                <v-card-actions class="pa-2">
+                  <v-btn
+                    color="error"
+                    variant="tonal"
+                    prepend-icon="mdi-logout"
+                    size="small"
+                    block
+                    @click="logout"
+                  >
+                    Cerrar Sesión
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-menu>
+          </div>
         </div>
       </template>
     </v-app-bar>
@@ -149,6 +178,7 @@ import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useMySession } from '../../composables/docugen-web/useMySession.js';
 import { useMyUsername } from '../../composables/docugen-web/useMyUsername.js';
 import { USERS } from '../../constants/users.js';
+import ManagementMyNotifications from '../../components/docugen-web/ManagementMyNotifications.vue';
 
 // General values
 const router = useRouter();
@@ -163,6 +193,7 @@ const myAccount = computed(() => myAccountStore.getMyAccount);
 
 const drawerOpen = ref(true);
 const accountMenuOpen = ref(false);
+const notificationsMenuOpen = ref(false);
 const userInitials = computed(() =>
   myUsername.value ? myUsername.value.slice(0, 2).toUpperCase() : 'NA'
 );

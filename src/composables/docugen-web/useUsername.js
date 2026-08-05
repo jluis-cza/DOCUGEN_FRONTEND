@@ -29,6 +29,24 @@ export const useUsername = () => {
         loading.value = false;
       }
     },
+    usernameGetter: async (payload) => {
+      try {
+        loading.value = true;
+        const response = await AdmissionService.getUsername(payload);
+        username.value = response.data.data.username;
+        success.value = response?.data?.success || false;
+        message.value = response?.data?.message || response.statusText;
+        code.value = response?.data?.code || 'EXXX';
+      } catch (err) {
+        console.error(err);
+        success.value = err.response?.data?.success || false;
+        message.value =
+          err.response?.data?.message || err.response.statusText || 'Error in usernameGetter';
+        code.value = err.response?.data?.code || 'EXXX';
+      } finally {
+        loading.value = false;
+      }
+    },
   };
 
   return { username, actions, loading, success, message, code };

@@ -1,7 +1,7 @@
 <template>
   <v-container
     fluid
-    v-if="!isItemDetailActive && !isAccountSessionsInfoActive && !isAccountServicesInfoActive"
+    v-if="!isItemDetailActive && !isAccountSessionsInfoActive && !isAccountServicesInfoActive && !isAccountNotificationsInfoActive"
   >
     <!-- title -->
     <div class="text-left">
@@ -122,6 +122,9 @@ const isItemDetailActive = computed(() => (route.name === 'account-detail' ? tru
 const isAccountSessionsInfoActive = computed(() => (route.name === 'sessions' ? true : false));
 const isAccountServicesInfoActive = computed(() =>
   route.name === 'account-services' ? true : false
+);
+const isAccountNotificationsInfoActive = computed(() =>
+  route.name === 'account-notifications' ? true : false
 );
 
 // Table headers

@@ -1,4 +1,4 @@
-// Admission HTTP services using the axios instance
+// Management HTTP services using the axios instance
 
 import { axiosInstance } from '../AxiosInstanceService.js';
 import { SERVICES } from '../../constants/services.js';
@@ -8,6 +8,10 @@ const CONFIGURATION_PATH = SERVICES.path.docugen_web.management.configuration;
 const MONITOR_PATH = SERVICES.path.docugen_web.management.monitor;
 const PROCESSES_PATH = SERVICES.path.docugen_web.management.resource.processes.base;
 const NOTIFICATIONS_PATH = SERVICES.path.docugen_web.management.resource.notifications.base;
+const NOTIFICATION_ACKNOWLEDGEMENT_PATH =
+  SERVICES.path.docugen_web.management.resource.notifications.acknowledgement;
+const NOTIFICATION_CREATION_PATH =
+  SERVICES.path.docugen_web.management.resource.notifications.creation;
 const PROFILES_PATH = SERVICES.path.docugen_web.management.resource.profiles.base;
 
 export const ManagementService = {
@@ -21,11 +25,16 @@ export const ManagementService = {
   getProfile: (id) => {
     return axiosInstance.get(MANAGEMENT_BASE_PATH + MONITOR_PATH + PROFILES_PATH + `/${id}`);
   },
-  // Setters
-  setNotification: (id, params) => {
+  // Setters, creator and ack
+  createNotification: (payload) => {
     return axiosInstance.post(
-      MANAGEMENT_BASE_PATH + CONFIGURATION_PATH + NOTIFICATIONS_PATH + `/${id}`,
-      params
+      MANAGEMENT_BASE_PATH + NOTIFICATION_CREATION_PATH + NOTIFICATIONS_PATH,
+      payload
+    );
+  },
+  acknowledgeNotification: (id) => {
+    return axiosInstance.post(
+      MANAGEMENT_BASE_PATH + NOTIFICATION_ACKNOWLEDGEMENT_PATH + NOTIFICATIONS_PATH + `/${id}`
     );
   },
   setProfile: (id, payload) => {

@@ -1,33 +1,32 @@
 import { ref, computed } from 'vue';
 import { ManagementService } from '../../services/docugen-web/ManagementService.js';
 import { useMyNotificationsStore } from '../../stores/docugen-web/myNotificationsStore.js';
-import { useListsStore } from '../../stores/utils/listsStore.js';
 
-export const useMyNotifications = () => {
+export const useMyNotification = () => {
   // Notification setttings
   const message = ref(null);
   const code = ref(null);
   //  Request settings
   const myNotificationsStore = useMyNotificationsStore();
-  const listStore = useListsStore()
-  const myNotifications = computed(() => myNotificationsStore.getMyNotifications);
+  const myNotification = computed(() => myNotificationsStore.getMyNotifications);
   // Petition settings
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    notificationsGetter: async (params) => {
+    notificationAcknowledger: async (id) => {
       try {
         loading.value = true;
-        const response = await ManagementService.getNotifications(params);
-        myNotificationsStore.setMyNotifications(response.data.data.notifications);
-        listStore.setList(1, response.data.metadata.notifications)
+        const response = await ManagementService.acknowledgeNotification(id);
+        myNotificationsStore.setMyNotification(id, response.data.data.notification);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         console.error(err);
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in notificationsGetter';
+          err.response?.data?.message ||
+          err.response.statusText ||
+          'Error in notificationAcknowledger';
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
@@ -35,5 +34,6 @@ export const useMyNotifications = () => {
       }
     },
   };
-  return { myNotifications, actions, loading, success, message, code };
+
+  return { myNotification, actions, loading, success, message, code };
 };

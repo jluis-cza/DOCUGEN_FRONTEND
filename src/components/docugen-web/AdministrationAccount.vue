@@ -1,5 +1,12 @@
 <template>
-  <v-container fluid v-if="!isAccountSessionsInfoActive && !isAccountServicesInfoActive">
+  <v-container
+    fluid
+    v-if="
+      !isAccountSessionsInfoActive &&
+      !isAccountServicesInfoActive &&
+      !isAccountNotificationsInfoActive
+    "
+  >
     <template v-if="!loading">
       <!-- Breadcrums -->
       <v-breadcrumbs :items="breadcrumbs" class="pa-0 mb-4 font-weight-bold">
@@ -48,6 +55,13 @@
                         >Ver servicios</span
                       >
                     </template>
+                    <template v-else-if="item.label === 'Notificaciones'">
+                      <span
+                        class="text-info cursor-pointer text-decoration-underline"
+                        @click="viewAccountNotifications(accountId)"
+                        >Ver notificaciones</span
+                      >
+                    </template>
                     <template v-else>
                       {{ item.data }}
                     </template>
@@ -79,6 +93,9 @@ const accountId = ref('');
 const isAccountSessionsInfoActive = computed(() => (route.name === 'sessions' ? true : false));
 const isAccountServicesInfoActive = computed(() =>
   route.name === 'account-services' ? true : false
+);
+const isAccountNotificationsInfoActive = computed(() =>
+  route.name === 'account-notifications' ? true : false
 );
 const { account, actions, loading } = useAccount();
 const breadcrumbs = computed(() => [
@@ -148,6 +165,7 @@ const cardInfo = computed(() => {
       data: `${extractTime(account.value.updatedAt, 'America/La_Paz', 'long').date} - ${extractTime(account.value.updatedAt, 'America/La_Paz', 'long').hour}`,
     },
     { label: 'Sesiones', data: 'Ver sesiones' },
+    { label: 'Notificaciones', data: 'Ver notificaciones' },
   ];
 });
 
@@ -159,6 +177,11 @@ const viewAccountSessions = (id) => {
 const viewAccountServices = (id) => {
   if (!id) throw new Error('There is no account id');
   router.push(`/dashboard/accounts/${id}/services`);
+};
+
+const viewAccountNotifications = (id) => {
+  if (!id) throw new Error('There is no account id');
+  router.push(`/dashboard/accounts/${id}/notifications`);
 };
 
 onMounted(async () => {

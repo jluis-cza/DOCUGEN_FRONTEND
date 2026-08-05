@@ -62,6 +62,13 @@ export const administrationManagement = [
                 component: () =>
                   import('../../components/docugen-web/AdministrationAccountServices.vue'),
               },
+              {
+                path: 'notifications',
+                name: 'account-notifications',
+                meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE] },
+                component: () =>
+                  import('../../components/docugen-web/ManagementAccountNotifications.vue'),
+              },
             ],
           },
         ],

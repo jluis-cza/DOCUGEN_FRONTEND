@@ -1,16 +1,17 @@
 import { ref, computed } from 'vue';
 import { ManagementService } from '../../services/docugen-web/ManagementService.js';
-import { useMyNotificationsStore } from '../../stores/docugen-web/myNotificationsStore.js';
+import { useNotificationsStore } from '../../stores/docugen-web/notificationsStore.js';
 import { useListsStore } from '../../stores/utils/listsStore.js';
 
-export const useMyNotifications = () => {
+export const useNotifications = () => {
   // Notification setttings
   const message = ref(null);
   const code = ref(null);
   //  Request settings
-  const myNotificationsStore = useMyNotificationsStore();
-  const listStore = useListsStore()
-  const myNotifications = computed(() => myNotificationsStore.getMyNotifications);
+  const notificationsStore = useNotificationsStore();
+  const listsStore = useListsStore()
+  const notifications = computed(() => notificationsStore.getNotifications);
+  const listId = 2
   // Petition settings
   const loading = ref(false);
   const success = ref(null);
@@ -19,8 +20,9 @@ export const useMyNotifications = () => {
       try {
         loading.value = true;
         const response = await ManagementService.getNotifications(params);
-        myNotificationsStore.setMyNotifications(response.data.data.notifications);
-        listStore.setList(1, response.data.metadata.notifications)
+        notificationsStore.addNotifications(response.data.data.notifications);
+        // listsStore.resetList(listId)
+        listsStore.setList(listId, response.data.metadata.notifications);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
@@ -35,5 +37,6 @@ export const useMyNotifications = () => {
       }
     },
   };
-  return { myNotifications, actions, loading, success, message, code };
+
+  return { notifications, actions, loading, success, message, code };
 };

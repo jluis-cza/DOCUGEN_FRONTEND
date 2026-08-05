@@ -1,3 +1,4 @@
+// Defines the frontend popup single and passing notification
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { SERVICES } from '../../constants/services.js';

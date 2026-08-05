@@ -68,6 +68,8 @@ export const SERVICES = {
           notifications: {
             base: '/notifications',
             id: '/:notification_id',
+            acknowledgement: '/ack',
+            creation: '/create',
           },
           profiles: {
             base: '/profiles',
@@ -79,8 +81,21 @@ export const SERVICES = {
     docugen_app: {},
     utils: {
       base: '/utils',
-      routes_info: '/info',
+      routes: '/info',
       time: '/time',
+    },
+    lookup: {
+      base: '/lookup',
+      resource: {
+        accounts: {
+          base: '/accounts',
+        },
+        roles: {
+          base: '/roles',
+          admin: '/admin',
+          dev: '/dev',
+        },
+      },
     },
   },
   payload: {
@@ -102,6 +117,14 @@ export const SERVICES = {
             email: '',
           },
           password: '',
+        },
+      },
+      management: {
+        create_notification: {
+          to: '',
+          from: '',
+          subject: '',
+          message: '',
         },
       },
     },

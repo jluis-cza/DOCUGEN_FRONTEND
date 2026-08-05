@@ -68,6 +68,8 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessions } from '../../composables/docugen-web/useSessions.js';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
+import { useUsername } from '../../composables/docugen-web/useUsername.js';
+
 import { useTablesStore } from '../../stores/utils/tablesStore.js';
 import { extractTime } from '../../helpers/utils.js';
 
@@ -81,7 +83,7 @@ const {
   success: sessions_success,
   loading: sessions_loading,
 } = useSessions();
-const { account, actions: account_actions } = useAccount();
+const { username, actions: username_actions } = useUsername();
 // Breadcrumbs settings
 const breadcrumbs = computed(() => [
   {
@@ -90,7 +92,7 @@ const breadcrumbs = computed(() => [
     to: '/dashboard/accounts',
   },
   {
-    title: account.value?.username ?? '',
+    title: username.value ?? '',
     disabled: false,
     to: `/dashboard/accounts/${accountId.value}`,
   },
@@ -179,7 +181,7 @@ const handleTableUpdate = async ({ page, itemsPerPage, sortBy }) => {
 };
 
 onMounted(async () => {
-  await account_actions.accountGetter(accountId.value);
+  await username_actions.usernameGetter({ id: accountId.value });
 });
 </script>
 

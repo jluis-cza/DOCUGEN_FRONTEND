@@ -73,6 +73,16 @@ export const RULES = {
           return 'Error en la consulta';
         }
       },
+      notificationSubjectMaxCharacters: async (value) => {
+        if (!value) return 'Sin entrada';
+        const isValidCharacterLong = value.length <= 30;
+        return isValidCharacterLong || 'Máximo 30 carácteres.';
+      },
+      notificationMessageMaxCharacters: async (value) => {
+        if (!value) return 'Sin entrada';
+        const isValidCharacterLong = value.length <= 80;
+        return isValidCharacterLong || 'Máximo 80 carácteres.';
+      },
     },
   },
 };

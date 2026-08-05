@@ -15,9 +15,7 @@
     <div class="text-left">
       <h3>Servicios</h3>
     </div>
-    <p class="text-left my-4">
-      Configuración de servicios para la cuenta {{ account.username ?? '' }}.
-    </p>
+    <p class="text-left my-4">Configuración de servicios para la cuenta {{ username ?? '' }}.</p>
 
     <!-- table -->
     <div class="my-4">
@@ -97,6 +95,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useServices } from '../../composables/docugen-web/useServices.js';
 import { useService } from '../../composables/docugen-web/useService.js';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
+import { useUsername } from '../../composables/docugen-web/useUsername.js';
+
 import { useTablesStore } from '../../stores/utils/tablesStore.js';
 import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
 import { extractTime } from '../../helpers/utils.js';
@@ -115,7 +115,7 @@ const {
   loading: services_loading,
 } = useServices();
 const { service, actions: service_actions } = useService();
-const { account, actions: account_actions } = useAccount();
+const { username, actions: username_actions } = useUsername();
 // Breadcrumbs settings
 const breadcrumbs = computed(() => [
   {
@@ -124,7 +124,7 @@ const breadcrumbs = computed(() => [
     to: '/dashboard/accounts',
   },
   {
-    title: account.value?.username ?? '',
+    title: username.value ?? '',
     disabled: false,
     to: `/dashboard/accounts/${accountId.value}`,
   },
@@ -241,7 +241,7 @@ const onSwitchStatus = async (value, item) => {
 };
 
 onMounted(async () => {
-  await account_actions.accountGetter(accountId.value);
+  await username_actions.usernameGetter({ id: accountId.value });
 });
 </script>
 
