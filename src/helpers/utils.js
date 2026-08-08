@@ -119,3 +119,15 @@ export const extractSubarray = (array, offset, size) => {
   const subarray = array.slice(a, b);
   return subarray;
 };
+
+// Smooth scroll
+//  it accepts a reference to ana element of DOM and when invoked scrolls there
+export const scroll = (reference) => {
+  const scrollElement = reference?.$el || null;
+  if (scrollElement) {
+    scrollElement.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }
+};

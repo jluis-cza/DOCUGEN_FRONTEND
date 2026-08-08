@@ -56,6 +56,7 @@ export const SERVICES = {
         base: '/manager',
         monitor: '/monitor',
         configuration: '/config', //Rarely used
+        count: '/cnt',
         resource: {
           activities: {
             base: '/activities',

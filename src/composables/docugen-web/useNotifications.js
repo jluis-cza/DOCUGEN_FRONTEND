@@ -9,9 +9,9 @@ export const useNotifications = () => {
   const code = ref(null);
   //  Request settings
   const notificationsStore = useNotificationsStore();
-  const listsStore = useListsStore()
+  const listsStore = useListsStore();
   const notifications = computed(() => notificationsStore.getNotifications);
-  const listId = 2
+  const listId = 2;
   // Petition settings
   const loading = ref(false);
   const success = ref(null);

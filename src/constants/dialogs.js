@@ -152,7 +152,7 @@ export const DIALOGS = {
             enabled: true,
             class: 'textarea-1',
             counter: 80,
-            rows: 3
+            rows: 3,
           },
         ],
       },

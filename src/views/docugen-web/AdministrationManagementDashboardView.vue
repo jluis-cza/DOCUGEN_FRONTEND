@@ -21,7 +21,12 @@
               transition="fade-transition"
             >
               <template #activator="{ props }">
-                <v-badge content="100" color="error" overlap :model-value="true">
+                <v-badge
+                  :content="newNotificationsCount"
+                  color="error"
+                  overlap
+                  :model-value="newNotificationsCount === 0 ? false : true"
+                >
                   <v-icon icon="mdi-bell-outline" v-bind="props"></v-icon>
                 </v-badge>
               </template>
@@ -175,8 +180,10 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
+import { useMyNotificationsStore } from '../../stores/docugen-web/myNotificationsStore.js';
 import { useMySession } from '../../composables/docugen-web/useMySession.js';
 import { useMyUsername } from '../../composables/docugen-web/useMyUsername.js';
+import { useMyNotifications } from '../../composables/docugen-web/useMyNotifications.js';
 import { USERS } from '../../constants/users.js';
 import ManagementMyNotifications from '../../components/docugen-web/ManagementMyNotifications.vue';
 
@@ -184,8 +191,10 @@ import ManagementMyNotifications from '../../components/docugen-web/ManagementMy
 const router = useRouter();
 const route = useRoute();
 const myAccountStore = useMyAccountStore();
+const myNotificationsStore = useMyNotificationsStore();
 const { actions: mySession_actions } = useMySession();
 const { myUsername, actions: myUsername_actions } = useMyUsername();
+const { myNotifications, actions: myNotifications_actions } = useMyNotifications();
 const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
 // Layout values
@@ -194,6 +203,7 @@ const myAccount = computed(() => myAccountStore.getMyAccount);
 const drawerOpen = ref(true);
 const accountMenuOpen = ref(false);
 const notificationsMenuOpen = ref(false);
+const newNotificationsCount = computed(() => myNotificationsStore.getMyNotificationsCount);
 const userInitials = computed(() =>
   myUsername.value ? myUsername.value.slice(0, 2).toUpperCase() : 'NA'
 );
@@ -221,6 +231,10 @@ const openMyProfile = async () => {
 };
 onMounted(async () => {
   await myUsername_actions.usernameGetter({ id: myAccount.value.id || '' });
+  await myNotifications_actions.notificationsCounter({
+    to: myAccount.value.id,
+    status: 'sent',
+  });
 });
 </script>
 

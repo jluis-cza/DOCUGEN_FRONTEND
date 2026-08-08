@@ -6,6 +6,7 @@ import { SERVICES } from '../../constants/services.js';
 const MANAGEMENT_BASE_PATH = SERVICES.path.docugen_web.management.base;
 const CONFIGURATION_PATH = SERVICES.path.docugen_web.management.configuration;
 const MONITOR_PATH = SERVICES.path.docugen_web.management.monitor;
+const COUNT_PATH = SERVICES.path.docugen_web.management.count;
 const PROCESSES_PATH = SERVICES.path.docugen_web.management.resource.processes.base;
 const NOTIFICATIONS_PATH = SERVICES.path.docugen_web.management.resource.notifications.base;
 const NOTIFICATION_ACKNOWLEDGEMENT_PATH =
@@ -21,6 +22,9 @@ export const ManagementService = {
   },
   getNotifications: (params) => {
     return axiosInstance.get(MANAGEMENT_BASE_PATH + MONITOR_PATH + NOTIFICATIONS_PATH, { params });
+  },
+  countNotifications: (params) => {
+    return axiosInstance.get(MANAGEMENT_BASE_PATH + COUNT_PATH + NOTIFICATIONS_PATH, { params });
   },
   getProfile: (id) => {
     return axiosInstance.get(MANAGEMENT_BASE_PATH + MONITOR_PATH + PROFILES_PATH + `/${id}`);

@@ -4,6 +4,6 @@ export const CHARTS = {
     cursor: null,
     limit: 7, //Number of x elements in a window
     hasPrevChunck: true,
-    hasNextChunck: false
+    hasNextChunck: false,
   },
 };
