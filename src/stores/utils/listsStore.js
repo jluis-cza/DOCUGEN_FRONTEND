@@ -4,7 +4,7 @@ import { deepMerge } from '../../helpers/utils.js';
 import { toRaw } from 'vue';
 import { LISTS } from '../../constants/lists.js';
 
-const getDefaultListData = () => JSON.parse(JSON.stringify(LISTS.default))
+const getDefaultListData = () => JSON.parse(JSON.stringify(LISTS.default));
 export const useListsStore = defineStore('lists', () => {
   // States
   const lists = ref([]);
@@ -17,15 +17,15 @@ export const useListsStore = defineStore('lists', () => {
 
   // Actions
   const setList = (id, options) => {
-    const index = lists.value.findIndex((l)=> l.id === id);
+    const index = lists.value.findIndex((l) => l.id === id);
     if (index !== -1) {
       lists.value[index] = deepMerge(toRaw(lists.value[index]), options);
     } else {
-      lists.value.push(deepMerge({ id }, options)); 
+      lists.value.push(deepMerge({ id }, options));
     }
   };
   const resetList = (id) => {
-    const index = lists.value.findIndex((l)=> l.id === id);
+    const index = lists.value.findIndex((l) => l.id === id);
     if (index !== -1) {
       lists.value[index] = deepMerge(toRaw(lists.value[index]), getDefaultListData());
     } else {
@@ -33,7 +33,7 @@ export const useListsStore = defineStore('lists', () => {
     }
   };
   const deleteList = (id) => {
-    const index = lists.value.findIndex((l)=> l.id === id);
+    const index = lists.value.findIndex((l) => l.id === id);
     if (index !== -1) {
       lists.value.splice(index, 1);
     }

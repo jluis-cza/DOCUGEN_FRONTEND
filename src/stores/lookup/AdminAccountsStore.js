@@ -8,10 +8,10 @@ export const useAdminAccountsStore = defineStore('adminAccounts', () => {
   const getAdminAccounts = computed(() => adminAccounts.value);
   // Actions
   const setAdminAccounts = (data) => {
-   adminAccounts.value = data || [];
+    adminAccounts.value = data || [];
   };
   const resetAdminAccounts = () => {
-   adminAccounts.value = []
+    adminAccounts.value = [];
   };
   return { getAdminAccounts, setAdminAccounts, resetAdminAccounts };
 });

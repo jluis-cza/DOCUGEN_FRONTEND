@@ -22,7 +22,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   //   notifications.value = data || [];
   // };
   const addNotifications = (data) => {
-    if(data && data.length > 0) {
+    if (data && data.length > 0) {
       // const chunk = [...data].reverse()
       // notifications.value.unshift(...chunk);
       notifications.value.push(...data);

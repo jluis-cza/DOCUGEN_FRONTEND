@@ -83,7 +83,7 @@ const login = async () => {
       await actions.mySessionStarter(credentialsData.value);
       if (success.value) {
         credentialsData.value = getCredentialsDefaultData();
-        identifier.value = ''
+        identifier.value = '';
         // await form.value.reset()
         await router.push('/dashboard');
       }

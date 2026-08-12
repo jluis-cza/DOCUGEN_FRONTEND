@@ -3,6 +3,6 @@ export const LISTS = {
   default: {
     cursor: null,
     limit: 5,
-    hasNextChunk: true
+    hasNextChunk: true,
   },
 };

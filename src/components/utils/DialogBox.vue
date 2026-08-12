@@ -46,19 +46,19 @@
 
                   <!-- textarea-1 -->
                   <template v-if="parameter.class === 'textarea-1'">
-                  <v-textarea
-                  v-model="parameter.value"
-                  :label="parameter.label"
-                  :rules="getRules(parameter.ruleSet)"
-                  :validate-on="parameter.evaluateOn"
-                  :rows="parameter.rows"
-                  :counter="parameter.counter"
-                  variant="filled"
-                  clearable
-                  required
-                  no-resize
-                  ></v-textarea>
-                </template>
+                    <v-textarea
+                      v-model="parameter.value"
+                      :label="parameter.label"
+                      :rules="getRules(parameter.ruleSet)"
+                      :validate-on="parameter.evaluateOn"
+                      :rows="parameter.rows"
+                      :counter="parameter.counter"
+                      variant="filled"
+                      clearable
+                      required
+                      no-resize
+                    ></v-textarea>
+                  </template>
                 </v-list-item>
                 <v-divider></v-divider>
               </template>
@@ -112,8 +112,10 @@ const rules = {
       () => parameters.value.find((p) => p.key === 'newPass')?.value || '',
       'Las contraseñas'
     )(value),
-  RULE_NOTIFICATION_SUBJECT_MAX_CHARACTERS: async (value) => RULES.text.input.notificationSubjectMaxCharacters(value),
-  RULE_NOTIFICATION_MESSAGE_MAX_CHARACTERS: async (value) => RULES.text.input.notificationMessageMaxCharacters(value),
+  RULE_NOTIFICATION_SUBJECT_MAX_CHARACTERS: async (value) =>
+    RULES.text.input.notificationSubjectMaxCharacters(value),
+  RULE_NOTIFICATION_MESSAGE_MAX_CHARACTERS: async (value) =>
+    RULES.text.input.notificationMessageMaxCharacters(value),
 };
 const form = ref(null);
 

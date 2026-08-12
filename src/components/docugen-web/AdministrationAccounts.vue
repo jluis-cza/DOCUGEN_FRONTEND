@@ -1,7 +1,12 @@
 <template>
   <v-container
     fluid
-    v-if="!isItemDetailActive && !isAccountSessionsInfoActive && !isAccountServicesInfoActive && !isAccountNotificationsInfoActive"
+    v-if="
+      !isItemDetailActive &&
+      !isAccountSessionsInfoActive &&
+      !isAccountServicesInfoActive &&
+      !isAccountNotificationsInfoActive
+    "
   >
     <!-- title -->
     <div class="text-left">

@@ -13,7 +13,7 @@
     </v-breadcrumbs>
 
     <!-- Notifications Box -->
-    <v-card min-width="700" >
+    <v-card min-width="700">
       <!-- title -->
       <v-card-item>
         <template #prepend>
@@ -24,9 +24,15 @@
       <!-- Messages-->
       <v-card-item class="bg-surface">
         <v-list>
-          <v-infinite-scroll :height="400" side="end" @load="onLoad" class="bg-background" ref="infiniteScrollRef">
+          <v-infinite-scroll
+            :height="400"
+            side="end"
+            @load="onLoad"
+            class="bg-background"
+            ref="infiniteScrollRef"
+          >
             <template v-for="notification in notifications" :key="notification._id">
-              <v-list-item >
+              <v-list-item>
                 <v-card variant="tonal" color="info" class="mx-auto mb-2">
                   <v-card-item>
                     <template #prepend>
@@ -168,7 +174,7 @@ const createNotification = async () => {
         const subject = response.parameters.find((p) => p.key === 'subject').value;
         const payload = { to: accountId.value, from: myAccountId.value, subject, message };
         await notification_actions.notificationCreator({ data: payload });
-        await scrollToTop()
+        await scrollToTop();
       }
     } else if (response.key === 'n') {
       exitDialog = true;

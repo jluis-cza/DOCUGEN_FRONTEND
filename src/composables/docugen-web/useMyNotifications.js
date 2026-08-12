@@ -9,7 +9,7 @@ export const useMyNotifications = () => {
   const code = ref(null);
   //  Request settings
   const myNotificationsStore = useMyNotificationsStore();
-  const listStore = useListsStore()
+  const listStore = useListsStore();
   const myNotifications = computed(() => myNotificationsStore.getMyNotifications);
   // Petition settings
   const loading = ref(false);
@@ -20,7 +20,7 @@ export const useMyNotifications = () => {
         loading.value = true;
         const response = await ManagementService.getNotifications(params);
         myNotificationsStore.setMyNotifications(response.data.data.notifications);
-        listStore.setList(1, response.data.metadata.notifications)
+        listStore.setList(1, response.data.metadata.notifications);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';
