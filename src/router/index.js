@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { admission } from './docugen-web/admission.js';
 import { administrationManagement } from './docugen-web/administrationManagement.js';
+import { USERS } from '../constants/users.js';
 import guard from './guard.js';
 
 const routes = [
@@ -25,6 +26,12 @@ const routes = [
   },
   ...admission,
   ...administrationManagement,
+  {
+    path: '/templates/:templateId/edit',
+    name: 'standalone-template-editor',
+    meta: { requiresAuth: true, allowedRoles: [USERS.type.client.role.developer] },
+    component: () => import('../components/docugen-app/TemplateEditor.vue'),
+  },
 
   //  DOCUGEN-APP
 

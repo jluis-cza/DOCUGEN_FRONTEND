@@ -22,9 +22,11 @@ export const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const tokenStore = useTokenStore();
-    const token = tokenStore.getToken || '';
+    const token = typeof tokenStore.getToken === 'string' ? tokenStore.getToken : '';
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
     }
     console.log('Request:', config.method.toUpperCase(), config.url);
     return config;

@@ -105,12 +105,6 @@ export const administrationManagement = [
         meta: { requiresAuth: true, allowedRoles: [DEV_ROLE] },
         component: () => import('../../components/docugen-app/TemplateList.vue'),
       },
-      {
-        path: 'templates/:templateId/edit',
-        name: 'template-editor',
-        meta: { requiresAuth: true, allowedRoles: [DEV_ROLE] },
-        component: () => import('../../components/docugen-app/TemplateEditor.vue'),
-      },
     ],
   },
 ];

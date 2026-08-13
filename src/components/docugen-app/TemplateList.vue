@@ -137,7 +137,7 @@ const createNewTemplate = async () => {
 
 const openEditor = (templateId) => {
   if (!templateId) return;
-  router.push(`/dashboard/templates/${templateId}/edit`);
+  router.push(`/templates/${templateId}/edit`);
 };
 
 const deleteItem = async (templateId) => {

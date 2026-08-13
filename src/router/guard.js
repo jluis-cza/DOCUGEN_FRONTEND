@@ -6,7 +6,7 @@ const guard = (router) => {
   // Global guard
   router.beforeEach(async (to, from, next) => {
     const tokenStore = useTokenStore();
-    const currentToken = tokenStore.getToken;
+    const currentToken = typeof tokenStore.getToken === 'string' ? tokenStore.getToken : '';
 
     // Checking is autentication is needed to access the route
     if (to.meta.requiresAuth) {

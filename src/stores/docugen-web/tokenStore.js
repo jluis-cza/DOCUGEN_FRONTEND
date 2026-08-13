@@ -3,17 +3,17 @@ import { ref, computed } from 'vue';
 
 export const useTokenStore = defineStore('token', () => {
   // States
-  const token = ref(null);
+  const token = ref('');
 
   //Getters
-  const getToken = computed(() => token.value);
+  const getToken = computed(() => (typeof token.value === 'string' ? token.value : ''));
 
   // Actions
   const setToken = (data) => {
-    token.value = data || '';
+    token.value = typeof data === 'string' ? data : '';
   };
   const resetToken = () => {
-    token.value = {};
+    token.value = '';
   };
 
   return {

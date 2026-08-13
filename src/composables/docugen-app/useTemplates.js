@@ -2,6 +2,12 @@ import { computed, ref } from 'vue';
 import { useTemplatesStore } from '../../stores/docugen-app/templatesStore.js';
 import { TemplateService } from '../../services/docugen-app/TemplateService.js';
 
+const unwrapApiData = (response, fallback = {}) => {
+  if (response?.data?.data !== undefined) return response.data.data;
+  if (response?.data !== undefined) return response.data;
+  return fallback;
+};
+
 export const useTemplates = () => {
   const templatesStore = useTemplatesStore();
   const loading = ref(false);
@@ -16,10 +22,13 @@ export const useTemplates = () => {
     try {
       loading.value = true;
       const response = await TemplateService.listTemplates(params);
-      templatesStore.setTemplates(response.data.data.templates || []);
-      success.value = response.data.success;
-      message.value = response.data.message;
-      code.value = response.data.code;
+      const payload = unwrapApiData(response, { templates: [] });
+      const items = Array.isArray(payload?.templates) ? payload.templates : Array.isArray(payload) ? payload : [];
+
+      templatesStore.setTemplates(items);
+      success.value = response.data?.success ?? true;
+      message.value = response.data?.message || '';
+      code.value = response.data?.code || 'S2001';
       return response;
     } catch (error) {
       success.value = false;
@@ -35,8 +44,9 @@ export const useTemplates = () => {
     try {
       loading.value = true;
       const response = await TemplateService.getTemplate(id);
-      templatesStore.setSelectedTemplate(response.data.data || {});
-      return response.data.data;
+      const template = unwrapApiData(response, {});
+      templatesStore.setSelectedTemplate(template || {});
+      return template || {};
     } catch (error) {
       success.value = false;
       message.value = error.response?.data?.message || 'Error cargando plantilla';
