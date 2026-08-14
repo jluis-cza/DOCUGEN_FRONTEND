@@ -23,7 +23,11 @@ export const useTemplates = () => {
       loading.value = true;
       const response = await TemplateService.listTemplates(params);
       const payload = unwrapApiData(response, { templates: [] });
-      const items = Array.isArray(payload?.templates) ? payload.templates : Array.isArray(payload) ? payload : [];
+      const items = Array.isArray(payload?.templates)
+        ? payload.templates
+        : Array.isArray(payload)
+          ? payload
+          : [];
 
       templatesStore.setTemplates(items);
       success.value = response.data?.success ?? true;

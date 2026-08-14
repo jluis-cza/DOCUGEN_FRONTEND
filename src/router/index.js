@@ -32,6 +32,12 @@ const routes = [
     meta: { requiresAuth: true, allowedRoles: [USERS.type.client.role.developer] },
     component: () => import('../components/docugen-app/TemplateEditor.vue'),
   },
+  {
+    path: '/templates/:templateId/present',
+    name: 'standalone-template-presentation',
+    meta: { requiresAuth: true, allowedRoles: [USERS.type.client.role.developer] },
+    component: () => import('../components/docugen-app/TemplatePresentationView.vue'),
+  },
 
   //  DOCUGEN-APP
 

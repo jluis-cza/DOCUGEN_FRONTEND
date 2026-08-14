@@ -8,16 +8,30 @@
       <div class="d-flex align-center ga-3">
         <div class="text-start">
           <div class="text-caption text-medium-emphasis">Plantillas</div>
-          <div class="text-subtitle-1 font-weight-bold">{{ template.name || 'Nueva plantilla' }}</div>
+          <div class="text-subtitle-1 font-weight-bold">
+            {{ template.name || 'Nueva plantilla' }}
+          </div>
         </div>
       </div>
 
       <template #append>
         <div class="d-flex align-center ga-2 flex-wrap">
-          <v-btn size="small" variant="text" prepend-icon="mdi-undo" :disabled="history.length <= 1" @click="undo">
+          <v-btn
+            size="small"
+            variant="text"
+            prepend-icon="mdi-undo"
+            :disabled="history.length <= 1"
+            @click="undo"
+          >
             Deshacer
           </v-btn>
-          <v-btn size="small" variant="text" prepend-icon="mdi-redo" :disabled="future.length === 0" @click="redo">
+          <v-btn
+            size="small"
+            variant="text"
+            prepend-icon="mdi-redo"
+            :disabled="future.length === 0"
+            @click="redo"
+          >
             Rehacer
           </v-btn>
 
@@ -31,10 +45,21 @@
           <v-btn variant="tonal" prepend-icon="mdi-content-save" size="small" @click="saveTemplate">
             Guardar
           </v-btn>
-          <v-btn color="primary" prepend-icon="mdi-file-pdf-box" size="small" @click="renderPdf">
-            Generar PDF
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-file-pdf-box"
+            size="small"
+            @click="openPresentation"
+          >
+            Configurar y Generar
           </v-btn>
-          <v-btn variant="text" color="error" prepend-icon="mdi-exit-to-app" size="small" @click="backToTemplates">
+          <v-btn
+            variant="text"
+            color="error"
+            prepend-icon="mdi-exit-to-app"
+            size="small"
+            @click="backToTemplates"
+          >
             Salir
           </v-btn>
         </div>
@@ -47,7 +72,9 @@
           <v-card class="panel h-100" rounded="xl">
             <div class="panel-header d-flex align-center justify-space-between">
               <h4>Elementos</h4>
-              <v-chip color="primary" size="small" variant="tonal">{{ template.elements.length }}</v-chip>
+              <v-chip color="primary" size="small" variant="tonal">{{
+                template.elements.length
+              }}</v-chip>
             </div>
 
             <div class="toolbar-grid">
@@ -113,23 +140,48 @@
                 <v-chip size="small" color="secondary" variant="tonal">
                   {{ template.elements.length }} elementos
                 </v-chip>
-                <v-chip size="small" color="success" variant="tonal">Zoom {{ Math.round(zoom * 100) }}%</v-chip>
+                <v-chip size="small" color="success" variant="tonal"
+                  >Zoom {{ Math.round(zoom * 100) }}%</v-chip
+                >
               </div>
               <div class="d-flex align-center ga-2">
-                <v-btn icon="mdi-content-copy" variant="text" size="small" :disabled="!selectedElement" @click="duplicateSelectedElement" />
-                <v-btn icon="mdi-delete" variant="text" color="error" size="small" :disabled="!selectedElement" @click="removeSelectedElement" />
+                <v-btn
+                  icon="mdi-content-copy"
+                  variant="text"
+                  size="small"
+                  :disabled="!selectedElement"
+                  @click="duplicateSelectedElement"
+                />
+                <v-btn
+                  icon="mdi-delete"
+                  variant="text"
+                  color="error"
+                  size="small"
+                  :disabled="!selectedElement"
+                  @click="removeSelectedElement"
+                />
               </div>
             </div>
 
             <div class="canvas-shell" @click="closeContextMenu">
               <div class="ruler ruler-horizontal">
-                <div v-for="n in 36" :key="`h-${n}`" class="tick" :style="{ left: `${(n - 1) * 30}px` }">
+                <div
+                  v-for="n in 36"
+                  :key="`h-${n}`"
+                  class="tick"
+                  :style="{ left: `${(n - 1) * 30}px` }"
+                >
                   <span>{{ (n - 1) * 30 }}</span>
                 </div>
               </div>
 
               <div class="ruler ruler-vertical">
-                <div v-for="n in 36" :key="`v-${n}`" class="tick" :style="{ top: `${(n - 1) * 30}px` }">
+                <div
+                  v-for="n in 36"
+                  :key="`v-${n}`"
+                  class="tick"
+                  :style="{ top: `${(n - 1) * 30}px` }"
+                >
                   <span>{{ (n - 1) * 30 }}</span>
                 </div>
               </div>
@@ -157,13 +209,31 @@
                     @contextmenu.prevent
                   >
                     <defs>
-                      <pattern id="editor-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                      <pattern
+                        id="editor-grid"
+                        width="20"
+                        height="20"
+                        patternUnits="userSpaceOnUse"
+                      >
                         <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" stroke-width="1" />
                       </pattern>
                     </defs>
 
-                    <rect :width="width" :height="height" fill="#ffffff" stroke="#dfe3ec" stroke-width="2" rx="8" />
-                    <rect :width="width" :height="height" fill="url(#editor-grid)" opacity="0.55" rx="8" />
+                    <rect
+                      :width="width"
+                      :height="height"
+                      fill="#ffffff"
+                      stroke="#dfe3ec"
+                      stroke-width="2"
+                      rx="8"
+                    />
+                    <rect
+                      :width="width"
+                      :height="height"
+                      fill="url(#editor-grid)"
+                      opacity="0.55"
+                      rx="8"
+                    />
 
                     <g v-for="element in template.elements" :key="element.id">
                       <rect
@@ -173,8 +243,14 @@
                         :width="element.width"
                         :height="element.height"
                         :fill="element.fill || '#eaf2ff'"
-                        :stroke="selectedElement?.id === element.id ? '#2563eb' : element.stroke || '#9ec5fe'"
-                        :stroke-width="selectedElement?.id === element.id ? 2 : element.strokeWidth || 1"
+                        :stroke="
+                          selectedElement?.id === element.id
+                            ? '#2563eb'
+                            : element.stroke || '#9ec5fe'
+                        "
+                        :stroke-width="
+                          selectedElement?.id === element.id ? 2 : element.strokeWidth || 1
+                        "
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
@@ -187,8 +263,14 @@
                         :y1="element.y"
                         :x2="Number(element.x) + Number(element.width || 120)"
                         :y2="Number(element.y) + Number(element.height || 0)"
-                        :stroke="selectedElement?.id === element.id ? '#2563eb' : element.stroke || '#9ec5fe'"
-                        :stroke-width="selectedElement?.id === element.id ? 2 : element.strokeWidth || 1"
+                        :stroke="
+                          selectedElement?.id === element.id
+                            ? '#2563eb'
+                            : element.stroke || '#9ec5fe'
+                        "
+                        :stroke-width="
+                          selectedElement?.id === element.id ? 2 : element.strokeWidth || 1
+                        "
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
@@ -197,7 +279,10 @@
 
                       <image
                         v-else-if="element.type === 'image'"
-                        :href="element.src || 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23e2e8f0%22/%3E%3C/svg%3E'"
+                        :href="
+                          element.src ||
+                          'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23e2e8f0%22/%3E%3C/svg%3E'
+                        "
                         :x="element.x"
                         :y="element.y"
                         :width="element.width"
@@ -249,7 +334,11 @@
                           :width="element.width || 18"
                           :height="element.height || 18"
                           :fill="element.fill || '#ffffff'"
-                          :stroke="selectedElement?.id === element.id ? '#2563eb' : element.stroke || '#94a3b8'"
+                          :stroke="
+                            selectedElement?.id === element.id
+                              ? '#2563eb'
+                              : element.stroke || '#94a3b8'
+                          "
                           stroke-width="2"
                           rx="4"
                         />
@@ -269,7 +358,11 @@
                         :x="element.x"
                         :y="element.y + (element.height || 20) / 2"
                         :font-size="element.fontSize || 18"
-                        :fill="selectedElement?.id === element.id ? '#1d4ed8' : element.color || '#111111'"
+                        :fill="
+                          selectedElement?.id === element.id
+                            ? '#1d4ed8'
+                            : element.color || '#111111'
+                        "
                         :font-weight="selectedElement?.id === element.id ? 800 : 700"
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
@@ -284,16 +377,39 @@
               </div>
             </div>
 
-            <div v-if="contextMenu.visible" class="context-menu" :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }">
+            <div
+              v-if="contextMenu.visible"
+              class="context-menu"
+              :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+            >
               <v-card class="pa-2" rounded="lg" border>
                 <div class="context-menu-list">
-                  <v-btn block variant="text" prepend-icon="mdi-content-copy" size="small" @click="duplicateSelectedElement">
+                  <v-btn
+                    block
+                    variant="text"
+                    prepend-icon="mdi-content-copy"
+                    size="small"
+                    @click="duplicateSelectedElement"
+                  >
                     Duplicar
                   </v-btn>
-                  <v-btn block variant="text" prepend-icon="mdi-content-duplicate" size="small" @click="copySelectedElement">
+                  <v-btn
+                    block
+                    variant="text"
+                    prepend-icon="mdi-content-duplicate"
+                    size="small"
+                    @click="copySelectedElement"
+                  >
                     Copiar
                   </v-btn>
-                  <v-btn block variant="text" prepend-icon="mdi-delete" size="small" color="error" @click="removeSelectedElement">
+                  <v-btn
+                    block
+                    variant="text"
+                    prepend-icon="mdi-delete"
+                    size="small"
+                    color="error"
+                    @click="removeSelectedElement"
+                  >
                     Eliminar
                   </v-btn>
                 </div>
@@ -318,9 +434,14 @@
             </div>
 
             <template v-if="selectedElement">
-              <v-text-field v-model="selectedElement.text" label="Texto / etiqueta" density="comfortable" @change="markDirty" />
               <v-text-field
-                v-if="['image','qr','placeholder'].includes(selectedElement.type)"
+                v-model="selectedElement.text"
+                label="Texto / etiqueta"
+                density="comfortable"
+                @change="markDirty"
+              />
+              <v-text-field
+                v-if="['image', 'qr', 'placeholder'].includes(selectedElement.type)"
                 v-model="selectedElement.src"
                 label="URL / origen"
                 density="comfortable"
@@ -334,7 +455,11 @@
                 @change="markDirty"
               />
               <v-text-field
-                v-if="selectedElement.type === 'placeholder' || selectedElement.type === 'date' || selectedElement.type === 'pageNumber'"
+                v-if="
+                  selectedElement.type === 'placeholder' ||
+                  selectedElement.type === 'date' ||
+                  selectedElement.type === 'pageNumber'
+                "
                 v-model="selectedElement.placeholderKey"
                 label="Clave del dato"
                 density="comfortable"
@@ -343,22 +468,58 @@
 
               <v-row dense>
                 <v-col cols="6">
-                  <v-text-field v-model.number="selectedElement.x" label="X" type="number" density="comfortable" @change="markDirty" />
+                  <v-text-field
+                    v-model.number="selectedElement.x"
+                    label="X"
+                    type="number"
+                    density="comfortable"
+                    @change="markDirty"
+                  />
                 </v-col>
                 <v-col cols="6">
-                  <v-text-field v-model.number="selectedElement.y" label="Y" type="number" density="comfortable" @change="markDirty" />
+                  <v-text-field
+                    v-model.number="selectedElement.y"
+                    label="Y"
+                    type="number"
+                    density="comfortable"
+                    @change="markDirty"
+                  />
                 </v-col>
                 <v-col cols="6">
-                  <v-text-field v-model.number="selectedElement.width" label="Ancho" type="number" density="comfortable" @change="markDirty" />
+                  <v-text-field
+                    v-model.number="selectedElement.width"
+                    label="Ancho"
+                    type="number"
+                    density="comfortable"
+                    @change="markDirty"
+                  />
                 </v-col>
                 <v-col cols="6">
-                  <v-text-field v-model.number="selectedElement.height" label="Alto" type="number" density="comfortable" @change="markDirty" />
+                  <v-text-field
+                    v-model.number="selectedElement.height"
+                    label="Alto"
+                    type="number"
+                    density="comfortable"
+                    @change="markDirty"
+                  />
                 </v-col>
                 <v-col cols="6">
-                  <v-text-field v-model.number="selectedElement.fontSize" label="Tamaño" type="number" density="comfortable" @change="markDirty" />
+                  <v-text-field
+                    v-model.number="selectedElement.fontSize"
+                    label="Tamaño"
+                    type="number"
+                    density="comfortable"
+                    @change="markDirty"
+                  />
                 </v-col>
                 <v-col cols="6">
-                  <v-text-field v-model="selectedElement.color" label="Color" type="color" density="comfortable" @change="markDirty" />
+                  <v-text-field
+                    v-model="selectedElement.color"
+                    label="Color"
+                    type="color"
+                    density="comfortable"
+                    @change="markDirty"
+                  />
                 </v-col>
               </v-row>
 
@@ -371,25 +532,70 @@
                 density="comfortable"
                 @change="markDirty"
               />
-              <v-text-field v-model="selectedElement.stroke" label="Color de borde" type="color" density="comfortable" @change="markDirty" />
-              <v-text-field v-model.number="selectedElement.strokeWidth" label="Grosor de borde" type="number" density="comfortable" @change="markDirty" />
+              <v-text-field
+                v-model="selectedElement.stroke"
+                label="Color de borde"
+                type="color"
+                density="comfortable"
+                @change="markDirty"
+              />
+              <v-text-field
+                v-model.number="selectedElement.strokeWidth"
+                label="Grosor de borde"
+                type="number"
+                density="comfortable"
+                @change="markDirty"
+              />
             </template>
 
             <template v-else>
-              <v-text-field v-model="template.name" label="Nombre" density="comfortable" @change="markDirty" />
-              <v-textarea v-model="template.description" label="Descripción" rows="3" density="comfortable" @change="markDirty" />
-              <v-text-field v-model.number="template.dimensions.width" label="Ancho" type="number" density="comfortable" @change="markDirty" />
-              <v-text-field v-model.number="template.dimensions.height" label="Alto" type="number" density="comfortable" @change="markDirty" />
-              <v-select v-model="template.status" label="Estado" :items="['draft', 'published', 'archived']" density="comfortable" @change="markDirty" />
+              <v-text-field
+                v-model="template.name"
+                label="Nombre"
+                density="comfortable"
+                @change="markDirty"
+              />
+              <v-textarea
+                v-model="template.description"
+                label="Descripción"
+                rows="3"
+                density="comfortable"
+                @change="markDirty"
+              />
+              <v-text-field
+                v-model.number="template.dimensions.width"
+                label="Ancho"
+                type="number"
+                density="comfortable"
+                @change="markDirty"
+              />
+              <v-text-field
+                v-model.number="template.dimensions.height"
+                label="Alto"
+                type="number"
+                density="comfortable"
+                @change="markDirty"
+              />
+              <v-select
+                v-model="template.status"
+                label="Estado"
+                :items="['draft', 'published', 'archived']"
+                density="comfortable"
+                @change="markDirty"
+              />
 
               <v-divider class="my-3" />
 
               <div class="panel-helper">
                 <div class="text-caption text-medium-emphasis mb-2">Campos dinámicos</div>
                 <v-chip-group column>
-                  <v-chip size="small" label @click="insertPlaceholder('cliente_nombre')">cliente_nombre</v-chip>
+                  <v-chip size="small" label @click="insertPlaceholder('cliente_nombre')"
+                    >cliente_nombre</v-chip
+                  >
                   <v-chip size="small" label @click="insertPlaceholder('empresa')">empresa</v-chip>
-                  <v-chip size="small" label @click="insertPlaceholder('cliente_id')">cliente_id</v-chip>
+                  <v-chip size="small" label @click="insertPlaceholder('cliente_id')"
+                    >cliente_id</v-chip
+                  >
                   <v-chip size="small" label @click="insertPlaceholder('fecha')">fecha</v-chip>
                   <v-chip size="small" label @click="insertPlaceholder('codigo')">codigo</v-chip>
                 </v-chip-group>
@@ -435,19 +641,25 @@ const history = ref([]);
 const future = ref([]);
 const contextMenu = ref({ visible: false, x: 0, y: 0, element: null });
 
-const serializeTemplate = () => JSON.stringify({
-  name: template.value.name,
-  description: template.value.description,
-  status: template.value.status,
-  dimensions: template.value.dimensions,
-  elements: template.value.elements,
-});
+const serializeTemplate = () =>
+  JSON.stringify({
+    name: template.value.name,
+    description: template.value.description,
+    status: template.value.status,
+    dimensions: template.value.dimensions,
+    elements: template.value.elements,
+  });
 
 const applySnapshot = (snapshot) => {
   if (!snapshot) return;
   try {
     const nextState = JSON.parse(snapshot);
-    template.value = { ...template.value, ...nextState, dimensions: nextState.dimensions || template.value.dimensions, elements: nextState.elements || [] };
+    template.value = {
+      ...template.value,
+      ...nextState,
+      dimensions: nextState.dimensions || template.value.dimensions,
+      elements: nextState.elements || [],
+    };
     width.value = Number(template.value.dimensions.width || 794);
     height.value = Number(template.value.dimensions.height || 1123);
     if (!template.value.elements.some((item) => item.id === selectedElement.value?.id)) {
@@ -510,11 +722,10 @@ const loadTemplate = async () => {
       ...baseTemplate(),
       ...normalizedItem,
       dimensions: normalizedItem.dimensions || { width: 794, height: 1123, unit: 'px' },
-      page:
-        normalizedItem.page || {
-          backgroundColor: '#ffffff',
-          margin: { top: 40, right: 40, bottom: 40, left: 40 },
-        },
+      page: normalizedItem.page || {
+        backgroundColor: '#ffffff',
+        margin: { top: 40, right: 40, bottom: 40, left: 40 },
+      },
       canvas: normalizedItem.canvas || { version: 1, zoom: 1, background: '#ffffff' },
       elements: Array.isArray(normalizedItem.elements) ? normalizedItem.elements : [],
     };
@@ -556,28 +767,159 @@ const makeElement = (type, extra = {}) => {
   pushHistory();
 };
 
-const addTextElement = () => makeElement('text', { text: 'Texto', x: 50, y: 80, width: 220, height: 30, fontSize: 18 });
-const addTitleElement = () => makeElement('title', { text: 'Título', x: 50, y: 110, width: 280, height: 42, fontSize: 28, fontWeight: '700' });
-const addSubtitleElement = () => makeElement('subtitle', { text: 'Subtítulo', x: 50, y: 165, width: 300, height: 30, fontSize: 20, fontWeight: '600' });
-const addParagraphElement = () => makeElement('paragraph', { text: 'Párrafo de ejemplo.', x: 50, y: 200, width: 300, height: 60, fontSize: 16 });
-const addListElement = () => makeElement('list', { text: '• Elemento de lista', x: 50, y: 270, width: 240, height: 28, fontSize: 15 });
-const addPlaceholder = () => makeElement('placeholder', { text: '{{cliente_nombre}}', placeholderKey: 'cliente_nombre', x: 50, y: 330, width: 220, height: 30, fontSize: 16 });
-const addImageElement = () => makeElement('image', { src: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80', x: 50, y: 380, width: 180, height: 110 });
-const addQrElement = () => makeElement('qr', { qrValue: '{{cliente_id}}', x: 50, y: 520, width: 110, height: 110 });
-const addDateElement = () => makeElement('date', { text: '{{fecha}}', placeholderKey: 'fecha', x: 50, y: 640, width: 180, height: 24, fontSize: 14 });
-const addFooterElement = () => makeElement('footer', { text: 'Documento generado por Docugen • {{fecha}}', x: 60, y: 1060, width: 660, height: 24, align: 'center', color: '#6b7280', fontSize: 11 });
-const addSignatureElement = () => makeElement('signature', { text: 'Firma autorizada', x: 520, y: 980, width: 220, height: 32, stroke: '#374151', fontSize: 12 });
-const addLineElement = () => makeElement('line', { x: 50, y: 930, width: 680, height: 0, stroke: '#cbd5e1', strokeWidth: 2 });
-const addRectElement = () => makeElement('rect', { x: 50, y: 760, width: 220, height: 120, fill: '#eef6ff', stroke: '#9ec5fe', strokeWidth: 1 });
-const addTableElement = () => makeElement('table', { text: 'Columna A | Columna B', x: 50, y: 900, width: 300, height: 80, fontSize: 12 });
-const addCheckboxElement = () => makeElement('checkbox', { text: 'Aceptado', checked: true, x: 50, y: 820, width: 18, height: 18, stroke: '#1f9d55' });
-const addPageNumberElement = () => makeElement('pageNumber', { text: 'Página {{page_number}}', placeholderKey: 'page_number', x: 660, y: 1090, width: 80, height: 20, align: 'right', fontSize: 10 });
+const addTextElement = () =>
+  makeElement('text', { text: 'Texto', x: 50, y: 80, width: 220, height: 30, fontSize: 18 });
+const addTitleElement = () =>
+  makeElement('title', {
+    text: 'Título',
+    x: 50,
+    y: 110,
+    width: 280,
+    height: 42,
+    fontSize: 28,
+    fontWeight: '700',
+  });
+const addSubtitleElement = () =>
+  makeElement('subtitle', {
+    text: 'Subtítulo',
+    x: 50,
+    y: 165,
+    width: 300,
+    height: 30,
+    fontSize: 20,
+    fontWeight: '600',
+  });
+const addParagraphElement = () =>
+  makeElement('paragraph', {
+    text: 'Párrafo de ejemplo.',
+    x: 50,
+    y: 200,
+    width: 300,
+    height: 60,
+    fontSize: 16,
+  });
+const addListElement = () =>
+  makeElement('list', {
+    text: '• Elemento de lista',
+    x: 50,
+    y: 270,
+    width: 240,
+    height: 28,
+    fontSize: 15,
+  });
+const addPlaceholder = () =>
+  makeElement('placeholder', {
+    text: '{{cliente_nombre}}',
+    placeholderKey: 'cliente_nombre',
+    x: 50,
+    y: 330,
+    width: 220,
+    height: 30,
+    fontSize: 16,
+  });
+const addImageElement = () =>
+  makeElement('image', {
+    src: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80',
+    x: 50,
+    y: 380,
+    width: 180,
+    height: 110,
+  });
+const addQrElement = () =>
+  makeElement('qr', { qrValue: '{{cliente_id}}', x: 50, y: 520, width: 110, height: 110 });
+const addDateElement = () =>
+  makeElement('date', {
+    text: '{{fecha}}',
+    placeholderKey: 'fecha',
+    x: 50,
+    y: 640,
+    width: 180,
+    height: 24,
+    fontSize: 14,
+  });
+const addFooterElement = () =>
+  makeElement('footer', {
+    text: 'Documento generado por Docugen • {{fecha}}',
+    x: 60,
+    y: 1060,
+    width: 660,
+    height: 24,
+    align: 'center',
+    color: '#6b7280',
+    fontSize: 11,
+  });
+const addSignatureElement = () =>
+  makeElement('signature', {
+    text: 'Firma autorizada',
+    x: 520,
+    y: 980,
+    width: 220,
+    height: 32,
+    stroke: '#374151',
+    fontSize: 12,
+  });
+const addLineElement = () =>
+  makeElement('line', { x: 50, y: 930, width: 680, height: 0, stroke: '#cbd5e1', strokeWidth: 2 });
+const addRectElement = () =>
+  makeElement('rect', {
+    x: 50,
+    y: 760,
+    width: 220,
+    height: 120,
+    fill: '#eef6ff',
+    stroke: '#9ec5fe',
+    strokeWidth: 1,
+  });
+const addTableElement = () =>
+  makeElement('table', {
+    text: 'Columna A | Columna B',
+    x: 50,
+    y: 900,
+    width: 300,
+    height: 80,
+    fontSize: 12,
+  });
+const addCheckboxElement = () =>
+  makeElement('checkbox', {
+    text: 'Aceptado',
+    checked: true,
+    x: 50,
+    y: 820,
+    width: 18,
+    height: 18,
+    stroke: '#1f9d55',
+  });
+const addPageNumberElement = () =>
+  makeElement('pageNumber', {
+    text: 'Página {{page_number}}',
+    placeholderKey: 'page_number',
+    x: 660,
+    y: 1090,
+    width: 80,
+    height: 20,
+    align: 'right',
+    fontSize: 10,
+  });
 
 const insertPlaceholder = (key) => {
   if (!selectedElement.value) return;
 
-  if (['text', 'title', 'subtitle', 'paragraph', 'list', 'date', 'pageNumber', 'signature', 'footer'].includes(selectedElement.value.type)) {
-    const value = selectedElement.value.text ? `${selectedElement.value.text} {{${key}}}` : `{{${key}}}`;
+  if (
+    [
+      'text',
+      'title',
+      'subtitle',
+      'paragraph',
+      'list',
+      'date',
+      'pageNumber',
+      'signature',
+      'footer',
+    ].includes(selectedElement.value.type)
+  ) {
+    const value = selectedElement.value.text
+      ? `${selectedElement.value.text} {{${key}}}`
+      : `{{${key}}}`;
     selectedElement.value.text = value;
   }
 
@@ -644,7 +986,9 @@ const copySelectedElement = () => {
 
 const removeSelectedElement = () => {
   if (!selectedElement.value) return;
-  template.value.elements = template.value.elements.filter((element) => element.id !== selectedElement.value.id);
+  template.value.elements = template.value.elements.filter(
+    (element) => element.id !== selectedElement.value.id
+  );
   selectedElement.value = template.value.elements[0] || null;
   pushHistory();
   closeContextMenu();
@@ -696,7 +1040,8 @@ const stopDrag = (event) => {
 
 const getElementLabel = (element) => {
   if (!element) return '';
-  if (element.type === 'placeholder') return element.placeholderKey ? `{{${element.placeholderKey}}}` : element.text || 'Placeholder';
+  if (element.type === 'placeholder')
+    return element.placeholderKey ? `{{${element.placeholderKey}}}` : element.text || 'Placeholder';
   if (element.type === 'footer') return element.text || 'Pie de página';
   if (element.type === 'image') return 'Imagen';
   if (element.type === 'qr') return 'QR';
@@ -722,20 +1067,8 @@ const saveTemplate = async () => {
   future.value = [];
 };
 
-const renderPdf = async () => {
-  const result = await renderTemplate({
-    templateId: templateId.value,
-    metadata: { documentName: template.value.name },
-    data: {
-      cliente_nombre: 'Luis',
-      empresa: 'Docugen',
-      cliente_id: 'CL-001',
-      fecha: new Date().toLocaleDateString('es-ES'),
-      page_number: '1',
-    },
-  });
-
-  if (result?.url) window.open(result.url, '_blank');
+const openPresentation = () => {
+  router.push(`/templates/${templateId.value}/present`);
 };
 
 watch(
