@@ -96,6 +96,14 @@ export const administrationManagement = [
         name: 'my-profile',
         meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
         component: () => import('../../components/docugen-web/ManagementMyProfile.vue'),
+        children: [
+          {
+            path: 'api-tokens',
+            name: 'my-profile-api-tokens',
+            meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
+            component: () => import('../../components/docugen-app/APITokenManagement.vue'),
+          },
+        ],
       },
 
       // Templates

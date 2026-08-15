@@ -61,6 +61,44 @@ export const useTemplates = () => {
     }
   };
 
+  const getTemplateParameters = async (id) => {
+    try {
+      loading.value = true;
+      const response = await TemplateService.getTemplateParameters(id);
+      const payload = unwrapApiData(response, { parameters: [] });
+      success.value = response.data?.success ?? true;
+      message.value = response.data?.message || '';
+      code.value = response.data?.code || 'S2007';
+      return payload;
+    } catch (error) {
+      success.value = false;
+      message.value = error.response?.data?.message || 'Error cargando parámetros';
+      code.value = error.response?.data?.code || 'EXXX';
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const getGenerationAvailability = async () => {
+    try {
+      loading.value = true;
+      const response = await TemplateService.getGenerationAvailability();
+      const payload = unwrapApiData(response, { enabled: false });
+      success.value = response.data?.success ?? true;
+      message.value = response.data?.message || '';
+      code.value = response.data?.code || 'S2008';
+      return payload;
+    } catch (error) {
+      success.value = false;
+      message.value = error.response?.data?.message || 'Error consultando disponibilidad';
+      code.value = error.response?.data?.code || 'EXXX';
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const createTemplate = async (payload) => {
     try {
       loading.value = true;
@@ -134,6 +172,24 @@ export const useTemplates = () => {
     }
   };
 
+  const generateDocumentRemote = async (payload) => {
+    try {
+      loading.value = true;
+      const response = await TemplateService.generateDocumentRemote(payload);
+      success.value = response.data?.success ?? true;
+      message.value = response.data?.message || '';
+      code.value = response.data?.code || 'S2009';
+      return response.data.data;
+    } catch (error) {
+      success.value = false;
+      message.value = error.response?.data?.message || 'Error generando documento remoto';
+      code.value = error.response?.data?.code || 'EXXX';
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     templates,
     selectedTemplate,
@@ -143,9 +199,12 @@ export const useTemplates = () => {
     code,
     listTemplates,
     getTemplate,
+    getTemplateParameters,
+    getGenerationAvailability,
     createTemplate,
     updateTemplate,
     deleteTemplate,
     renderTemplate,
+    generateDocumentRemote,
   };
 };
