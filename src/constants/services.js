@@ -1,8 +1,8 @@
 //HTTP services related constant center
 export const SERVICES = {
   base_url: {
-    api: import.meta.env.VITE_BASE_URL + '/api',
-    stg: import.meta.env.VITE_BASE_URL + '/storage',
+    api: import.meta.env.VITE_BASE_URL,
+    stg: import.meta.env.VITE_BASE_URL.replace('/api/v1', '') + '/storage',
   },
   content: {
     type: {
