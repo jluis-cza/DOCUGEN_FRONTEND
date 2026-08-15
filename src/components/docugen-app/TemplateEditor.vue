@@ -186,7 +186,7 @@
                 </div>
               </div>
 
-              <div class="page-viewport">
+              <div ref="pageViewport" class="page-viewport">
                 <div
                   class="page-wrapper"
                   :style="{
@@ -352,6 +352,44 @@
                           stroke-linejoin="round"
                         />
                       </g>
+
+                      <text
+                        v-else-if="
+                          [
+                            'paragraph',
+                            'list',
+                            'text',
+                            'title',
+                            'subtitle',
+                            'date',
+                            'pageNumber',
+                            'signature',
+                            'footer',
+                          ].includes(element.type)
+                        "
+                        :x="element.x"
+                        :y="element.y + (element.height || 20) / 2"
+                        :font-size="element.fontSize || 18"
+                        :fill="
+                          selectedElement?.id === element.id
+                            ? '#1d4ed8'
+                            : element.color || '#111111'
+                        "
+                        :font-weight="selectedElement?.id === element.id ? 800 : 700"
+                        @click="selectElement(element)"
+                        @contextmenu.prevent="openContextMenu($event, element)"
+                        @pointerdown="startDrag($event, element)"
+                        style="cursor: pointer; font-family: 'Inter', sans-serif"
+                      >
+                        <tspan
+                          v-for="(line, index) in getWrappedTextLines(element)"
+                          :key="`${element.id}-${index}`"
+                          :x="element.x"
+                          :dy="index === 0 ? 0 : Number(element.fontSize || 18) * 1.35"
+                        >
+                          {{ line }}
+                        </tspan>
+                      </text>
 
                       <text
                         v-else
@@ -587,6 +625,48 @@
               <v-divider class="my-3" />
 
               <div class="panel-helper">
+                <div class="text-caption text-medium-emphasis mb-2">Parámetros dinámicos</div>
+                <div v-if="dynamicParameters.length" class="d-flex flex-column ga-2 mb-3">
+                  <div
+                    v-for="(parameter, index) in dynamicParameters"
+                    :key="parameter.key || index"
+                    class="d-flex ga-2 align-center"
+                  >
+                    <v-text-field
+                      v-model="parameter.key"
+                      label="Nombre"
+                      density="compact"
+                      hide-details
+                      @blur="normalizeDynamicParameter(parameter)"
+                    />
+                    <v-select
+                      v-model="parameter.type"
+                      label="Tipo"
+                      :items="[
+                        'text',
+                        'textarea',
+                        'number',
+                        'date',
+                        'boolean',
+                        'image',
+                        'qr',
+                        'email',
+                        'url',
+                      ]"
+                      density="compact"
+                      hide-details
+                    />
+                    <v-checkbox v-model="parameter.required" hide-details density="compact" />
+                  </div>
+                </div>
+                <v-btn class="mt-2" size="small" variant="tonal" @click="addDynamicParameter">
+                  Añadir parámetro
+                </v-btn>
+              </div>
+
+              <v-divider class="my-3" />
+
+              <div class="panel-helper">
                 <div class="text-caption text-medium-emphasis mb-2">Campos dinámicos</div>
                 <v-chip-group column>
                   <v-chip size="small" label @click="insertPlaceholder('cliente_nombre')"
@@ -609,7 +689,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 
@@ -627,13 +707,14 @@ const baseTemplate = () => ({
   page: { backgroundColor: '#ffffff', margin: { top: 40, right: 40, bottom: 40, left: 40 } },
   canvas: { version: 1, zoom: 1, background: '#ffffff' },
   elements: [],
-  metadata: {},
+  metadata: { dynamicParameters: [] },
 });
 
 const template = ref(baseTemplate());
 const selectedElement = ref(null);
 const dragState = ref(null);
 const svgRef = ref(null);
+const pageViewport = ref(null);
 const width = ref(794);
 const height = ref(1123);
 const zoom = ref(1);
@@ -648,6 +729,7 @@ const serializeTemplate = () =>
     status: template.value.status,
     dimensions: template.value.dimensions,
     elements: template.value.elements,
+    metadata: template.value.metadata,
   });
 
 const applySnapshot = (snapshot) => {
@@ -668,6 +750,132 @@ const applySnapshot = (snapshot) => {
   } catch (error) {
     console.warn('Snapshot inválido', error);
   }
+};
+
+const normalizeDynamicParameter = (parameter) => {
+  if (!parameter || !parameter.key) return;
+
+  const key = parameter.key.trim().replace(/\s+/g, '_');
+  if (!key) return;
+
+  parameter.key = key;
+  parameter.label = parameter.label || key;
+  parameter.type = parameter.type || 'text';
+  parameter.required = Boolean(parameter.required);
+  parameter.description = parameter.description || '';
+};
+
+const buildDynamicKey = (type) => {
+  const label = type === 'image' ? 'imagen' : type === 'qr' ? 'qr' : 'param';
+  const current = template.value.elements.filter((element) => element.type === type);
+  const nextIndex = current.length + 1;
+  return `${label}${nextIndex}`;
+};
+
+const dynamicParameters = computed({
+  get: () => {
+    const values = Array.isArray(template.value?.metadata?.dynamicParameters)
+      ? template.value.metadata.dynamicParameters
+      : [];
+    return values;
+  },
+  set: (value) => {
+    template.value.metadata = {
+      ...(template.value.metadata || {}),
+      dynamicParameters: value,
+    };
+  },
+});
+
+const addDynamicParameter = () => {
+  const current = Array.isArray(template.value.metadata?.dynamicParameters)
+    ? template.value.metadata.dynamicParameters
+    : [];
+
+  const next = [
+    ...current,
+    {
+      key: `param_${current.length + 1}`,
+      label: `param_${current.length + 1}`,
+      type: 'text',
+      required: true,
+    },
+  ];
+  template.value.metadata = {
+    ...(template.value.metadata || {}),
+    dynamicParameters: next,
+  };
+  pushHistory();
+};
+
+const syncDynamicParametersFromTemplate = () => {
+  const source = Array.isArray(template.value?.metadata?.dynamicParameters)
+    ? template.value.metadata.dynamicParameters
+    : [];
+  const map = new Map();
+
+  source.forEach((item) => {
+    if (!item?.key) return;
+    const key = item.key.trim().replace(/\s+/g, '_');
+    if (!key) return;
+    map.set(key, {
+      ...item,
+      key,
+      label: item.label || key,
+      type: item.type || 'text',
+      required: Boolean(item.required),
+    });
+  });
+
+  template.value.elements.forEach((element) => {
+    const keyFromPlaceholder = (element.placeholderKey || '').trim().replace(/\s+/g, '_');
+    if (keyFromPlaceholder && !map.has(keyFromPlaceholder)) {
+      map.set(keyFromPlaceholder, {
+        key: keyFromPlaceholder,
+        label: keyFromPlaceholder,
+        type:
+          element.type === 'qr'
+            ? 'qr'
+            : element.type === 'image'
+              ? 'image'
+              : element.type === 'date'
+                ? 'date'
+                : 'text',
+        required: true,
+      });
+    }
+
+    const candidateText = [
+      element.text || '',
+      element.qrValue || '',
+      element.src || '',
+      element.placeholderKey || '',
+    ].join(' ');
+    const matches = candidateText.match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g) || [];
+    matches.forEach((match) => {
+      const key = match.replace(/[{}]/g, '').trim().replace(/\s+/g, '_');
+      if (!key || map.has(key)) return;
+      map.set(key, {
+        key,
+        label: key,
+        type:
+          element.type === 'qr'
+            ? 'qr'
+            : element.type === 'image'
+              ? 'image'
+              : element.type === 'date'
+                ? 'date'
+                : 'text',
+        required: true,
+      });
+    });
+  });
+
+  const next = [...map.values()].sort((a, b) => String(a.key).localeCompare(String(b.key)));
+  template.value.metadata = {
+    ...(template.value.metadata || {}),
+    dynamicParameters: next,
+  };
 };
 
 const pushHistory = () => {
@@ -697,16 +905,70 @@ const redo = () => {
   applySnapshot(next);
 };
 
+const getWrappedTextLines = (element) => {
+  const baseText = String(element?.text || '').replace(/\r\n/g, '\n');
+  if (!baseText && element?.type !== 'paragraph' && element?.type !== 'list') {
+    return [getElementLabel(element) || ''];
+  }
+
+  const fontSize = Number(element?.fontSize || 16);
+  const maxWidth = Math.max(80, Number(element?.width || 180));
+  const charsPerLine = Math.max(12, Math.floor(maxWidth / (fontSize * 0.62)));
+  const maxLines = Math.max(
+    1,
+    Math.floor((Number(element?.height || 60) || 60) / (fontSize * 1.35))
+  );
+
+  const chunks = [];
+  const paragraphs = baseText.split(/\n/);
+
+  paragraphs.forEach((paragraph) => {
+    const words = paragraph.split(/\s+/).filter(Boolean);
+    let current = '';
+
+    words.forEach((word) => {
+      const candidate = current ? `${current} ${word}` : word;
+      if (candidate.length <= charsPerLine) {
+        current = candidate;
+        return;
+      }
+
+      if (current) {
+        chunks.push(current);
+      }
+      current = word;
+    });
+
+    if (current) {
+      chunks.push(current);
+    }
+  });
+
+  const lines = chunks.length ? chunks : [''];
+  const fitted = lines.slice(0, maxLines);
+  return fitted.length ? fitted : [''];
+};
+
+const fitPageToViewport = () => {
+  if (!pageViewport.value) return;
+
+  const padding = 48;
+  const viewportWidth = Math.max(320, pageViewport.value.clientWidth - padding);
+  const viewportHeight = Math.max(220, pageViewport.value.clientHeight - padding);
+  const nextZoom = Math.min(viewportWidth / width.value, viewportHeight / height.value, 1);
+  zoom.value = Number(Math.max(0.25, nextZoom).toFixed(2));
+};
+
 const zoomIn = () => {
   zoom.value = Math.min(2, Number((zoom.value + 0.1).toFixed(2)));
 };
 
 const zoomOut = () => {
-  zoom.value = Math.max(0.4, Number((zoom.value - 0.1).toFixed(2)));
+  zoom.value = Math.max(0.25, Number((zoom.value - 0.1).toFixed(2)));
 };
 
 const resetZoom = () => {
-  zoom.value = 1;
+  fitPageToViewport();
 };
 
 const backToTemplates = () => router.push('/dashboard/templates');
@@ -728,7 +990,15 @@ const loadTemplate = async () => {
       },
       canvas: normalizedItem.canvas || { version: 1, zoom: 1, background: '#ffffff' },
       elements: Array.isArray(normalizedItem.elements) ? normalizedItem.elements : [],
+      metadata: {
+        ...(normalizedItem.metadata || {}),
+        dynamicParameters: Array.isArray(normalizedItem.metadata?.dynamicParameters)
+          ? normalizedItem.metadata.dynamicParameters
+          : [],
+      },
     };
+
+    syncDynamicParametersFromTemplate();
 
     width.value = Number(template.value.dimensions.width || 794);
     height.value = Number(template.value.dimensions.height || 1123);
@@ -743,6 +1013,7 @@ const loadTemplate = async () => {
 };
 
 const makeElement = (type, extra = {}) => {
+  const generatedKey = type === 'image' || type === 'qr' ? buildDynamicKey(type) : undefined;
   const base = {
     id: `${type}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
     type,
@@ -759,11 +1030,14 @@ const makeElement = (type, extra = {}) => {
     opacity: 1,
     checked: true,
     align: 'left',
+    ...(type === 'image' ? { placeholderKey: generatedKey, src: `{{${generatedKey}}}` } : {}),
+    ...(type === 'qr' ? { placeholderKey: generatedKey, qrValue: `{{${generatedKey}}}` } : {}),
     ...extra,
   };
 
   template.value.elements.push(base);
   selectedElement.value = base;
+  syncDynamicParametersFromTemplate();
   pushHistory();
 };
 
@@ -817,16 +1091,28 @@ const addPlaceholder = () =>
     height: 30,
     fontSize: 16,
   });
-const addImageElement = () =>
+const addImageElement = () => {
+  const key = buildDynamicKey('image');
   makeElement('image', {
-    src: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80',
+    placeholderKey: key,
+    src: `{{${key}}}`,
     x: 50,
     y: 380,
     width: 180,
     height: 110,
   });
-const addQrElement = () =>
-  makeElement('qr', { qrValue: '{{cliente_id}}', x: 50, y: 520, width: 110, height: 110 });
+};
+const addQrElement = () => {
+  const key = buildDynamicKey('qr');
+  makeElement('qr', {
+    placeholderKey: key,
+    qrValue: `{{${key}}}`,
+    x: 50,
+    y: 520,
+    width: 110,
+    height: 110,
+  });
+};
 const addDateElement = () =>
   makeElement('date', {
     text: '{{fecha}}',
@@ -928,10 +1214,17 @@ const insertPlaceholder = (key) => {
     selectedElement.value.text = `{{${key}}}`;
   }
 
+  if (selectedElement.value.type === 'image') {
+    selectedElement.value.placeholderKey = key;
+    selectedElement.value.src = `{{${key}}}`;
+  }
+
   if (selectedElement.value.type === 'qr') {
+    selectedElement.value.placeholderKey = key;
     selectedElement.value.qrValue = `{{${key}}}`;
   }
 
+  syncDynamicParametersFromTemplate();
   pushHistory();
 };
 
@@ -990,6 +1283,7 @@ const removeSelectedElement = () => {
     (element) => element.id !== selectedElement.value.id
   );
   selectedElement.value = template.value.elements[0] || null;
+  syncDynamicParametersFromTemplate();
   pushHistory();
   closeContextMenu();
 };
@@ -1085,25 +1379,47 @@ watch(
   }
 );
 
+watch([width, height], () => {
+  fitPageToViewport();
+});
+
 onMounted(async () => {
   await loadTemplate();
+  fitPageToViewport();
+
+  if (pageViewport.value && 'ResizeObserver' in window) {
+    const observer = new ResizeObserver(() => fitPageToViewport());
+    observer.observe(pageViewport.value);
+    window.__docugenPageResizeObserver = observer;
+  }
+});
+
+onBeforeUnmount(() => {
+  if (window.__docugenPageResizeObserver) {
+    window.__docugenPageResizeObserver.disconnect();
+    delete window.__docugenPageResizeObserver;
+  }
 });
 </script>
 
 <style scoped>
 .editor-shell {
   min-height: calc(100vh - 96px);
-  background: linear-gradient(180deg, #f5f7ff 0%, #eef3fb 100%);
+  background: linear-gradient(180deg, #f4f7ff 0%, #eef4fb 100%);
 }
 
 .editor-topbar {
   position: sticky;
   top: 0;
   z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .editor-body {
   height: calc(100vh - 120px);
+  padding-top: 16px;
 }
 
 .editor-layout {
@@ -1120,10 +1436,10 @@ onMounted(async () => {
 }
 
 .panel {
-  background: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.76);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(29, 78, 216, 0.08);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
   padding: 18px;
 }
 
@@ -1137,18 +1453,29 @@ onMounted(async () => {
   gap: 10px;
 }
 
+.toolbar-grid .v-btn {
+  justify-content: flex-start;
+  padding-inline: 12px;
+  border-radius: 12px;
+  min-height: 42px;
+  font-weight: 600;
+}
+
 .stage-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
   position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.9));
 }
 
 .stage-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 12px;
+  padding: 8px 12px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  margin-bottom: 12px;
 }
 
 .zoom-control {
@@ -1159,9 +1486,10 @@ onMounted(async () => {
   position: relative;
   flex: 1;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #f8fafc, #edf3ff);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .ruler {
@@ -1236,6 +1564,7 @@ onMounted(async () => {
   justify-content: center;
   width: 794px;
   height: 1123px;
+  filter: drop-shadow(0 18px 34px rgba(15, 23, 42, 0.12));
 }
 
 .template-canvas {
@@ -1244,7 +1573,7 @@ onMounted(async () => {
   height: 1123px;
   max-width: none;
   background: white;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12);
   border-radius: 16px;
 }
 

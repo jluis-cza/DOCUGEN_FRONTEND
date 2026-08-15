@@ -48,7 +48,7 @@
             prepend-icon="mdi-file-pdf-box"
             @click="generatePdf"
             :loading="isGenerating"
-            :disabled="Object.keys(validationErrors).length > 0"
+            :disabled="!canGeneratePdf"
           >
             {{ pdfUrl ? 'Regenerar' : 'Generar' }} PDF
           </v-btn>
@@ -227,10 +227,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 import { usePresentationConfig } from '../../composables/docugen-app/usePresentationConfig.js';
 import { usePresentationStore } from '../../stores/docugen-app/presentationStore.js';
+import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 
 const route = useRoute();
 const router = useRouter();
 const presentationStore = usePresentationStore();
+const notificationStore = useNotificationStore();
 const { getTemplate, renderTemplate } = useTemplates();
 const {
   template,
@@ -257,84 +259,94 @@ const isLoadingTemplate = ref(true);
 const showLoadError = ref(false);
 const loadErrorMessage = ref('');
 
-// Cargar plantilla al montar
+const canGeneratePdf = computed(() => {
+  const hasParams = Object.keys(placeholders.value || {}).length > 0;
+  if (!hasParams) return true;
+  return Object.keys(validationErrors.value || {}).length === 0 && !isGenerating.value;
+});
+
+const showNotification = (message, code, mode = 'persistent') => {
+  notificationStore.setNotification({
+    message,
+    code,
+    mode,
+  });
+};
+
 onMounted(async () => {
   isLoadingTemplate.value = true;
   loadErrorMessage.value = '';
 
   if (!templateId.value) {
-    console.error('No templateId en route');
     loadErrorMessage.value = 'ID de plantilla no encontrado';
     isLoadingTemplate.value = false;
     showLoadError.value = true;
+    showNotification('No se encontró el identificador de la plantilla.', 'E0001', 'persistent');
     setTimeout(() => router.push('/dashboard/templates'), 500);
     return;
   }
 
   try {
-    console.log('Cargando plantilla:', templateId.value);
     const tmpl = await getTemplate(templateId.value);
-    console.log('Plantilla cargada:', tmpl);
 
     if (!tmpl || !tmpl._id) {
-      console.error('Template inválida o vacía:', tmpl);
       loadErrorMessage.value = 'La plantilla no existe o no tienes permisos';
       isLoadingTemplate.value = false;
       showLoadError.value = true;
+      showNotification('La plantilla no existe o no tienes permisos.', 'E0002', 'persistent');
       setTimeout(() => router.push('/dashboard/templates'), 500);
       return;
     }
 
-    console.log('Extrayendo placeholders...');
     extractPlaceholdersFromTemplate(tmpl);
     presentationStore.setTemplate(tmpl);
     updateJsonString();
     isLoadingTemplate.value = false;
-    console.log('Plantilla lista');
   } catch (error) {
-    console.error('Error cargando plantilla:', error);
     loadErrorMessage.value = error?.message || 'Error desconocido cargando plantilla';
     isLoadingTemplate.value = false;
     showLoadError.value = true;
+    showNotification('Error cargando la plantilla.', 'E0003', 'persistent');
     setTimeout(() => router.push('/dashboard/templates'), 800);
   }
 });
 
-// Sincronizar JSON cuando cambian los datos
 watch(
   () => configData.value,
   () => {
     updateJsonString();
+    validate();
   },
   { deep: true }
 );
 
-// Actualizar string JSON desde configData
 const updateJsonString = () => {
   jsonString.value = JSON.stringify(configData.value, null, 2);
   jsonError.value = null;
 };
 
-// Sincronizar JSON a datos
 const syncJsonToData = () => {
   try {
     const parsed = JSON.parse(jsonString.value);
     setConfigDataBulk(parsed);
+    validate();
     jsonError.value = null;
   } catch (error) {
     jsonError.value = `JSON inválido: ${error.message}`;
+    showNotification('El JSON de configuración no es válido.', 'W0001', 'persistent');
   }
 };
 
-// Cambiar modo de vista
 const toggleViewMode = () => {
   toggleViewModeAction();
   presentationStore.setViewMode(viewMode.value);
 };
 
-// Generar PDF
 const generatePdf = async () => {
   if (!validate()) {
+    const firstError =
+      Object.values(validationErrors.value || {})[0] || 'Completa los valores requeridos';
+    showNotification(firstError, 'W0002', 'persistent');
     return;
   }
 
@@ -352,17 +364,18 @@ const generatePdf = async () => {
       pdfUrl.value = result.url;
       presentationStore.setPdfUrl(pdfUrl.value);
       presentationStore.setConfigData(configData.value);
+      showNotification('PDF generado correctamente.', 'S2006', 'short');
     }
   } catch (error) {
+    const message = error?.response?.data?.message || error?.message || 'No se pudo generar el PDF';
     console.error('Error generando PDF:', error);
-    // Mostrar notificación de error
+    showNotification(message, 'E2007', 'persistent');
   } finally {
     isGenerating.value = false;
     showGeneratingDialog.value = false;
   }
 };
 
-// Descargar PDF
 const downloadPdf = () => {
   if (pdfUrl.value) {
     const link = document.createElement('a');
@@ -374,20 +387,18 @@ const downloadPdf = () => {
   }
 };
 
-// Volver al editor
 const backToEditor = () => {
   presentationStore.resetPresentation();
   router.push(`/templates/${templateId.value}/edit`);
 };
 
-// Limpiar configuración
 const handleResetConfig = () => {
   resetConfig();
   pdfUrl.value = null;
   updateJsonString();
+  showNotification('Configuración reiniciada.', 'I0001', 'short');
 };
 
-// Exposer para el template
 Object.assign(window, {
   resetConfig: handleResetConfig,
 });
@@ -403,6 +414,9 @@ Object.assign(window, {
   position: sticky;
   top: 0;
   z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .presentation-body {
@@ -423,7 +437,12 @@ Object.assign(window, {
   height: 100%;
   overflow: hidden;
 }
-
+.config-panel .v-card,
+.preview-panel .v-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
 .config-content {
   height: calc(100% - 60px);
   overflow-y: auto;
