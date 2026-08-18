@@ -8,32 +8,36 @@
           <v-list-item v-for="notification in safeNotifications" :key="notification._id">
             <v-card
               class="w-100 notification-card notification-card--neutral"
-              :class="notification.status === 'sent' ? 'notification-card--unread' : 'notification-card--read'"
+              :class="
+                notification.status === 'sent'
+                  ? 'notification-card--unread'
+                  : 'notification-card--read'
+              "
               color="surface"
               variant="tonal"
             >
               <v-card-title class="d-flex align-center justify-space-between">
                 <span>{{ notification.subject || 'Sin asunto' }}</span>
                 <v-icon
-                  :icon="notification.status === 'sent' ? 'mdi-checkbox-blank-circle-outline' : 'mdi-check-circle'"
+                  :icon="
+                    notification.status === 'sent'
+                      ? 'mdi-checkbox-blank-circle-outline'
+                      : 'mdi-check-circle'
+                  "
                   :color="notification.status === 'sent' ? 'primary' : 'success'"
                   size="small"
                   class="ms-2"
                 />
               </v-card-title>
               <v-card-subtitle>
-                {{ getSenderLabel(notification) }} · {{ getNotificationTime(notification.createdAt) }}
+                {{ getSenderLabel(notification) }} ·
+                {{ getNotificationTime(notification.createdAt) }}
               </v-card-subtitle>
               <v-card-text>
-                <div
-                  v-if="isNotificationOpen(notification._id)"
-                  class="notification-message mt-1"
-                >
+                <div v-if="isNotificationOpen(notification._id)" class="notification-message mt-1">
                   {{ notification.message || 'Sin mensaje' }}
                 </div>
-                <div v-else class="notification-hidden text-caption mt-1">
-                  Mensaje oculto
-                </div>
+                <div v-else class="notification-hidden text-caption mt-1">Mensaje oculto</div>
                 <div class="mt-2 text-decoration-underline text-info">
                   <span
                     v-if="isNotificationOpen(notification._id)"
@@ -88,9 +92,7 @@ const {
   actions: myNotifications_actions,
   message: myNotifications_message,
 } = useMyNotifications();
-const {
-  actions: myNotification_actions,
-} = useMyNotification();
+const { actions: myNotification_actions } = useMyNotification();
 const { username, actions: username_actions, success: username_success } = useUsername();
 const accounId = computed(() => myAccountStore.getMyAccount.id);
 const defaultNotificationsQuery = () => ({ cursor: null, limit: 5, hasNextChunk: true });
@@ -192,7 +194,8 @@ const toggleNotification = async (notification) => {
 const resolveSenderName = async (notification) => {
   if (!notification?.from) return;
 
-  const senderId = typeof notification.from === 'string' ? notification.from : notification.from?._id;
+  const senderId =
+    typeof notification.from === 'string' ? notification.from : notification.from?._id;
   if (!senderId || senderNames.value[senderId]) return;
 
   try {
@@ -231,7 +234,9 @@ watch(
 <style scoped>
 .notification-card {
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .notification-card--unread,
