@@ -16,8 +16,11 @@ export const useMyNotification = () => {
     notificationAcknowledger: async (id) => {
       try {
         loading.value = true;
-        const response = await ManagementService.acknowledgeNotification(id);
-        myNotificationsStore.setMyNotification(id, response.data.data.notification);
+        const notificationId = typeof id === 'string' ? id : id?.id || id?._id;
+        if (!notificationId) throw new Error('Notification id is required');
+
+        const response = await ManagementService.acknowledgeNotification(notificationId);
+        myNotificationsStore.setMyNotification(notificationId, response.data.data.notification);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';

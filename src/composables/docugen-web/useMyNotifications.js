@@ -19,8 +19,21 @@ export const useMyNotifications = () => {
       try {
         loading.value = true;
         const response = await ManagementService.getNotifications(params);
-        myNotificationsStore.setMyNotifications(response.data.data.notifications);
-        listStore.setList(1, response.data.metadata.notifications);
+        const notifications = response?.data?.data?.notifications ?? [];
+        const metadata = response?.data?.metadata?.notifications ?? {
+          cursor: null,
+          limit: params?.limit ?? 5,
+          hasNextChunk: false,
+        };
+
+        const mergedNotifications = Array.isArray(notifications) ? notifications : [];
+
+        myNotificationsStore.setMyNotifications(mergedNotifications);
+        listStore.setList(1, {
+          cursor: metadata.cursor ?? null,
+          limit: metadata.limit ?? params?.limit ?? 5,
+          hasNextChunk: metadata.hasNextChunk ?? false,
+        });
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
         code.value = response?.data?.code || 'EXXX';

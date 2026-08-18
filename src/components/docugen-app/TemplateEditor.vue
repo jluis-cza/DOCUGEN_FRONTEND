@@ -53,15 +53,6 @@
           >
             Configurar y Generar
           </v-btn>
-          <v-btn
-            variant="text"
-            color="error"
-            prepend-icon="mdi-exit-to-app"
-            size="small"
-            @click="backToTemplates"
-          >
-            Salir
-          </v-btn>
         </div>
       </template>
     </v-app-bar>
@@ -69,7 +60,7 @@
     <v-container fluid class="editor-body pa-4">
       <div class="editor-layout">
         <div class="editor-sidebar">
-          <v-card class="panel h-100" rounded="xl">
+          <v-card class="panel h-100 sidebar-panel" rounded="xl">
             <div class="panel-header d-flex align-center justify-space-between">
               <h4>Elementos</h4>
               <v-chip color="primary" size="small" variant="tonal">{{
@@ -277,22 +268,47 @@
                         style="cursor: pointer"
                       />
 
-                      <image
+                      <g
                         v-else-if="element.type === 'image'"
-                        :href="
-                          element.src ||
-                          'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23e2e8f0%22/%3E%3C/svg%3E'
-                        "
-                        :x="element.x"
-                        :y="element.y"
-                        :width="element.width"
-                        :height="element.height"
-                        preserveAspectRatio="xMidYMid meet"
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
                         style="cursor: pointer"
-                      />
+                      >
+                        <rect
+                          :x="element.x"
+                          :y="element.y"
+                          :width="element.width"
+                          :height="element.height"
+                          fill="#f8fafc"
+                          stroke="#94a3b8"
+                          stroke-width="1.5"
+                          stroke-dasharray="6 6"
+                          rx="6"
+                        />
+
+                        <image
+                          v-if="!isImagePlaceholder(element)"
+                          :href="element.src"
+                          :x="element.x"
+                          :y="element.y"
+                          :width="element.width"
+                          :height="element.height"
+                          preserveAspectRatio="xMidYMid meet"
+                        />
+
+                        <text
+                          :x="element.x + element.width / 2"
+                          :y="element.y + element.height / 2"
+                          text-anchor="middle"
+                          dominant-baseline="middle"
+                          font-size="12"
+                          font-weight="700"
+                          fill="#475569"
+                        >
+                          {{ getImagePlaceholderLabel(element) }}
+                        </text>
+                      </g>
 
                       <g
                         v-else-if="element.type === 'qr'"
@@ -306,18 +322,22 @@
                           :y="element.y"
                           :width="element.width"
                           :height="element.height"
-                          fill="#ffffff"
-                          :stroke="selectedElement?.id === element.id ? '#2563eb' : '#e5e7eb'"
-                          stroke-width="2"
+                          fill="#f8fafc"
+                          stroke="#94a3b8"
+                          stroke-width="1.5"
+                          stroke-dasharray="6 6"
+                          rx="6"
                         />
                         <text
                           :x="element.x + element.width / 2"
                           :y="element.y + element.height / 2"
                           text-anchor="middle"
-                          font-size="11"
-                          fill="#1f2937"
+                          dominant-baseline="middle"
+                          font-size="12"
+                          font-weight="700"
+                          fill="#475569"
                         >
-                          QR
+                          {{ getQrPlaceholderLabel(element) }}
                         </text>
                       </g>
 
@@ -1332,13 +1352,35 @@ const stopDrag = (event) => {
   pushHistory();
 };
 
+const isImagePlaceholder = (element) => {
+  if (!element) return true;
+  const value = String(element.src || '');
+  return !value || value.includes('{{') || value.startsWith('data:image/svg+xml');
+};
+
+const getImagePlaceholderLabel = (element) => {
+  if (!element) return '<imagen>';
+  const key =
+    element.placeholderKey ||
+    String(element.src || '').match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/)?.[1];
+  return key ? `<${key}>` : '<imagen>';
+};
+
+const getQrPlaceholderLabel = (element) => {
+  if (!element) return '<qr>';
+  const key =
+    element.placeholderKey ||
+    String(element.qrValue || '').match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/)?.[1];
+  return key ? `<${key}>` : '<qr>';
+};
+
 const getElementLabel = (element) => {
   if (!element) return '';
   if (element.type === 'placeholder')
     return element.placeholderKey ? `{{${element.placeholderKey}}}` : element.text || 'Placeholder';
   if (element.type === 'footer') return element.text || 'Pie de página';
-  if (element.type === 'image') return 'Imagen';
-  if (element.type === 'qr') return 'QR';
+  if (element.type === 'image') return getImagePlaceholderLabel(element);
+  if (element.type === 'qr') return getQrPlaceholderLabel(element);
   if (element.type === 'line') return 'Línea';
   if (element.type === 'signature') return element.text || 'Firma';
   if (element.type === 'checkbox') return element.text || 'Casilla';
@@ -1435,6 +1477,12 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .panel {
   background: rgba(255, 255, 255, 0.76);
   backdrop-filter: blur(12px);
@@ -1451,6 +1499,10 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  min-height: 0;
 }
 
 .toolbar-grid .v-btn {

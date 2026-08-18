@@ -21,7 +21,12 @@
               transition="fade-transition"
             >
               <template #activator="{ props }">
-                <v-badge content="100" color="error" overlap :model-value="true">
+                <v-badge
+                  :content="unreadNotificationsCount"
+                  color="error"
+                  overlap
+                  :model-value="unreadNotificationsCount > 0"
+                >
                   <v-icon icon="mdi-bell-outline" v-bind="props"></v-icon>
                 </v-badge>
               </template>
@@ -175,21 +180,25 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
+import { useMyNotificationsStore } from '../../stores/docugen-web/myNotificationsStore.js';
+import { useMyNotifications } from '../../composables/docugen-web/useMyNotifications.js';
 import { useMySession } from '../../composables/docugen-web/useMySession.js';
 import { useMyUsername } from '../../composables/docugen-web/useMyUsername.js';
 import { USERS } from '../../constants/users.js';
 import ManagementMyNotifications from '../../components/docugen-web/ManagementMyNotifications.vue';
 
-// General values
 const router = useRouter();
 const route = useRoute();
 const myAccountStore = useMyAccountStore();
+const myNotificationsStore = useMyNotificationsStore();
+const { actions: myNotificationsActions } = useMyNotifications();
 const { actions: mySession_actions } = useMySession();
 const { myUsername, actions: myUsername_actions } = useMyUsername();
 const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
-// Layout values
+
 const myAccount = computed(() => myAccountStore.getMyAccount);
+const unreadNotificationsCount = computed(() => myNotificationsStore.countMyNewNotifications());
 
 const drawerOpen = ref(true);
 const accountMenuOpen = ref(false);
@@ -197,7 +206,17 @@ const notificationsMenuOpen = ref(false);
 const userInitials = computed(() =>
   myUsername.value ? myUsername.value.slice(0, 2).toUpperCase() : 'NA'
 );
-const selectedItem = ref([]); //Default view
+const selectedItem = ref([]);
+
+const loadMyNotificationsBadge = async () => {
+  if (!myAccount.value?.id) return;
+
+  await myNotificationsActions.notificationsGetter({
+    to: myAccount.value.id,
+    limit: 20,
+    cursor: null,
+  });
+};
 
 const logout = async () => {
   try {
@@ -221,6 +240,7 @@ const openMyProfile = async () => {
 };
 onMounted(async () => {
   await myUsername_actions.usernameGetter({ id: myAccount.value.id || '' });
+  await loadMyNotificationsBadge();
 });
 </script>
 

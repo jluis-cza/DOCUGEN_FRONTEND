@@ -11,8 +11,20 @@ export const useMyNotificationsStore = defineStore('myNotifications', () => {
   const getMyNotifications = computed(() => myNotifications.value);
 
   // Actions
+  const normalizeNotification = (notification) => {
+    if (!notification || typeof notification !== 'object') return notification;
+
+    return {
+      ...notification,
+      subject: notification.subject || 'Sin asunto',
+      message: notification.message || 'Sin mensaje',
+      from: notification.from || 'Sistema',
+      status: notification.status || 'sent',
+    };
+  };
+
   const setMyNotifications = (data) => {
-    myNotifications.value = data || [];
+    myNotifications.value = Array.isArray(data) ? data.map(normalizeNotification) : [];
   };
   const setMyNotification = (id, options) => {
     const index = myNotifications.value.findIndex((a) => a._id === id);

@@ -54,17 +54,6 @@
           </v-btn>
 
           <v-btn
-            size="small"
-            variant="tonal"
-            prepend-icon="mdi-cloud-download"
-            @click="generateRemotePdf"
-            :loading="isGenerating"
-            :disabled="!canGeneratePdf"
-          >
-            API
-          </v-btn>
-
-          <v-btn
             v-if="pdfUrl"
             size="small"
             color="success"
@@ -72,16 +61,6 @@
             @click="downloadPdf"
           >
             Descargar
-          </v-btn>
-
-          <v-btn
-            variant="text"
-            color="error"
-            prepend-icon="mdi-close"
-            size="small"
-            @click="backToEditor"
-          >
-            Cerrar
           </v-btn>
         </div>
       </template>
@@ -244,7 +223,7 @@ const route = useRoute();
 const router = useRouter();
 const presentationStore = usePresentationStore();
 const notificationStore = useNotificationStore();
-const { getTemplate, renderTemplate, generateDocumentRemote } = useTemplates();
+const { getTemplate, renderTemplate } = useTemplates();
 const {
   template,
   placeholders,
@@ -380,44 +359,6 @@ const generatePdf = async () => {
   } catch (error) {
     const message = error?.response?.data?.message || error?.message || 'No se pudo generar el PDF';
     console.error('Error generando PDF:', error);
-    showNotification(message, 'E2007', 'persistent');
-  } finally {
-    isGenerating.value = false;
-    showGeneratingDialog.value = false;
-  }
-};
-
-const generateRemotePdf = async () => {
-  if (!validate()) {
-    const firstError =
-      Object.values(validationErrors.value || {})[0] || 'Completa los valores requeridos';
-    showNotification(firstError, 'W0002', 'persistent');
-    return;
-  }
-
-  isGenerating.value = true;
-  showGeneratingDialog.value = true;
-
-  try {
-    const result = await generateDocumentRemote({
-      templateId: templateId.value,
-      metadata: {
-        documentName: template.value?.name || 'Documento',
-        description: template.value?.description || '',
-      },
-      data: configData.value,
-    });
-
-    if (result?.url) {
-      pdfUrl.value = result.url;
-      presentationStore.setPdfUrl(pdfUrl.value);
-      presentationStore.setConfigData(configData.value);
-      showNotification('PDF generado remotamente correctamente.', 'S2009', 'short');
-    }
-  } catch (error) {
-    const message =
-      error?.response?.data?.message || error?.message || 'No se pudo generar el PDF remoto';
-    console.error('Error generando PDF remoto:', error);
     showNotification(message, 'E2007', 'persistent');
   } finally {
     isGenerating.value = false;
