@@ -7,6 +7,8 @@ import { identifyModuleProcessPrefix } from '../../helpers/docugen-web/managerPr
 export const useMyProcessesStore = defineStore('myProcesses', () => {
   // States
   const myProcesses = ref([]);
+  const myProcessingProcesses = ref([]);
+  const myEditionProcesses = ref([]);
 
   //Getters
   const getAllMyProcesses = computed(() => myProcesses.value);
@@ -23,59 +25,64 @@ export const useMyProcessesStore = defineStore('myProcesses', () => {
     }
     return sections;
   });
-  const getMyProcessesCount = (module, date) => {
-    if (!module || !date) throw new Error('There is no id or module arguments input');
-    const modulePrefix = identifyModuleProcessPrefix(module); // Identifing the module
-    // Counting the processes by prefix code then by date
-    const count = myProcesses.value.filter((p) => {
-      if (p.code.slice(0, 3) === modulePrefix) {
-        return extractTime(p.createdAt, 'America/La_Paz', 'numeric').date === date;
-      } else {
-        return false;
-      }
-    }).length;
-    return count;
-  };
-  const getMyHistoricalProcessesCounting = (module) => {
-    if (!module) throw new Error('There is no id or module arguments input');
-    const modulePrefix = identifyModuleProcessPrefix(module); // Identifing the module
-    const processesByModule = myProcesses.value.filter((p) => p.code.slice(0, 3) === modulePrefix);
-    // Creating the dataset (date, count)
-    const dataset = [];
-    for (const process of processesByModule) {
-      const processDate = extractTime(process.createdAt, 'America/La_Paz', 'numeric').date;
-      const element = dataset.find((element) => element.date === processDate);
-      if (element) {
-        element.count = element.count + 1;
-      } else {
-        dataset.push({ date: processDate, count: 1 });
-      }
-    }
-    dataset.reverse(); // ascending order
-    return dataset;
-  };
-  const getMyHistoricalProcessesCountingWindow = (module, offset) => {
-    if (!module && !offset) throw new Error('There is no offset or module arguments input');
-    const modulePrefix = identifyModuleProcessPrefix(module); // Identifing the module
-    const processesByModule = myProcesses.value.filter((p) => p.code.slice(0, 3) === modulePrefix);
-    // Creating the dataset (date, count)
-    const dataset = [];
-    for (const process of processesByModule) {
-      const processDate = extractTime(process.createdAt, 'America/La_Paz', 'numeric').date;
-      const element = dataset.find((element) => element.date === processDate);
-      if (element) {
-        element.count = element.count + 1;
-      } else {
-        dataset.push({ date: processDate, count: 1 });
-      }
-    }
-    const subDataset = extractSubarray(dataset, offset, 7); // Extracting subarray up to 7 elements (1week)
-    subDataset.reverse(); // ascending order
-    return subDataset;
-  };
+  // const getMyProcessesCount = (module, date) => {
+  //   if (!module || !date) throw new Error('There is no id or module arguments input');
+  //   const modulePrefix = identifyModuleProcessPrefix(module); // Identifing the module
+  //   // Counting the processes by prefix code then by date
+  //   const count = myProcesses.value.filter((p) => {
+  //     if (p.code.slice(0, 3) === modulePrefix) {
+  //       return extractTime(p.createdAt, 'America/La_Paz', 'numeric').date === date;
+  //     } else {
+  //       return false;
+  //     }
+  //   }).length;
+  //   return count;
+  // };
+  // const getMyHistoricalProcessesCounting = (module) => {
+  //   if (!module) throw new Error('There is no id or module arguments input');
+  //   const modulePrefix = identifyModuleProcessPrefix(module); // Identifing the module
+  //   const processesByModule = myProcesses.value.filter((p) => p.code.slice(0, 3) === modulePrefix);
+  //   // Creating the dataset (date, count)
+  //   const dataset = [];
+  //   for (const process of processesByModule) {
+  //     const processDate = extractTime(process.createdAt, 'America/La_Paz', 'numeric').date;
+  //     const element = dataset.find((element) => element.date === processDate);
+  //     if (element) {
+  //       element.count = element.count + 1;
+  //     } else {
+  //       dataset.push({ date: processDate, count: 1 });
+  //     }
+  //   }
+  //   dataset.reverse(); // ascending order
+  //   return dataset;
+  // };
+  // const getMyHistoricalProcessesCountingWindow = (module, offset) => {
+  //   if (!module && !offset) throw new Error('There is no offset or module arguments input');
+  //   const modulePrefix = identifyModuleProcessPrefix(module); // Identifing the module
+  //   const processesByModule = myProcesses.value.filter((p) => p.code.slice(0, 3) === modulePrefix);
+  //   // Creating the dataset (date, count)
+  //   const dataset = [];
+  //   for (const process of processesByModule) {
+  //     const processDate = extractTime(process.createdAt, 'America/La_Paz', 'numeric').date;
+  //     const element = dataset.find((element) => element.date === processDate);
+  //     if (element) {
+  //       element.count = element.count + 1;
+  //     } else {
+  //       dataset.push({ date: processDate, count: 1 });
+  //     }
+  //   }
+  //   const subDataset = extractSubarray(dataset, offset, 7); // Extracting subarray up to 7 elements (1week)
+  //   subDataset.reverse(); // ascending order
+  //   return subDataset;
+  // };
   // Actions
-  const setMyProcesses = (data) => {
-    myProcesses.value = data || [];
+  // const setMyProcesses = (data) => {
+  //   myProcesses.value = data || [];
+  // };
+  const addMyProcesses = (data) => {
+    if (data && data.length > 0) {
+      myProcesses.value.push(...data);
+    }
   };
 
   const resetMyProcesses = () => {
@@ -90,7 +97,7 @@ export const useMyProcessesStore = defineStore('myProcesses', () => {
     getMyHistoricalProcessesCountingWindow,
     getMyProcessesCount,
     //Actions
-    setMyProcesses,
+    addMyProcesses,
     resetMyProcesses,
   };
 });

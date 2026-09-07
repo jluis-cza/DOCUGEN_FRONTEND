@@ -41,6 +41,24 @@
             <v-card-item>
               <Line :data="chart.data" :options="chartOptions" />
             </v-card-item>
+
+            <v-card-actions>
+              <v-btn
+                size="small"
+                variant="plain"
+                @click="previousData(pagination.limit)"
+                icon="mdi-skip-previous"
+              >
+              </v-btn>
+              <v-spacer></v-spacer>
+              <v-btn
+                size="small"
+                variant="plain"
+                @click="nextData(pagination.limit)"
+                icon="mdi-skip-next"
+              >
+              </v-btn>
+            </v-card-actions>
             <!-- <v-card-actions class="d-flex justify-space-between align-center">
               <v-btn
                 size="small"
@@ -81,7 +99,9 @@ import { useProcesses } from '../../composables/docugen-web/useProcesses.js';
 import { useProcessesStore } from '../../stores/docugen-web/processesStore.js';
 import { useMyProcesses } from '../../composables/docugen-web/useMyProcesses.js';
 import { useMyProcessesStore } from '../../stores/docugen-web/myProcessesStore.js';
+import { useListsStore } from '../../stores/utils/listsStore.js';
 import { extractTime } from '../../helpers/utils.js';
+
 import {
   Chart as ChartJS,
   Title,
@@ -114,10 +134,13 @@ const {
 } = useMyProcesses();
 const processesStore = useProcessesStore();
 const myProcessesStore = useMyProcessesStore();
+const listsStore = useListsStore();
 const dateOffset = ref({
   edition: 0,
   processing: 0,
 });
+const listId = 4;
+const pagination = computed(() => listsStore.getList(listId));
 
 // Functions
 const getCurrentDate = () => {
@@ -225,11 +248,24 @@ const charts = computed(() => {
 
 // Hooks
 onMounted(async () => {
+  
   if (props.account.role === 'admin')
-    await processes_actions.processesGetter({ requestedModules: ['edition', 'processing'] });
+    await processes_actions.processesGetter({
+      type: 'B',
+      requestedModules: ['processing'],
+      params,
+    });
+  await processes_actions.processesGetter({ type: 'C', requestedModules: ['edition'], params });
   // if (props.account.role === 'dev' && myProcesses_success === null)
   if (props.account.role === 'dev')
-    await myProcesses_actions.myProcessesGetter({ associated_account: props.account.id });
+    await myProcesses_actions.myProcessesGetter({
+      type: 'B',
+      requestedModules: ['processing'],
+      params,
+    });
+  await myProcesses_actions.myProcessesGetter({ type: 'C', requestedModules: ['edition'], params });
+
+  // await myProcesses_actions.myProcessesGetter({ associated_account: props.account.id });
 });
 </script>
 

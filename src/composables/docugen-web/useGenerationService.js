@@ -1,26 +1,26 @@
 import { computed, ref } from 'vue';
 import { ManagementService } from '../../services/docugen-web/ManagementService.js';
-import { useMyProcessesStore } from '../../stores/docugen-web/myProcessesStore.js';
+import { useProcessesStore } from '../../stores/docugen-web/processesStore.js';
 import { useListsStore } from '../../stores/utils/listsStore.js';
 
-export const useMyProcesses = () => {
+export const useProcesses = () => {
   // Notification setttings
   const message = ref(null);
   const code = ref(null);
   // Store settings
-  const myProcessesStore = useMyProcessesStore();
+  const processesStore = useProcessesStore();
   const listStore = useListsStore();
-  const myProcesses = computed(() => myProcessesStore.getMyProcesses);
-  const listId = 3;
+  const processes = computed(() => processesStore.getProcesses);
+  const listId = 4;
   // Request settings
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    myProcessesGetter: async (params) => {
+    processesGetter: async (params) => {
       try {
         loading.value = true;
         const response = await ManagementService.getProcesses(params);
-        myProcessesStore.addMyProcesses(response.data.data.processes);
+        processesStore.addProcesses(response.data.data.processes);
         listStore.setList(listId, response.data.metadata.processes);
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || false;
@@ -29,7 +29,7 @@ export const useMyProcesses = () => {
         console.error(err);
         success.value = err.response?.data?.success || false;
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in myProcessesGetter';
+          err.response?.data?.message || err.response.statusText || 'Error in processesGetter';
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
         loading.value = false;
@@ -37,5 +37,5 @@ export const useMyProcesses = () => {
     },
   };
 
-  return { myProcesses, actions, loading, success, message, code };
+  return { processes, actions, loading, success, message, code };
 };

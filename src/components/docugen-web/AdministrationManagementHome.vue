@@ -11,7 +11,8 @@
   <v-row>
     <!-- Services overview -->
     <v-col cols="8">
-      <AdministrationManagementHomeServices :account="account" />
+      <!-- <AdministrationManagementHomeServices :account="account" />
+        -->en construcción
     </v-col>
     <!-- My processes -->
     <v-col cols="4">
@@ -38,7 +39,7 @@ import { useTime } from '../../composables/utils/useTime.js';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { extractTime } from '../../helpers/utils.js';
 import AdministrationManagementHomeProcesses from './AdministrationManagementHomeProcesses.vue';
-import AdministrationManagementHomeServices from './AdministrationManagementHomeServices.vue';
+// import AdministrationManagementHomeServices from './AdministrationManagementHomeServices.vue';
 import AdministrationManagementHomeAccounts from './AdministrationManagementHomeAccounts.vue';
 import AdministrationManagementHomeSystemParameters from './AdministrationManagementHomeSystemParameters.vue';
 import AdministrationManagementHomeServiceLookups from './AdministrationManagementHomeServiceLookups.vue';

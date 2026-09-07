@@ -4,7 +4,7 @@ import { deepMerge } from '../../helpers/utils.js';
 import { toRaw } from 'vue';
 import { LISTS } from '../../constants/lists.js';
 
-const getDefaultListData = () => JSON.parse(JSON.stringify(LISTS.default));
+const getDefaultListData = (listType) => JSON.parse(JSON.stringify(LISTS[listType]));
 export const useListsStore = defineStore('lists', () => {
   // States
   const lists = ref([]);
@@ -26,10 +26,24 @@ export const useListsStore = defineStore('lists', () => {
   };
   const resetList = (id) => {
     const index = lists.value.findIndex((l) => l.id === id);
+    let defaultListData = {};
+    switch (id) {
+      case 1 || 2 || 9 || 10 || 11 || 12:
+        defaultListData = getDefaultListData('default');
+        break;
+      case 3 || 6:
+        defaultListData = getDefaultListData('timeline');
+        break;
+      case 4 || 5 || 7 || 8:
+        defaultListData = getDefaultListData('chart1');
+        break;
+      default:
+        defaultListData = getDefaultListData('default');
+    }
     if (index !== -1) {
-      lists.value[index] = deepMerge(toRaw(lists.value[index]), getDefaultListData());
+      lists.value[index] = deepMerge(toRaw(lists.value[index]), defaultListData);
     } else {
-      lists.value.push(deepMerge({ id }, getDefaultListData()));
+      lists.value.push(deepMerge({ id }, defaultListData));
     }
   };
   const deleteList = (id) => {
@@ -50,5 +64,18 @@ export const useListsStore = defineStore('lists', () => {
 // id
 //  1: myNotifications (static)
 //  2: notifications (static)
+//  3: myProcesses (static)
+//  4: myProcessingProcesses (static)
+//  5: myEditionProcesses (static)
+//  6: processes (static)
+//  7: processingProcesses (static)
+//  8: editionProcesses (static)
+//  9: myProcessingProcessesCount (static)
+//  10: myEditionProcessesCount (static)
+//  11: processingProcessesCount (static)
+//  12: editionProcessesCount (static)
+
 // Structure(e.g.):
 //    {id: 0, cursor: null, limit: 5, hasNextChunck: true}
+
+// TODO: The use of  "static" needs to be evaluated

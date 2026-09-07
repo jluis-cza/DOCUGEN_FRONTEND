@@ -4,5 +4,18 @@ export const LISTS = {
     cursor: null,
     limit: 5,
     hasNextChunk: true,
+    total: null
+  },
+  timeline: {
+    cursor: null,
+    limit: 3,
+    hasNextChunk: true,
+    total: null
+  },
+  chart1: {
+    cursor: null,
+    limit: 7,
+    hasNextChunk: true,
+    total: null
   },
 };
