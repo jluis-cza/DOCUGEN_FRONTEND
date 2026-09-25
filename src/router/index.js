@@ -3,6 +3,7 @@ import { admission } from './docugen-web/admission.js';
 import { administrationManagement } from './docugen-web/administrationManagement.js';
 import { USERS } from '../constants/users.js';
 import guard from './guard.js';
+import { useOverlayStore } from '../stores/utils/overlayStore.js';
 
 const routes = [
   //  DOCUGEN-WEB
@@ -51,6 +52,16 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+router.beforeEach(() => {
+  useOverlayStore().setOverlay({});
+});
+router.afterEach(() => {
+  useOverlayStore().resetOverlay();
+});
+router.onError(() => {
+  useOverlayStore().resetOverlay();
 });
 
 guard(router);
