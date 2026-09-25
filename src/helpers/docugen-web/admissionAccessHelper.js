@@ -3,16 +3,28 @@ import { useMySessionStore } from '../../stores/docugen-web/mySessionStore.js';
 import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
 import { AdmissionService } from '../../services/docugen-web/AdmissionService.js';
 
+let accessRenewalPromise = null;
+
 export const accessRenewer = async () => {
-  const myAccountStore = useMyAccountStore();
-  const mySessionStore = useMySessionStore();
-  const tokenStore = useTokenStore();
-  console.log('Renewing access...');
-  const response = await AdmissionService.renewAccess();
-  tokenStore.setToken(response.data.data.token);
-  mySessionStore.setMySession(response.data.data.session);
-  myAccountStore.setMyAccount(response.data.data.account);
-  console.log('Access renewed');
+  if (accessRenewalPromise) return accessRenewalPromise;
+
+  accessRenewalPromise = (async () => {
+    const myAccountStore = useMyAccountStore();
+    const mySessionStore = useMySessionStore();
+    const tokenStore = useTokenStore();
+    console.log('Renewing access...');
+    const response = await AdmissionService.renewAccess();
+    tokenStore.setToken(response.data.data.token);
+    mySessionStore.setMySession(response.data.data.session);
+    myAccountStore.setMyAccount(response.data.data.account);
+    console.log('Access renewed');
+  })();
+
+  try {
+    return await accessRenewalPromise;
+  } finally {
+    accessRenewalPromise = null;
+  }
 };
 
 export const accessRemover = () => {

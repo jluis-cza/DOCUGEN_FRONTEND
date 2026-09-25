@@ -2,11 +2,13 @@ import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
 import { useMyAccountStore } from '../stores/docugen-web/myAccountStore.js';
 import { accessRemover, accessRenewer } from '../helpers/docugen-web/admissionAccessHelper.js';
 
+const AUTH_PUBLIC_PATHS = ['/login', '/register', '/verification'];
+
 const guard = (router) => {
   // Global guard
   router.beforeEach(async (to, from, next) => {
     const tokenStore = useTokenStore();
-    const currentToken = typeof tokenStore.getToken === 'string' ? tokenStore.getToken : '';
+    let currentToken = typeof tokenStore.getToken === 'string' ? tokenStore.getToken : '';
 
     // Checking is autentication is needed to access the route
     if (to.meta.requiresAuth) {
@@ -22,11 +24,12 @@ const guard = (router) => {
           accessRemover();
           return next('/login');
         }
+        currentToken = typeof tokenStore.getToken === 'string' ? tokenStore.getToken : '';
       }
 
       // Checking the user's role
       const role = myAccountStore.getMyAccount.role;
-      if (to.meta.allowedRoles.includes(role)) {
+      if (currentToken && (to.meta.allowedRoles || []).includes(role)) {
         console.log(`Access granted. role: ${role}`);
         return next();
       } else {
@@ -40,15 +43,11 @@ const guard = (router) => {
       return next();
     }
 
-    try {
-      await accessRenewer();
-      console.error('User is authenticated.');
+    if (currentToken && AUTH_PUBLIC_PATHS.includes(to.path)) {
       return next('/dashboard');
-    } catch (err) {
-      console.error('User is not authenticated.', err.message);
-      accessRemover();
-      return next();
     }
+
+    return next();
   });
 };
 
