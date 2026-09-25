@@ -88,6 +88,7 @@ export const SERVICES = {
       documents: {
         base: '/documents',
         generate: '/generate',
+        bulk_generate: '/bulk-generate',
         availability: '/availability',
       },
       api_tokens: {

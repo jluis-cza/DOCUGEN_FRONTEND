@@ -7,6 +7,7 @@ const DOCUMENTS = SERVICES.path.docugen_app.documents.base;
 const RENDER = SERVICES.path.docugen_app.render;
 const PARAMETERS = SERVICES.path.docugen_app.templates.parameters;
 const GENERATE = SERVICES.path.docugen_app.documents.generate;
+const BULK_GENERATE = SERVICES.path.docugen_app.documents.bulk_generate;
 const AVAILABILITY = SERVICES.path.docugen_app.documents.availability;
 
 export const TemplateService = {
@@ -18,5 +19,7 @@ export const TemplateService = {
   updateTemplate: (id, payload) => axiosInstance.put(BASE + TEMPLATES + `/${id}`, payload),
   deleteTemplate: (id) => axiosInstance.delete(BASE + TEMPLATES + `/${id}`),
   generateDocumentRemote: (payload) => axiosInstance.post(BASE + DOCUMENTS + GENERATE, payload),
+  generateDocumentsBulk: (payload) =>
+    axiosInstance.post(BASE + DOCUMENTS + BULK_GENERATE, payload),
   renderTemplate: (payload) => axiosInstance.post(BASE + RENDER, payload),
 };

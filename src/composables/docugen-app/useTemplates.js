@@ -190,6 +190,24 @@ export const useTemplates = () => {
     }
   };
 
+  const generateDocumentsBulk = async (payload) => {
+    try {
+      loading.value = true;
+      const response = await TemplateService.generateDocumentsBulk(payload);
+      success.value = response.data?.success ?? true;
+      message.value = response.data?.message || '';
+      code.value = response.data?.code || 'S2010';
+      return response.data.data;
+    } catch (error) {
+      success.value = false;
+      message.value = error.response?.data?.message || 'Error generando documentos masivos';
+      code.value = error.response?.data?.code || 'EXXX';
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     templates,
     selectedTemplate,
@@ -206,5 +224,6 @@ export const useTemplates = () => {
     deleteTemplate,
     renderTemplate,
     generateDocumentRemote,
+    generateDocumentsBulk,
   };
 };
