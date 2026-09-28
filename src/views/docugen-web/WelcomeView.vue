@@ -3,8 +3,13 @@
     <v-app-bar class="px-3 bg-primary">
       <v-app-bar-title>DOCUGEN</v-app-bar-title>
       <v-spacer> </v-spacer>
-      <v-btn @click="goToLogin" class="mx-5">Iniciar Sesión</v-btn>
-      <v-btn @click="goToRegistry" class="bg-success">Registrarse</v-btn>
+      <template v-if="isLoggedIn">
+        <v-btn @click="goToDashboard" class="mx-5">Ir al dashboard</v-btn>
+      </template>
+      <template v-else>
+        <v-btn @click="goToLogin" class="mx-5">Iniciar Sesión</v-btn>
+        <v-btn @click="goToRegistry" class="bg-success">Registrarse</v-btn>
+      </template>
     </v-app-bar>
     <v-main>
       <v-container>
@@ -45,15 +50,26 @@
         <RouterLink to="/information" style="text-decoration: none; color: inherit"
           >Acerca</RouterLink
         >
+        |
+        <RouterLink to="/qa" style="text-decoration: none; color: inherit">Q&amp;A</RouterLink>
       </div>
       <p>Diseñado por JL</p>
     </footer>
   </v-app>
 </template>
 <script setup>
+import { computed } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
+import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
+import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 
 const router = useRouter();
+const tokenStore = useTokenStore();
+const myAccountStore = useMyAccountStore();
+const isLoggedIn = computed(
+  () => Boolean(tokenStore.getToken || myAccountStore.getMyAccount?.id)
+);
+
 const getImageUrl = (name) => {
   return new URL(`../../assets/docugen-web/${name}`, import.meta.url).href;
 };
@@ -68,6 +84,9 @@ const goToLogin = () => {
 };
 const goToRegistry = () => {
   router.push('/register');
+};
+const goToDashboard = () => {
+  router.push('/dashboard');
 };
 </script>
 <style scoped></style>

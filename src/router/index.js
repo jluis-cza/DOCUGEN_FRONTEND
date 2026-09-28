@@ -25,18 +25,36 @@ const routes = [
     meta: {},
     component: () => import('../views/docugen-web/ManualView.vue'),
   },
+  {
+    path: '/qa',
+    name: 'qa',
+    meta: {},
+    component: () => import('../views/docugen-web/QAView.vue'),
+  },
+  {
+    path: '/suspension',
+    redirect: '/qa',
+  },
   ...admission,
   ...administrationManagement,
   {
     path: '/templates/:templateId/edit',
     name: 'standalone-template-editor',
-    meta: { requiresAuth: true, allowedRoles: [USERS.type.client.role.developer] },
+    meta: {
+      requiresAuth: true,
+      allowedRoles: [USERS.type.client.role.developer],
+      requiredService: 'edition',
+    },
     component: () => import('../components/docugen-app/TemplateEditor.vue'),
   },
   {
     path: '/templates/:templateId/present',
     name: 'standalone-template-presentation',
-    meta: { requiresAuth: true, allowedRoles: [USERS.type.client.role.developer] },
+    meta: {
+      requiresAuth: true,
+      allowedRoles: [USERS.type.client.role.developer],
+      requiredService: 'generation',
+    },
     component: () => import('../components/docugen-app/TemplatePresentationView.vue'),
   },
 

@@ -1,14 +1,32 @@
 <template>
   <v-snackbar
-    v-model="showNotification"
+    v-model="isVisible"
     :color="color"
     location="bottom right"
     transition="fade-transition"
     :timeout="timeout"
     contained
+    @after-leave="handleAfterLeave"
   >
     <div class="d-flex align-center ga-2">
-      <v-icon :icon="icon" /> <span>{{ message }}</span>
+      <v-icon :icon="icon" />
+      <template v-if="isSuspensionNotice">
+        <span>Cuenta suspendida.</span>
+        <a href="/qa" class="text-white font-weight-bold" @click.prevent="closeAndGo('/qa')"
+          >Más información</a
+        >
+      </template>
+      <template v-else-if="isServiceUnavailableNotice">
+        <span>{{ serviceNoticeText }}</span>
+        <a
+          :href="serviceNoticeLink"
+          class="text-white font-weight-bold"
+          @click.prevent="closeAndGo(serviceNoticeLink)"
+        >
+          Más información
+        </a>
+      </template>
+      <span v-else>{{ notification.message }}</span>
     </div>
     <template v-slot:actions>
       <v-btn
@@ -16,65 +34,64 @@
         variant="text"
         density="compact"
         icon="mdi-close"
-        @click="showNotification = false"
+        @click="isVisible = false"
       ></v-btn>
     </template>
   </v-snackbar>
 </template>
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 
 const notificationStore = useNotificationStore();
-const onReception = computed(() => notificationStore.isNotificationReceived);
-// Layout
-const showNotification = ref(false);
-const message = ref('');
-const color = ref('');
-const icon = ref('');
-const timeout = ref(3000); //default timeout
+const notification = ref({ message: '', code: '', mode: '' });
+const isVisible = ref(false);
 
-const setNotification = async () => {
-  if (showNotification.value) {
-    showNotification.value = false;
-    await nextTick();
-  }
-  message.value = notificationStore.getNotification.message;
-  const code = notificationStore.getNotification.code;
-  const notificationType = code[0];
-  switch (notificationType) {
-    case 'S':
-      color.value = 'success';
-      icon.value = 'mdi-check-circle';
-      break;
-    case 'W':
-      color.value = 'warning';
-      icon.value = 'mdi-alert-circle';
-      break;
-    case 'E':
-      color.value = 'error';
-      icon.value = 'mdi-close-circle';
-      break;
-    case 'I':
-      color.value = 'info';
-      icon.value = 'mdi-information';
-      break;
-    default:
-      color.value = 'error';
-      icon.value = 'mdi-close-circle';
-      break;
-  }
-  const mode = notificationStore.getNotification.mode;
-  timeout.value = mode === 'persistent' ? -1 : 3000;
-  showNotification.value = true;
+watch(
+  () => (notificationStore.isNotificationReceived ? notificationStore.getNotification : null),
+  (receivedNotification) => {
+    if (!receivedNotification) return;
+    notification.value = { ...receivedNotification };
+    isVisible.value = true;
+  },
+  { immediate: true }
+);
+
+const closeAndGo = (path) => {
+  isVisible.value = false;
+  window.location.href = path;
 };
 
-watch(onReception, (newValue, oldValue) => {
-  if (oldValue === false && newValue === true) setNotification();
-});
+const handleAfterLeave = () => {
+  if (isVisible.value) return;
+  notificationStore.resetNotification();
+  notification.value = { message: '', code: '', mode: '' };
+};
 
-// Cleaning the notification store when removed
-watch(showNotification, (newValue, oldValue) => {
-  if (oldValue === true && newValue === false) notificationStore.resetNotification();
+const isSuspensionNotice = computed(() => notification.value.code === 'E0170');
+const serviceNoticeText = computed(() => {
+  const messages = {
+    E0820: 'Servicio de edición de plantillas no disponible.',
+    E0821: 'Servicio de generación de documentos no disponible.',
+  };
+  return messages[notification.value.code] || notification.value.message;
 });
+const isServiceUnavailableNotice = computed(() => ['E0820', 'E0821'].includes(notification.value.code));
+const serviceNoticeLink = computed(() =>
+  notification.value.code === 'E0820' ? '/qa#service-edition' : '/qa#service-generation'
+);
+const color = computed(() => {
+  const colors = { S: 'success', W: 'warning', E: 'error', I: 'info' };
+  return colors[notification.value.code?.[0]] || 'error';
+});
+const icon = computed(() => {
+  const icons = {
+    S: 'mdi-check-circle',
+    W: 'mdi-alert-circle',
+    E: 'mdi-close-circle',
+    I: 'mdi-information',
+  };
+  return icons[notification.value.code?.[0]] || 'mdi-close-circle';
+});
+const timeout = computed(() => (notification.value.mode === 'persistent' ? -1 : 3000));
 </script>

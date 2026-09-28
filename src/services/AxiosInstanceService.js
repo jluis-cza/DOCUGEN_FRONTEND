@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { SERVICES } from '../constants/services.js';
 import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
+import { useNotificationStore } from '../stores/utils/notificationStore.js';
 import { accessRenewer, accessRemover } from '../helpers/docugen-web/admissionAccessHelper.js';
 import router from '../router/index.js';
 
@@ -62,6 +63,31 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+    if (error.response?.data?.code === 'E0170') {
+      accessRemover();
+      useNotificationStore().setNotification({
+        message: error.response.data.message,
+        code: 'E0170',
+        mode: 'persistent',
+      });
+      if (router.currentRoute.value.path !== '/') router.replace('/');
+      return Promise.reject(error);
+    }
+
+    if (['E0820', 'E0821'].includes(error.response?.data?.code)) {
+      const code = error.response.data.code;
+      const messages = {
+        E0820: 'Servicio de edición de plantillas no disponible.',
+        E0821: 'Servicio de generación de documentos no disponible.',
+      };
+      useNotificationStore().setNotification({
+        message: messages[code],
+        code,
+        mode: 'persistent',
+      });
+      return Promise.reject(error);
+    }
+
     if (!originalRequest.url.includes(SERVICES.path.docugen_web.admission.base + '/')) {
       // 401 status treatment - Authenticated endpoints
       if (error.response?.status === 401 && !originalRequest._retry) {

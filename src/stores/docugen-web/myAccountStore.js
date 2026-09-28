@@ -2,28 +2,40 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
-export const useMyAccountStore = defineStore('myAccount', () => {
-  // States
-  const myAccount = ref({});
+const ACCOUNT_STORAGE_KEY = 'docugen_account';
 
-  //Getters
+const getStoredAccount = () => {
+  try {
+    const item = localStorage.getItem(ACCOUNT_STORAGE_KEY);
+    return item ? JSON.parse(item) : {};
+  } catch (error) {
+    return {};
+  }
+};
+
+export const useMyAccountStore = defineStore('myAccount', () => {
+  const myAccount = ref(getStoredAccount());
+
   const getMyAccount = computed(() => myAccount.value);
 
-  // Actions
   const setMyAccount = (data) => {
-    myAccount.value = data || {};
+    const nextAccount = data || {};
+    myAccount.value = nextAccount;
+    if (typeof window !== 'undefined') {
+      if (Object.keys(nextAccount).length > 0) localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(nextAccount));
+      else localStorage.removeItem(ACCOUNT_STORAGE_KEY);
+    }
     return true;
   };
+
   const resetMyAccount = () => {
     myAccount.value = {};
+    if (typeof window !== 'undefined') localStorage.removeItem(ACCOUNT_STORAGE_KEY);
   };
 
   return {
-    //Getters
     getMyAccount,
-    //Actions
     setMyAccount,
     resetMyAccount,
-    // registerAccount,
   };
 });

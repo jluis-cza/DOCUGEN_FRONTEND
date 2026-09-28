@@ -15,6 +15,7 @@ export const TemplateService = {
   getTemplate: (id) => axiosInstance.get(BASE + TEMPLATES + `/${id}`),
   getTemplateParameters: (id) => axiosInstance.get(BASE + TEMPLATES + `/${id}` + PARAMETERS),
   getGenerationAvailability: () => axiosInstance.get(BASE + DOCUMENTS + AVAILABILITY),
+  getAccountServicesAvailability: () => axiosInstance.get(BASE + DOCUMENTS + AVAILABILITY),
   createTemplate: (payload) => axiosInstance.post(BASE + TEMPLATES, payload),
   updateTemplate: (id, payload) => axiosInstance.put(BASE + TEMPLATES + `/${id}`, payload),
   deleteTemplate: (id) => axiosInstance.delete(BASE + TEMPLATES + `/${id}`),

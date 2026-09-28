@@ -1,25 +1,37 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
-export const useTokenStore = defineStore('token', () => {
-  // States
-  const token = ref('');
+const TOKEN_STORAGE_KEY = 'docugen_token';
 
-  //Getters
+const getStoredToken = () => {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+  } catch (error) {
+    return '';
+  }
+};
+
+export const useTokenStore = defineStore('token', () => {
+  const token = ref(getStoredToken());
+
   const getToken = computed(() => (typeof token.value === 'string' ? token.value : ''));
 
-  // Actions
   const setToken = (data) => {
-    token.value = typeof data === 'string' ? data : '';
+    const nextToken = typeof data === 'string' ? data : '';
+    token.value = nextToken;
+    if (typeof window !== 'undefined') {
+      if (nextToken) localStorage.setItem(TOKEN_STORAGE_KEY, nextToken);
+      else localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
   };
+
   const resetToken = () => {
     token.value = '';
+    if (typeof window !== 'undefined') localStorage.removeItem(TOKEN_STORAGE_KEY);
   };
 
   return {
-    //Getters
     getToken,
-    //Actions
     setToken,
     resetToken,
   };

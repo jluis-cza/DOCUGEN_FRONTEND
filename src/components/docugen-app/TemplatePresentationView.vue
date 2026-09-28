@@ -359,7 +359,7 @@ const generatePdf = async () => {
   } catch (error) {
     const message = error?.response?.data?.message || error?.message || 'No se pudo generar el PDF';
     console.error('Error generando PDF:', error);
-    showNotification(message, 'E2007', 'persistent');
+    showNotification(message, error?.response?.data?.code || 'E2007', 'persistent');
   } finally {
     isGenerating.value = false;
     showGeneratingDialog.value = false;

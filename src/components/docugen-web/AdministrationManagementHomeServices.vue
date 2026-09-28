@@ -196,11 +196,11 @@ const panels = computed(() => {
   return [
     {
       counter: getTodayProcessesCount('edition'),
-      description: 'Ediciones de plantilla hechas hoy',
+      description: 'Uso del módulo de Edición hoy',
     },
     {
       counter: getTodayProcessesCount('processing'),
-      description: 'Generaciones de documentos hechas hoy',
+      description: 'Uso del módulo de Generación hoy',
     },
   ];
 });
