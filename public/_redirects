@@ -1,0 +1,3 @@
+/api/*        https://docugen-backend-xwba.onrender.com/api/:splat        200!
+/generated/*  https://docugen-backend-xwba.onrender.com/generated/:splat  200!
+/*            /index.html                                       200
