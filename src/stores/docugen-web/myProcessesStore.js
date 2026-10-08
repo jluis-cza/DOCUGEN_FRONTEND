@@ -7,12 +7,14 @@ import { identifyModuleProcessPrefix } from '../../helpers/docugen-web/managerPr
 export const useMyProcessesStore = defineStore('myProcesses', () => {
   // States
   const myProcesses = ref([]);
+  const timelineProcesses = ref([]);
 
   //Getters
   const getAllMyProcesses = computed(() => myProcesses.value);
+  const getAllTimelineProcesses = computed(() => timelineProcesses.value);
   const getMyDateSegmentedProcesses = computed(() => {
     const sections = [];
-    for (const myProcess of myProcesses.value) {
+    for (const myProcess of timelineProcesses.value) {
       const myProcessDate = extractTime(myProcess.createdAt, 'America/La_Paz', 'long').date;
       const section = sections.find((section) => section.date === myProcessDate);
       if (section) {
@@ -78,6 +80,21 @@ export const useMyProcessesStore = defineStore('myProcesses', () => {
     myProcesses.value = data || [];
   };
 
+  const setTimelineProcesses = (data) => {
+    timelineProcesses.value = Array.isArray(data) ? data : [];
+  };
+
+  const appendTimelineProcesses = (data) => {
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    const existingIds = new Set(timelineProcesses.value.map((process) => process._id));
+    timelineProcesses.value.push(...data.filter((process) => !existingIds.has(process?._id)));
+  };
+
+  const resetTimelineProcesses = () => {
+    timelineProcesses.value = [];
+  };
+
   const resetMyProcesses = () => {
     myProcesses.value = [];
   };
@@ -85,6 +102,7 @@ export const useMyProcessesStore = defineStore('myProcesses', () => {
   return {
     //Getters
     getAllMyProcesses,
+    getAllTimelineProcesses,
     getMyDateSegmentedProcesses,
     getMyHistoricalProcessesCounting,
     getMyHistoricalProcessesCountingWindow,
@@ -92,5 +110,8 @@ export const useMyProcessesStore = defineStore('myProcesses', () => {
     //Actions
     setMyProcesses,
     resetMyProcesses,
+    setTimelineProcesses,
+    appendTimelineProcesses,
+    resetTimelineProcesses,
   };
 });
