@@ -29,9 +29,10 @@ export const useNotifications = () => {
       } catch (err) {
         console.error(err);
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in notificationsGetter';
+          err.response?.data?.message || err.response?.statusText || 'Error in notificationsGetter';
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
+        throw err;
       } finally {
         loading.value = false;
       }

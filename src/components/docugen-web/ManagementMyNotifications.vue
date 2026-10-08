@@ -1,35 +1,31 @@
 <template>
-  <v-card min-width="480" rounded="lg" elevation="3">
+  <v-card class="notification-inbox" rounded="lg" elevation="3">
     <v-card-title> Notificaciones</v-card-title>
     <v-divider></v-divider>
-    <v-infinite-scroll height="420" :items="safeNotifications" side="end" @load="onLoad">
+    <v-infinite-scroll
+      class="notification-scroll"
+      height="420"
+      :items="safeNotifications"
+      side="end"
+      @load="onLoad"
+    >
       <div>
         <v-list>
           <v-list-item v-for="notification in safeNotifications" :key="notification._id">
-            <v-card
-              class="w-100 notification-card notification-card--neutral"
-              :class="
-                notification.status === 'sent'
-                  ? 'notification-card--unread'
-                  : 'notification-card--read'
-              "
-              color="surface"
-              variant="tonal"
-            >
-              <v-card-title class="d-flex align-center justify-space-between">
+            <v-card class="w-100 notification-card" color="info" variant="tonal">
+              <v-card-title
+                class="notification-subject d-flex align-center justify-space-between text-primary"
+              >
                 <span>{{ notification.subject || 'Sin asunto' }}</span>
                 <v-icon
-                  :icon="
-                    notification.status === 'sent'
-                      ? 'mdi-checkbox-blank-circle-outline'
-                      : 'mdi-check-circle'
-                  "
-                  :color="notification.status === 'sent' ? 'primary' : 'success'"
+                  v-if="notification.status === 'received'"
+                  icon="mdi-check-circle"
+                  color="success"
                   size="small"
                   class="ms-2"
                 />
               </v-card-title>
-              <v-card-subtitle>
+              <v-card-subtitle class="text-secondary">
                 {{ getSenderLabel(notification) }} ·
                 {{ getNotificationTime(notification.createdAt) }}
               </v-card-subtitle>
@@ -37,7 +33,6 @@
                 <div v-if="isNotificationOpen(notification._id)" class="notification-message mt-1">
                   {{ notification.message || 'Sin mensaje' }}
                 </div>
-                <div v-else class="notification-hidden text-caption mt-1">Mensaje oculto</div>
                 <div class="mt-2 text-decoration-underline text-info">
                   <span
                     v-if="isNotificationOpen(notification._id)"
@@ -237,12 +232,33 @@ watch(
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
+  min-width: 0;
 }
 
-.notification-card--unread,
-.notification-card--read {
-  background: rgba(var(--v-theme-surface-variant), 0.55) !important;
-  border-color: rgba(var(--v-theme-on-surface), 0.08);
+.notification-inbox {
+  box-sizing: border-box;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.notification-scroll {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.notification-subject,
+.notification-subject span,
+.notification-message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.notification-card :deep(.v-card-subtitle) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .notification-message {
@@ -251,10 +267,5 @@ watch(
   border-radius: 8px;
   padding: 10px 12px;
   border: 1px solid rgba(var(--v-theme-primary), 0.12);
-}
-
-.notification-hidden {
-  color: rgb(var(--v-theme-on-surface-variant));
-  opacity: 0.8;
 }
 </style>

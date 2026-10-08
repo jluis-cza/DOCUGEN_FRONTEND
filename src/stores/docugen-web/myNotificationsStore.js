@@ -26,6 +26,16 @@ export const useMyNotificationsStore = defineStore('myNotifications', () => {
   const setMyNotifications = (data) => {
     myNotifications.value = Array.isArray(data) ? data.map(normalizeNotification) : [];
   };
+  const appendMyNotifications = (data) => {
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    const existingIds = new Set(myNotifications.value.map((notification) => notification._id));
+    const newNotifications = data
+      .filter((notification) => !existingIds.has(notification?._id))
+      .map(normalizeNotification);
+
+    myNotifications.value.push(...newNotifications);
+  };
   const setMyNotification = (id, options) => {
     const index = myNotifications.value.findIndex((a) => a._id === id);
     if (index !== -1) {
@@ -49,6 +59,7 @@ export const useMyNotificationsStore = defineStore('myNotifications', () => {
     getMyNotifications,
     //Actions
     setMyNotifications,
+    appendMyNotifications,
     setMyNotification,
     countMyNewNotifications,
     resetMyNotifications,

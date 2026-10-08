@@ -26,6 +26,7 @@
         <v-list>
           <v-infinite-scroll
             :height="400"
+            :items="notifications"
             side="end"
             @load="onLoad"
             class="bg-background"
@@ -38,8 +39,16 @@
                     <template #prepend>
                       <v-icon icon="mdi-message-text-outline"></v-icon>
                     </template>
-                    <v-card-title class="text-primary">
-                      {{ notification.subject }}
+                    <v-card-title class="d-flex align-center justify-space-between text-primary">
+                      <span>{{ notification.subject }}</span>
+                      <v-icon
+                        v-if="notification.status === 'received'"
+                        icon="mdi-check-circle"
+                        color="success"
+                        size="small"
+                        class="ms-2"
+                        aria-label="Notificación vista"
+                      />
                     </v-card-title>
                     <v-card-subtitle class="text-secondary">
                       Enviado por {{ getUsername(notification.from) }} el
@@ -114,6 +123,7 @@ const dialogBoxDataSet = {
   default: DIALOGS.default,
 };
 const listId = 2;
+const isLoadingNotifications = ref(false);
 
 // listsStore.resetList(listId);
 const pagination = computed(() => listsStore.getList(listId));
@@ -186,26 +196,25 @@ const createNotification = async () => {
 };
 
 const onLoad = async ({ done }) => {
+  if (isLoadingNotifications.value) {
+    done('ok');
+    return;
+  }
+
+  if (!pagination.value.hasNextChunk) {
+    done('empty');
+    return;
+  }
+
+  isLoadingNotifications.value = true;
   try {
-    console.log('entrando a load ----------->');
-    if (!pagination.value.hasNextChunk) {
-      done('empty');
-      return;
-    }
-
     await notifications_actions.notificationsGetter(params.value);
-    // if (notifications.value && notifications.value.length > 0) {
-    //   notificationsLayout.value.push(...notifications.value);
-    // }
-
-    if (!pagination.value.hasNextChunk) {
-      done('empty');
-    } else {
-      done('ok');
-    }
+    done(pagination.value.hasNextChunk ? 'ok' : 'empty');
   } catch (error) {
     console.error('Error loading the list. ', error);
     done('error');
+  } finally {
+    isLoadingNotifications.value = false;
   }
 };
 
