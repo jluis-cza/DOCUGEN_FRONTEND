@@ -3,7 +3,9 @@
     <!-- Tabs Navigation -->
     <v-tabs v-model="activeTab" class="mb-4" @update:model-value="handleTabChange">
       <v-tab value="info" prepend-icon="mdi-account"> Mi Información </v-tab>
-      <v-tab value="api-tokens" prepend-icon="mdi-key-link"> Tokens de API </v-tab>
+      <v-tab v-if="myProfile.role === 'dev'" value="api-tokens" prepend-icon="mdi-key-link">
+        Tokens de API
+      </v-tab>
     </v-tabs>
 
     <!-- Tab Content -->
@@ -68,7 +70,7 @@
       </v-window-item>
 
       <!-- Tab 2: Tokens de API -->
-      <v-window-item value="api-tokens">
+      <v-window-item v-if="myProfile.role === 'dev'" value="api-tokens">
         <router-view />
       </v-window-item>
     </v-window>

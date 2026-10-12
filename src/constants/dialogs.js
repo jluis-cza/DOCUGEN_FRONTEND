@@ -88,7 +88,7 @@ export const DIALOGS = {
           {
             key: 'newPass',
             label: 'Nueva contraseña',
-            info: 'Mínimo 8 carácteres.',
+            info: 'Mínimo 5 carácteres.',
             valueSet: [],
             unitSet: [],
             ruleSet: ['RULE_TEXT_REQUIRED', 'RULE_PASSWORD_INPUT'],

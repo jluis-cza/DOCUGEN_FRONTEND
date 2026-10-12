@@ -59,7 +59,7 @@
               @click:append-inner="showPassword = !showPassword"
             >
               <template #append-inner>
-                <v-tooltip location="bottom" text="Mínimo 8 carácteres.">
+                <v-tooltip location="bottom" text="Mínimo 5 carácteres.">
                   <template #activator="{ props }">
                     <v-icon class="mr-2" v-bind="props" icon="mdi-information-outline"></v-icon>
                   </template>

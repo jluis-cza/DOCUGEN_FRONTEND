@@ -97,7 +97,7 @@ const isAccountServicesInfoActive = computed(() =>
 const isAccountNotificationsInfoActive = computed(() =>
   route.name === 'account-notifications' ? true : false
 );
-const { account, actions, loading } = useAccount();
+const { account, actions, loading, code } = useAccount();
 const breadcrumbs = computed(() => [
   {
     title: 'Cuentas',
@@ -187,6 +187,7 @@ const viewAccountNotifications = (id) => {
 onMounted(async () => {
   accountId.value = route.params.accountId;
   await actions.accountGetter(accountId.value);
+  if (code.value === 'E0171') router.replace('/dashboard/accounts');
 });
 </script>
 

@@ -100,7 +100,11 @@ export const administrationManagement = [
           {
             path: 'api-tokens',
             name: 'my-profile-api-tokens',
-            meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
+            meta: {
+              requiresAuth: true,
+              allowedRoles: [DEV_ROLE],
+              roleDeniedRedirect: '/dashboard/my-profile',
+            },
             component: () => import('../../components/docugen-app/APITokenManagement.vue'),
           },
         ],

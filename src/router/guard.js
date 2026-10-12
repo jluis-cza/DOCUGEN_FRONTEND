@@ -63,7 +63,7 @@ const guard = (router) => {
         return next();
       } else {
         console.error('Access failed. No role found.');
-        return next('/login');
+        return next(to.meta.roleDeniedRedirect || '/login');
       }
     }
 

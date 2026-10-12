@@ -39,7 +39,7 @@ export const RULES = {
       // Password rule
       password: (value) => {
         if (value) {
-          const isValidPassword = /^.{8,}$/.test(value);
+          const isValidPassword = /^.{5,}$/.test(value);
           // const isValidPassword =
           //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/.test(value);
           return isValidPassword || 'Contraseña no válida.';
