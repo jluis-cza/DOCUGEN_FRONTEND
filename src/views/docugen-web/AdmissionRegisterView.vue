@@ -1,9 +1,8 @@
 <template>
   <v-container class="w-100 h-100 d-flex flex-column">
-    <!-- Home link -->
-    <div>
-      <RouterLink to="/">Ir a la página de inicio</RouterLink>
-    </div>
+    <v-btn to="/" variant="text" prepend-icon="mdi-arrow-left" class="mb-8 align-self-start">
+      Volver al inicio
+    </v-btn>
     <!-- Form -->
     <div class="flex-grow-1 d-flex align-center justify-center">
       <v-card class="mx-auto" width="400" :loading="loading" variant="elevated">
@@ -87,7 +86,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter, RouterLink } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useMyAccount } from '../../composables/docugen-web/useMyAccount.js';
 import { SERVICES } from '../../constants/services.js';
 import { RULES } from '../../helpers/rules.js';

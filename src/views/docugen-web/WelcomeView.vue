@@ -45,10 +45,10 @@
     <footer class="text-center bg-secondary">
       <p>DOCUGEN 2026</p>
       <div>
-        <RouterLink to="/manual" style="text-decoration: none; color: inherit">Ayuda</RouterLink>
+        <RouterLink to="/manual" style="text-decoration: none; color: inherit">Manual</RouterLink>
         |
         <RouterLink to="/information" style="text-decoration: none; color: inherit"
-          >Acerca</RouterLink
+          >Información</RouterLink
         >
         |
         <RouterLink to="/qa" style="text-decoration: none; color: inherit">Q&amp;A</RouterLink>

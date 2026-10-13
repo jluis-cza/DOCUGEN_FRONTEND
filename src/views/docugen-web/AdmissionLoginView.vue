@@ -1,9 +1,8 @@
 <template>
   <v-container class="w-100 h-100 d-flex flex-column">
-    <!-- Home link -->
-    <div>
-      <RouterLink to="/">Ir a la página de inicio</RouterLink>
-    </div>
+    <v-btn to="/" variant="text" prepend-icon="mdi-arrow-left" class="mb-8 align-self-start">
+      Volver al inicio
+    </v-btn>
     <!-- Form -->
     <div class="flex-grow-1 d-flex w-100 h-100 align-center justify-center">
       <v-card width="400" :loading="loading" variant="elevated">
@@ -44,7 +43,7 @@ import { RULES } from '../../helpers/rules.js';
 import { SERVICES } from '../../constants/services.js';
 import { ref } from 'vue';
 import { useMySession } from '../../composables/docugen-web/useMySession.js';
-import { useRouter, RouterLink } from 'vue-router';
+import { useRouter } from 'vue-router';
 
 const RULE_TEXT_REQUIRED = RULES.text.input.required;
 const RULE_EMAIL_INPUT = RULES.text.input.email;
