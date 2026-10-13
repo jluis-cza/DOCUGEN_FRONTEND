@@ -712,11 +712,13 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
+import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 
 const route = useRoute();
 const router = useRouter();
 const templateId = computed(() => route.params.templateId);
-const { getTemplate, updateTemplate, renderTemplate } = useTemplates();
+const notificationStore = useNotificationStore();
+const { getTemplate, updateTemplate, renderTemplate, message, code } = useTemplates();
 
 const baseTemplate = () => ({
   _id: '',
@@ -1392,15 +1394,28 @@ const getElementLabel = (element) => {
 };
 
 const saveTemplate = async () => {
-  await updateTemplate(templateId.value, {
-    name: template.value.name,
-    description: template.value.description,
-    dimensions: template.value.dimensions,
-    elements: template.value.elements,
-    status: template.value.status,
-  });
-  history.value = [serializeTemplate()];
-  future.value = [];
+  try {
+    await updateTemplate(templateId.value, {
+      name: template.value.name,
+      description: template.value.description,
+      dimensions: template.value.dimensions,
+      elements: template.value.elements,
+      status: template.value.status,
+    });
+    history.value = [serializeTemplate()];
+    future.value = [];
+    notificationStore.setNotification({
+      message: message.value,
+      code: code.value,
+      mode: 'automatic',
+    });
+  } catch (error) {
+    notificationStore.setNotification({
+      message: error.response?.data?.message || error.message || 'No se pudo guardar la plantilla.',
+      code: error.response?.data?.code || 'EXXX',
+      mode: 'automatic',
+    });
+  }
 };
 
 const openPresentation = () => {

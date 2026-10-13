@@ -255,11 +255,15 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
+import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 
 const router = useRouter();
+const notificationStore = useNotificationStore();
 const {
   templates,
   loading,
+  message,
+  code,
   listTemplates,
   createTemplate,
   deleteTemplate,
@@ -610,8 +614,22 @@ const openEditor = (templateId) => {
 };
 
 const deleteItem = async (templateId) => {
-  await deleteTemplate(templateId);
-  await loadTemplates();
+  try {
+    await deleteTemplate(templateId);
+    notificationStore.setNotification({
+      message: message.value,
+      code: code.value,
+      mode: 'automatic',
+    });
+    await loadTemplates();
+  } catch (error) {
+    notificationStore.setNotification({
+      message:
+        error.response?.data?.message || error.message || 'No se pudo eliminar la plantilla.',
+      code: error.response?.data?.code || 'EXXX',
+      mode: 'automatic',
+    });
+  }
 };
 
 const loadTemplates = async () => {

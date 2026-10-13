@@ -34,14 +34,13 @@ export const useMySession = () => {
           err.response?.data?.message || err.response?.statusText || 'Error in mySessionStarter';
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
-      } finally {
-        loading.value = false;
-        const data = {
+        notificationStore.setNotification({
           message: message.value,
           code: code.value,
           mode: code.value === 'E0170' ? 'persistent' : 'automatic',
-        };
-        notificationStore.setNotification(data);
+        });
+      } finally {
+        loading.value = false;
       }
     },
     mySessionCloser: async (payload) => {
@@ -56,17 +55,16 @@ export const useMySession = () => {
         code.value = response?.data?.code || 'EXXX';
       } catch (err) {
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in mySessionCloser';
+          err.response?.data?.message || err.response?.statusText || 'Error in mySessionCloser';
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
-      } finally {
-        loading.value = false;
-        const data = {
+        notificationStore.setNotification({
           message: message.value,
           code: code.value,
           mode: 'automatic',
-        };
-        notificationStore.setNotification(data);
+        });
+      } finally {
+        loading.value = false;
       }
     },
   };

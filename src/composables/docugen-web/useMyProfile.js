@@ -37,17 +37,16 @@ export const useMyProfile = () => {
       } catch (err) {
         console.error(err);
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in myProfileGetter';
+          err.response?.data?.message || err.response?.statusText || 'Error in myProfileGetter';
         success.value = err.response?.data?.success || false;
         code.value = err.response?.data?.code || 'EXXX';
       } finally {
         loading.value = false;
-        const data = {
+        notificationStore.setNotification({
           message: message.value,
           code: code.value,
           mode: 'automatic',
-        };
-        notificationStore.setNotification(data);
+        });
       }
     },
     myProfileSetter: async (id, payload) => {
