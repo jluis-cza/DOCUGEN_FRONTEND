@@ -49,12 +49,24 @@
         </template>
 
         <template #[`item.status`]="{ item }">
-          <v-chip :color="statusColor(item.status)" size="small" label> {{ item.status }} </v-chip>
+          <v-chip :color="getTemplateStatusColor(item.status)" size="small" label>
+            {{ getTemplateStatusLabel(item.status) }}
+          </v-chip>
+        </template>
+
+        <template #[`item.updatedAt`]="{ item }">
+          {{ formatUpdatedAt(item.updatedAt) }}
         </template>
 
         <template #[`item.actions`]="{ item }">
           <div class="d-flex ga-2">
-            <v-btn color="info" variant="tonal" size="small" @click="openEditor(item._id)">
+            <v-btn
+              color="info"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-eye-outline"
+              @click="openEditor(item._id)"
+            >
               Ver
             </v-btn>
             <v-btn
@@ -66,10 +78,31 @@
             >
               Ver detalles
             </v-btn>
-            <v-btn color="secondary" variant="tonal" size="small" @click="exportTemplate(item)">
+            <v-btn
+              color="secondary"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-download"
+              @click="exportTemplate(item)"
+            >
               Exportar
             </v-btn>
-            <v-btn color="error" variant="tonal" size="small" @click="deleteItem(item._id)">
+            <v-btn
+              color="warning"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-swap-horizontal"
+              @click="openStatusDialog(item)"
+            >
+              Actualizar estado
+            </v-btn>
+            <v-btn
+              color="error"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-delete-outline"
+              @click="deleteItem(item._id)"
+            >
               Eliminar
             </v-btn>
           </div>
@@ -106,8 +139,12 @@
             <v-col cols="12" md="4">
               <v-sheet border rounded class="pa-3 mb-3">
                 <div class="text-caption text-medium-emphasis mb-2">Estado</div>
-                <v-chip :color="statusColor(selectedTemplateDetails.status)" size="small" label>
-                  {{ selectedTemplateDetails.status }}
+                <v-chip
+                  :color="getTemplateStatusColor(selectedTemplateDetails.status)"
+                  size="small"
+                  label
+                >
+                  {{ getTemplateStatusLabel(selectedTemplateDetails.status) }}
                 </v-chip>
               </v-sheet>
             </v-col>
@@ -237,7 +274,13 @@
         <v-card-text>
           <v-text-field v-model="form.name" label="Nombre de la plantilla" />
           <v-text-field v-model="form.description" label="Descripción" />
-          <v-select v-model="form.status" label="Estado" :items="['draft', 'published']" />
+          <v-select
+            v-model="form.status"
+            label="Estado"
+            :items="TEMPLATE_STATUS_OPTIONS"
+            item-title="title"
+            item-value="value"
+          />
           <v-text-field v-model.number="form.dimensions.width" label="Ancho" type="number" />
           <v-text-field v-model.number="form.dimensions.height" label="Alto" type="number" />
         </v-card-text>
@@ -245,6 +288,49 @@
           <v-spacer />
           <v-btn text @click="dialogOpen = false">Cancelar</v-btn>
           <v-btn color="primary" @click="createNewTemplate">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="statusDialogOpen" max-width="480" persistent>
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          Actualizar estado de la plantilla
+        </v-card-title>
+        <v-card-text>
+          <p class="mb-4">
+            Selecciona el nuevo estado para
+            <strong>{{ selectedTemplateForStatus?.name }}</strong
+            >.
+          </p>
+          <v-select
+            v-model="selectedStatus"
+            label="Nuevo estado"
+            :items="TEMPLATE_STATUS_OPTIONS"
+            item-title="title"
+            item-value="value"
+            :disabled="updatingStatus"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="tonal"
+            class="bg-secondary"
+            :disabled="updatingStatus"
+            @click="closeStatusDialog"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn
+            variant="tonal"
+            class="bg-primary"
+            :loading="updatingStatus"
+            :disabled="!selectedStatus || selectedStatus === selectedTemplateForStatus?.status"
+            @click="confirmStatusUpdate"
+          >
+            Aceptar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -256,6 +342,12 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
+import {
+  getTemplateStatusColor,
+  getTemplateStatusLabel,
+  TEMPLATE_STATUS_OPTIONS,
+} from '../../helpers/docugen-app/templateStatus.js';
+import { extractTime } from '../../helpers/utils.js';
 
 const router = useRouter();
 const notificationStore = useNotificationStore();
@@ -266,11 +358,16 @@ const {
   code,
   listTemplates,
   createTemplate,
+  updateTemplate,
   deleteTemplate,
   getTemplate,
   getTemplateParameters,
 } = useTemplates();
 const dialogOpen = ref(false);
+const statusDialogOpen = ref(false);
+const updatingStatus = ref(false);
+const selectedTemplateForStatus = ref(null);
+const selectedStatus = ref('');
 const detailsDialog = ref(false);
 const detailsLoading = ref(false);
 const search = ref('');
@@ -285,10 +382,27 @@ const form = ref({
 });
 
 const headers = [
-  { title: 'Nombre', key: 'name' },
-  { title: 'Estado', key: 'status' },
-  { title: 'Actualizado', key: 'updatedAt' },
-  { title: 'Acciones', key: 'actions', sortable: false },
+  {
+    title: 'Nombre',
+    key: 'name',
+    headerProps: { class: 'bg-accent font-weight-bold' },
+  },
+  {
+    title: 'Estado',
+    key: 'status',
+    headerProps: { class: 'bg-accent font-weight-bold' },
+  },
+  {
+    title: 'Actualizado',
+    key: 'updatedAt',
+    headerProps: { class: 'bg-accent font-weight-bold' },
+  },
+  {
+    title: 'Acciones',
+    key: 'actions',
+    sortable: false,
+    headerProps: { class: 'bg-accent font-weight-bold' },
+  },
 ];
 
 const normalizePlaceholderKey = (value) => {
@@ -300,8 +414,10 @@ const normalizePlaceholderKey = (value) => {
     .replace(/\s+/g, '_');
 };
 
-const statusColor = (status) => {
-  return status === 'draft' ? 'warning' : 'success';
+const formatUpdatedAt = (value) => {
+  if (!value) return 'Sin fecha';
+  const { date, hour } = extractTime(value, 'America/La_Paz', 'short2');
+  return `${date}, ${hour.slice(0, 5)}`;
 };
 
 const extractStaticParameters = (template) => {
@@ -371,6 +487,49 @@ const openTemplateDetails = async (item) => {
 
 const openCreateDialog = () => {
   dialogOpen.value = true;
+};
+
+const openStatusDialog = (template) => {
+  selectedTemplateForStatus.value = template;
+  selectedStatus.value = template.status || 'draft';
+  statusDialogOpen.value = true;
+};
+
+const closeStatusDialog = () => {
+  if (updatingStatus.value) return;
+  statusDialogOpen.value = false;
+  selectedTemplateForStatus.value = null;
+  selectedStatus.value = '';
+};
+
+const confirmStatusUpdate = async () => {
+  const template = selectedTemplateForStatus.value;
+  if (!template || !selectedStatus.value || updatingStatus.value) return;
+
+  updatingStatus.value = true;
+  try {
+    const updatedTemplate = await updateTemplate(template._id, { status: selectedStatus.value });
+    template.status = updatedTemplate.status;
+    if (selectedTemplateDetails.value?._id === updatedTemplate._id) {
+      selectedTemplateDetails.value.status = updatedTemplate.status;
+    }
+    statusDialogOpen.value = false;
+    notificationStore.setNotification({
+      message: message.value,
+      code: code.value,
+      mode: 'automatic',
+    });
+    selectedTemplateForStatus.value = null;
+    selectedStatus.value = '';
+  } catch (error) {
+    notificationStore.setNotification({
+      message: error.response?.data?.message || error.message || 'No se pudo actualizar el estado.',
+      code: error.response?.data?.code || 'EXXX',
+      mode: 'automatic',
+    });
+  } finally {
+    updatingStatus.value = false;
+  }
 };
 
 const createNewTemplate = async () => {

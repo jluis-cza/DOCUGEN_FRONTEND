@@ -637,7 +637,9 @@
               <v-select
                 v-model="template.status"
                 label="Estado"
-                :items="['draft', 'published', 'archived']"
+                :items="TEMPLATE_STATUS_OPTIONS"
+                item-title="title"
+                item-value="value"
                 density="comfortable"
                 @change="markDirty"
               />
@@ -713,6 +715,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
+import { TEMPLATE_STATUS_OPTIONS } from '../../helpers/docugen-app/templateStatus.js';
 
 const route = useRoute();
 const router = useRouter();

@@ -17,76 +17,85 @@
 
     <!-- Tokens Table -->
     <v-card class="elevation-1">
-      <v-table v-if="tokens.length > 0" density="comfortable">
-        <thead>
-          <tr>
-            <th class="text-left">Nombre</th>
-            <th class="text-left">Token</th>
-            <th class="text-left">Creado</th>
-            <th class="text-left">Último Uso</th>
-            <th class="text-left">Usos</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="token in tokens" :key="token.id">
-            <td>
-              <div>
-                <div class="font-weight-bold">{{ token.name }}</div>
-                <div class="text-caption text-medium-emphasis">{{ token.description }}</div>
-              </div>
-            </td>
-            <td>
-              <v-chip size="small" variant="outlined" class="font-family-monospace">
-                {{ token.token_preview }}
-              </v-chip>
-            </td>
-            <td>
-              <div class="text-caption">
-                {{ formatDate(token.createdAt) }}
-              </div>
-            </td>
-            <td>
-              <div v-if="token.lastUsedAt" class="text-caption">
-                {{ formatDate(token.lastUsedAt) }}
-                <div v-if="token.lastUsedIp" class="text-caption text-medium-emphasis">
-                  {{ token.lastUsedIp }}
+      <div v-if="tokens.length > 0" class="tokens-table-container">
+        <v-table class="tokens-table" density="comfortable">
+          <thead>
+            <tr>
+              <th class="text-left bg-accent font-weight-bold">Nombre</th>
+              <th class="text-left bg-accent font-weight-bold">Token</th>
+              <th class="text-left bg-accent font-weight-bold">Creado</th>
+              <th class="text-left bg-accent font-weight-bold">Último Uso</th>
+              <th class="text-left bg-accent font-weight-bold">Usos</th>
+              <th class="text-center bg-accent font-weight-bold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="token in tokens" :key="token.id">
+              <td>
+                <div>
+                  <div class="font-weight-bold">{{ token.name }}</div>
+                  <div class="text-caption text-medium-emphasis">{{ token.description }}</div>
                 </div>
-              </div>
-              <div v-else class="text-caption text-disabled">Nunca</div>
-            </td>
-            <td>
-              <v-chip size="small" color="info" variant="tonal">
-                {{ token.accessCount }}
-              </v-chip>
-            </td>
-            <td class="text-center">
-              <v-btn
-                icon="mdi-eye"
-                variant="text"
-                size="small"
-                @click="viewTokenDetails(token.id)"
-              />
-              <v-btn icon="mdi-pencil" variant="text" size="small" @click="editToken(token)" />
-              <v-btn
-                icon="mdi-lock"
-                variant="text"
-                size="small"
-                color="warning"
-                @click="confirmRevoke(token)"
-                v-if="token.status === 'active'"
-              />
-              <v-btn
-                icon="mdi-delete"
-                variant="text"
-                size="small"
-                color="error"
-                @click="confirmDelete(token)"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
+              </td>
+              <td>
+                <v-chip size="small" variant="outlined" class="font-family-monospace">
+                  {{ token.token_preview }}
+                </v-chip>
+              </td>
+              <td>
+                <div class="text-caption">
+                  {{ formatDate(token.createdAt) }}
+                </div>
+              </td>
+              <td>
+                <div v-if="token.lastUsedAt" class="text-caption">
+                  {{ formatDate(token.lastUsedAt) }}
+                  <div v-if="token.lastUsedIp" class="text-caption text-medium-emphasis">
+                    {{ token.lastUsedIp }}
+                  </div>
+                </div>
+                <div v-else class="text-caption text-disabled">Nunca</div>
+              </td>
+              <td>
+                <v-chip size="small" color="info" variant="tonal">
+                  {{ token.accessCount }}
+                </v-chip>
+              </td>
+              <td class="text-center">
+                <div class="d-flex justify-center ga-1">
+                  <v-btn
+                    prepend-icon="mdi-pencil"
+                    variant="tonal"
+                    size="small"
+                    @click="editToken(token)"
+                  >
+                    Editar
+                  </v-btn>
+                  <v-btn
+                    v-if="token.status === 'active'"
+                    prepend-icon="mdi-lock"
+                    variant="tonal"
+                    size="small"
+                    color="warning"
+                    @click="confirmRevoke(token)"
+                  >
+                    Revocar
+                  </v-btn>
+                  <v-btn
+                    prepend-icon="mdi-delete"
+                    variant="tonal"
+                    size="small"
+                    color="error"
+                    @click="confirmDelete(token)"
+                  >
+                    Eliminar
+                  </v-btn>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </div>
 
       <v-card-text v-else class="text-center pa-8">
         <v-icon size="48" class="mb-4 text-disabled">mdi-key-link</v-icon>
@@ -227,7 +236,10 @@
     <!-- Edit Token Dialog -->
     <v-dialog v-model="showEditDialog" max-width="500">
       <v-card>
-        <v-card-title>Editar Token</v-card-title>
+        <v-card-title class="bg-primary text-white">
+          <v-icon icon="mdi-pencil" class="mr-2" />
+          Editar Token
+        </v-card-title>
 
         <v-card-text class="pa-6">
           <v-text-field v-model="editingToken.name" label="Nombre" />
@@ -242,8 +254,10 @@
 
         <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn variant="text" @click="showEditDialog = false">Cancelar</v-btn>
-          <v-btn color="primary" @click="handleUpdateToken" :loading="loading">
+          <v-btn variant="tonal" class="bg-secondary" @click="showEditDialog = false">
+            Cancelar
+          </v-btn>
+          <v-btn variant="tonal" class="bg-primary" @click="handleUpdateToken" :loading="loading">
             Guardar Cambios
           </v-btn>
         </v-card-actions>
@@ -253,7 +267,7 @@
     <!-- Confirm Revoke Dialog -->
     <v-dialog v-model="showRevokeConfirm" max-width="400">
       <v-card>
-        <v-card-title class="bg-warning">
+        <v-card-title class="bg-warning text-white">
           <v-icon icon="mdi-alert-circle" class="mr-2" />
           Revocar Token
         </v-card-title>
@@ -270,8 +284,12 @@
 
         <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn variant="text" @click="showRevokeConfirm = false">Cancelar</v-btn>
-          <v-btn color="warning" @click="handleRevokeToken" :loading="loading"> Sí, Revocar </v-btn>
+          <v-btn variant="tonal" class="bg-secondary" @click="showRevokeConfirm = false">
+            Cancelar
+          </v-btn>
+          <v-btn variant="tonal" class="bg-primary" @click="handleRevokeToken" :loading="loading">
+            Sí, Revocar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -294,8 +312,12 @@
 
         <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn variant="text" @click="showDeleteConfirm = false">Cancelar</v-btn>
-          <v-btn color="error" @click="handleDeleteToken" :loading="loading"> Sí, Eliminar </v-btn>
+          <v-btn variant="tonal" class="bg-secondary" @click="showDeleteConfirm = false">
+            Cancelar
+          </v-btn>
+          <v-btn variant="tonal" class="bg-primary" @click="handleDeleteToken" :loading="loading">
+            Sí, Eliminar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -306,6 +328,7 @@
 import { ref, onMounted } from 'vue';
 import { useAPITokens } from '@/composables/docugen-app/useAPITokens.js';
 import { useNotificationStore } from '@/stores/utils/notificationStore.js';
+import { extractTime } from '@/helpers/utils.js';
 
 const {
   tokens,
@@ -379,13 +402,8 @@ const clearErrors = () => {
 
 const formatDate = (date) => {
   if (!date) return 'N/A';
-  return new Date(date).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const { date: formattedDate, hour } = extractTime(date, 'America/La_Paz', 'short2');
+  return formattedDate && hour ? `${formattedDate}, ${hour.slice(0, 5)}` : 'N/A';
 };
 
 const handleCreateToken = async () => {
@@ -531,11 +549,6 @@ const closeCreateDialog = () => {
   clearErrors();
 };
 
-const viewTokenDetails = async (tokenId) => {
-  // Aquí podrías mostrar más detalles del token
-  console.log('View token details:', tokenId);
-};
-
 // Lifecycle
 onMounted(() => {
   getTokens();
@@ -554,5 +567,15 @@ onMounted(() => {
 
 .font-family-monospace {
   font-family: 'Courier New', monospace;
+}
+
+.tokens-table-container {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tokens-table :deep(table) {
+  min-width: 1000px;
+  white-space: nowrap;
 }
 </style>
