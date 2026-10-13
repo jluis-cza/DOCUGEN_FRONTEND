@@ -14,6 +14,7 @@ const NOTIFICATION_ACKNOWLEDGEMENT_PATH =
 const NOTIFICATION_CREATION_PATH =
   SERVICES.path.docugen_web.management.resource.notifications.creation;
 const PROFILES_PATH = SERVICES.path.docugen_web.management.resource.profiles.base;
+const PROFILE_PICTURE_PATH = '/picture';
 
 export const ManagementService = {
   // Getters
@@ -47,6 +48,18 @@ export const ManagementService = {
     return axiosInstance.post(
       MANAGEMENT_BASE_PATH + CONFIGURATION_PATH + PROFILES_PATH + `/${id}`,
       payload
+    );
+  },
+  setProfilePicture: (id, imageFile) => {
+    return axiosInstance.post(
+      MANAGEMENT_BASE_PATH + CONFIGURATION_PATH + PROFILES_PATH + `/${id}` + PROFILE_PICTURE_PATH,
+      imageFile,
+      { headers: { 'Content-Type': imageFile.type } }
+    );
+  },
+  removeProfilePicture: (id) => {
+    return axiosInstance.delete(
+      MANAGEMENT_BASE_PATH + CONFIGURATION_PATH + PROFILES_PATH + `/${id}` + PROFILE_PICTURE_PATH
     );
   },
 };

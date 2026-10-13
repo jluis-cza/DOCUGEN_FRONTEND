@@ -62,17 +62,30 @@
                  >
                    <v-icon :icon="accountMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
                  </v-btn> -->
-                <v-avatar v-bind="props" color="surface">
-                  <span class="text-primary font-weight-bold text-caption">{{ userInitials }}</span>
+                <v-avatar
+                  v-if="profilePictureData"
+                  v-bind="props"
+                  :image="profilePictureData"
+                  color="surface"
+                />
+                <v-avatar v-else v-bind="props" color="surface">
+                  <span v-if="profileLoaded" class="text-primary font-weight-bold text-caption">
+                    {{ userInitials }}
+                  </span>
                 </v-avatar>
               </template>
               <v-card min-width="240" rounded="lg" elevation="3">
                 <v-card-item>
                   <template #prepend>
-                    <v-avatar color="surface">
-                      <span class="text-primary font-weight-bold text-caption">{{
-                        userInitials
-                      }}</span>
+                    <v-avatar
+                      v-if="profilePictureData"
+                      :image="profilePictureData"
+                      color="surface"
+                    />
+                    <v-avatar v-else color="surface">
+                      <span v-if="profileLoaded" class="text-primary font-weight-bold text-caption">
+                        {{ userInitials }}
+                      </span>
                     </v-avatar>
                   </template>
                   <v-card-title> {{ myUsername }} </v-card-title>
@@ -184,6 +197,9 @@ import { useMyNotificationsStore } from '../../stores/docugen-web/myNotification
 import { useMyNotifications } from '../../composables/docugen-web/useMyNotifications.js';
 import { useMySession } from '../../composables/docugen-web/useMySession.js';
 import { useMyUsername } from '../../composables/docugen-web/useMyUsername.js';
+import { useMyProfile } from '../../composables/docugen-web/useMyProfile.js';
+import { useMyProfileStore } from '../../stores/docugen-web/myProfileStore.js';
+import { useOverlayStore } from '../../stores/utils/overlayStore.js';
 import { USERS } from '../../constants/users.js';
 import ManagementMyNotifications from '../../components/docugen-web/ManagementMyNotifications.vue';
 
@@ -191,14 +207,23 @@ const router = useRouter();
 const route = useRoute();
 const myAccountStore = useMyAccountStore();
 const myNotificationsStore = useMyNotificationsStore();
+const myProfileStore = useMyProfileStore();
+const overlayStore = useOverlayStore();
 const { actions: myNotificationsActions } = useMyNotifications();
 const { actions: mySession_actions } = useMySession();
 const { myUsername, actions: myUsername_actions } = useMyUsername();
+const { actions: myProfileActions } = useMyProfile();
 const administrator = USERS.type.server.role.administrator;
 const developer = USERS.type.client.role.developer;
 
 const myAccount = computed(() => myAccountStore.getMyAccount);
 const unreadNotificationsCount = computed(() => myNotificationsStore.countMyNewNotifications());
+const profilePictureData = computed(
+  () => myProfileStore.getMyProfile.user?.profilePicture?.data || ''
+);
+const profileLoaded = computed(
+  () => String(myProfileStore.getMyProfile?._id || '') === String(myAccount.value?.id || '')
+);
 
 const drawerOpen = ref(true);
 const accountMenuOpen = ref(false);
@@ -219,10 +244,12 @@ const loadMyNotificationsBadge = async () => {
 };
 
 const logout = async () => {
+  overlayStore.setOverlay({});
   try {
     await mySession_actions.mySessionCloser({ id: myAccount.value.id });
     await router.push('/');
   } catch (error) {
+    overlayStore.resetOverlay();
     console.log('Error in logout process. ', error.message);
     throw error;
   }
@@ -240,6 +267,7 @@ const openMyProfile = async () => {
 };
 onMounted(async () => {
   await myUsername_actions.usernameGetter({ id: myAccount.value.id || '' });
+  await myProfileActions.myProfileSummaryGetter(myAccount.value.id || '');
   await loadMyNotificationsBadge();
 });
 </script>

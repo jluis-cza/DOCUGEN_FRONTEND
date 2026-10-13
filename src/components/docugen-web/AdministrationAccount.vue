@@ -7,7 +7,7 @@
       !isAccountNotificationsInfoActive
     "
   >
-    <template v-if="!loading">
+    <template v-if="accountLoaded && !loading">
       <!-- Breadcrums -->
       <v-breadcrumbs :items="breadcrumbs" class="pa-0 mb-4 font-weight-bold">
         <template #divider>
@@ -27,6 +27,25 @@
             <v-icon icon="mdi-account"></v-icon>
           </template>
           <v-card-title> {{ account.username }}</v-card-title>
+          <template #append>
+            <v-badge
+              dot
+              location="bottom end"
+              :color="status(account.status).color"
+              offset-x="4"
+              offset-y="4"
+            >
+              <v-avatar
+                v-if="profilePictureData"
+                size="48"
+                color="surface"
+                :image="profilePictureData"
+              />
+              <v-avatar v-else size="48" color="surface">
+                <span class="text-primary font-weight-bold">{{ userInitials }}</span>
+              </v-avatar>
+            </v-badge>
+          </template>
         </v-card-item>
         <!-- Review info -->
         <v-card-item>
@@ -81,15 +100,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAccount } from '../../composables/docugen-web/useAccount.js';
 import { extractTime } from '../../helpers/utils.js';
+import { useOverlayStore } from '../../stores/utils/overlayStore.js';
 import AdministrationAccountSessions from './AdministrationAccountSessions.vue';
 
 const route = useRoute();
 const router = useRouter();
 const accountId = ref('');
+const accountLoaded = ref(false);
+const loadedAccountId = ref('');
 const isAccountSessionsInfoActive = computed(() => (route.name === 'sessions' ? true : false));
 const isAccountServicesInfoActive = computed(() =>
   route.name === 'account-services' ? true : false
@@ -97,7 +119,12 @@ const isAccountServicesInfoActive = computed(() =>
 const isAccountNotificationsInfoActive = computed(() =>
   route.name === 'account-notifications' ? true : false
 );
-const { account, actions, loading, code } = useAccount();
+const { account, actions, loading, success, code } = useAccount();
+const overlayStore = useOverlayStore();
+const profilePictureData = computed(() => account.value?.user?.profilePicture?.data || '');
+const userInitials = computed(() =>
+  account.value?.username ? account.value.username.slice(0, 2).toUpperCase() : 'NA'
+);
 const breadcrumbs = computed(() => [
   {
     title: 'Cuentas',
@@ -184,11 +211,33 @@ const viewAccountNotifications = (id) => {
   router.push(`/dashboard/accounts/${id}/notifications`);
 };
 
-onMounted(async () => {
-  accountId.value = route.params.accountId;
-  await actions.accountGetter(accountId.value);
-  if (code.value === 'E0171') router.replace('/dashboard/accounts');
-});
+watch(
+  () => [route.name, route.params.accountId],
+  async ([routeName, id], _oldValue, onCleanup) => {
+    if (routeName !== 'account-detail' || !id) return;
+
+    accountId.value = id;
+    if (accountLoaded.value && loadedAccountId.value === id) {
+      overlayStore.resetOverlay();
+      return;
+    }
+
+    accountLoaded.value = false;
+    let requestIsCurrent = true;
+    onCleanup(() => {
+      requestIsCurrent = false;
+    });
+
+    await actions.accountGetter(id);
+    if (!requestIsCurrent) return;
+
+    accountLoaded.value = success.value === true;
+    loadedAccountId.value = accountLoaded.value ? id : '';
+    overlayStore.resetOverlay();
+    if (code.value === 'E0171') router.replace('/dashboard/accounts');
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped></style>

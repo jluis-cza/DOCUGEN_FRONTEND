@@ -75,8 +75,10 @@ const router = createRouter({
 router.beforeEach(() => {
   useOverlayStore().setOverlay({});
 });
-router.afterEach(() => {
-  useOverlayStore().resetOverlay();
+router.afterEach((to, from, failure) => {
+  if (failure || to.name !== 'account-detail') {
+    useOverlayStore().resetOverlay();
+  }
 });
 router.onError(() => {
   useOverlayStore().resetOverlay();

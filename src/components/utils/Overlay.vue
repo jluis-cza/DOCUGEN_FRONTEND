@@ -3,10 +3,9 @@
     v-model="showOverlay"
     scroll-strategy="block"
     z-index="9999"
-    class="align-center justify-center"
     :opacity="opacity"
     :scrim="scrim"
-    contained
+    :content-props="centeredSpinnerProps"
     persistent
   >
     <v-progress-circular color="primary" size="48" indeterminate />
@@ -22,6 +21,14 @@ const showOverlay = ref(false);
 const onReception = computed(() => overlayStore.isOverlaySet);
 const opacity = ref(0.9);
 const scrim = ref('white');
+const centeredSpinnerProps = {
+  style: {
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+  },
+};
 
 const setOverlay = () => {
   showOverlay.value = true;

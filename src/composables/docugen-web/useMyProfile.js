@@ -16,6 +16,16 @@ export const useMyProfile = () => {
   const loading = ref(false);
   const success = ref(null);
   const actions = {
+    myProfileSummaryGetter: async (id) => {
+      try {
+        const response = await ManagementService.getProfile(id);
+        myProfileStore.setMyProfile(response.data.data.profile);
+        return true;
+      } catch (err) {
+        console.error('Error in myProfileSummaryGetter.', err);
+        return false;
+      }
+    },
     myProfileGetter: async (id) => {
       try {
         loading.value = true;
@@ -64,6 +74,56 @@ export const useMyProfile = () => {
           mode: 'automatic',
         };
         notificationStore.setNotification(data);
+      }
+    },
+    profilePictureSetter: async (id, imageFile) => {
+      try {
+        loading.value = true;
+        const response = await ManagementService.setProfilePicture(id, imageFile);
+        myProfileStore.setMyProfile(response.data.data.profile);
+        message.value = response?.data?.message || response.statusText;
+        success.value = response?.data?.success || false;
+        code.value = response?.data?.code || 'EXXX';
+      } catch (err) {
+        console.error(err);
+        message.value =
+          err.response?.data?.message ||
+          err.response?.statusText ||
+          'Error in profilePictureSetter';
+        success.value = err.response?.data?.success || false;
+        code.value = err.response?.data?.code || 'EXXX';
+      } finally {
+        loading.value = false;
+        notificationStore.setNotification({
+          message: message.value,
+          code: code.value,
+          mode: 'automatic',
+        });
+      }
+    },
+    profilePictureRemover: async (id) => {
+      try {
+        loading.value = true;
+        const response = await ManagementService.removeProfilePicture(id);
+        myProfileStore.setMyProfile(response.data.data.profile);
+        message.value = response?.data?.message || response.statusText;
+        success.value = response?.data?.success || false;
+        code.value = response?.data?.code || 'EXXX';
+      } catch (err) {
+        console.error(err);
+        message.value =
+          err.response?.data?.message ||
+          err.response?.statusText ||
+          'Error in profilePictureRemover';
+        success.value = err.response?.data?.success || false;
+        code.value = err.response?.data?.code || 'EXXX';
+      } finally {
+        loading.value = false;
+        notificationStore.setNotification({
+          message: message.value,
+          code: code.value,
+          mode: 'automatic',
+        });
       }
     },
   };

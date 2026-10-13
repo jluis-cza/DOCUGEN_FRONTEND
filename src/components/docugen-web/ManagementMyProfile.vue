@@ -16,16 +16,30 @@
           <!-- Title -->
           <v-card-item>
             <template #prepend>
-              <v-icon icon="mdi-account"></v-icon>
-            </template>
-            <template #append>
-              <v-icon
-                icon="mdi-circle"
-                size="small"
-                :color="profileStatus(myProfile.status).color"
-              ></v-icon>
+              <v-icon icon="mdi-account" color="primary" />
             </template>
             <v-card-title>Mi perfil</v-card-title>
+            <template #append>
+              <v-badge
+                v-if="myProfile.username"
+                dot
+                location="bottom end"
+                :color="profileStatus(myProfile.status).color"
+                offset-x="4"
+                offset-y="4"
+              >
+                <v-avatar
+                  v-if="profilePictureData"
+                  size="48"
+                  color="surface"
+                  :image="profilePictureData"
+                />
+                <v-avatar v-else-if="myProfile.username" size="48" color="surface">
+                  <span class="text-primary font-weight-bold">{{ userInitials }}</span>
+                </v-avatar>
+              </v-badge>
+              <v-avatar v-else size="48" color="surface" />
+            </template>
           </v-card-item>
           <!-- Review info -->
           <v-card-item>
@@ -57,6 +71,47 @@
                 </v-list-item>
                 <v-divider></v-divider>
               </template>
+              <v-list-item>
+                <div class="d-flex flex-wrap justify-space-between align-center ga-3">
+                  <span class="font-weight-medium text-secondary">Imagen de perfil</span>
+                  <div class="d-flex flex-column align-end ga-1">
+                    <div class="d-flex flex-wrap justify-end ga-2">
+                      <span
+                        class="cursor-pointer text-decoration-underline text-primary"
+                        :class="{ 'text-disabled': profilePictureLoading }"
+                        @click="!profilePictureLoading && profilePictureInput?.click()"
+                      >
+                        {{
+                          profilePictureLoading
+                            ? 'Procesando...'
+                            : profilePictureData
+                              ? 'Actualizar imagen'
+                              : 'Subir imagen'
+                        }}
+                      </span>
+                      <span
+                        v-if="profilePictureData"
+                        class="cursor-pointer text-decoration-underline text-error"
+                        :class="{ 'text-disabled': profilePictureLoading }"
+                        @click="!profilePictureLoading && (confirmPictureRemoval = true)"
+                      >
+                        Eliminar imagen
+                      </span>
+                    </div>
+                    <span class="text-caption text-medium-emphasis">
+                      JPEG, PNG o WebP; tamaño máximo 1 MiB.
+                    </span>
+                  </div>
+                  <input
+                    ref="profilePictureInput"
+                    class="d-none"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    @change="onProfilePictureSelected"
+                  />
+                </div>
+              </v-list-item>
+              <v-divider></v-divider>
             </v-list>
           </v-card-item>
           <!-- profile update date -->
@@ -74,6 +129,17 @@
         <router-view />
       </v-window-item>
     </v-window>
+
+    <v-dialog v-model="confirmPictureRemoval" max-width="420">
+      <v-card title="Eliminar imagen de perfil">
+        <v-card-text>¿Quieres volver a mostrar las iniciales en lugar de tu imagen?</v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="confirmPictureRemoval = false">Cancelar</v-btn>
+          <v-btn color="error" variant="tonal" @click="removeProfilePicture">Eliminar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -91,9 +157,16 @@ const route = useRoute();
 const router = useRouter();
 const { myProfile, actions: myProfile_actions, success: myProfile_success } = useMyProfile();
 const myAccountStore = useMyAccountStore();
+const profilePictureInput = ref(null);
+const confirmPictureRemoval = ref(false);
+const profilePictureLoading = ref(false);
 const dialogBoxStore = useDialogBoxStore();
 const notificationStore = useNotificationStore();
 const accountId = computed(() => myAccountStore.getMyAccount.id);
+const profilePictureData = computed(() => myProfile.value?.user?.profilePicture?.data || '');
+const userInitials = computed(() =>
+  myProfile.value?.username ? myProfile.value.username.slice(0, 2).toUpperCase() : 'NA'
+);
 
 // Tab management
 const activeTab = ref('info');
@@ -162,6 +235,29 @@ const profileUpdateTime = computed(() => {
     hour: updatedTime.hour,
   };
 });
+
+const onProfilePictureSelected = async (event) => {
+  const [imageFile] = event.target.files || [];
+  event.target.value = '';
+  if (!imageFile) return;
+
+  profilePictureLoading.value = true;
+  try {
+    await myProfile_actions.profilePictureSetter(accountId.value, imageFile);
+  } finally {
+    profilePictureLoading.value = false;
+  }
+};
+
+const removeProfilePicture = async () => {
+  confirmPictureRemoval.value = false;
+  profilePictureLoading.value = true;
+  try {
+    await myProfile_actions.profilePictureRemover(accountId.value);
+  } finally {
+    profilePictureLoading.value = false;
+  }
+};
 
 const setValue = async (itemKey) => {
   let dialogBoxData = {};
