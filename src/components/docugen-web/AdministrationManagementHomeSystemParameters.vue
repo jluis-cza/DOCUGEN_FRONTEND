@@ -36,39 +36,40 @@ const systemParametersStore = useSystemParametersStore();
 const { actions, loading, success, message, code } = useSystemParameters();
 
 const cardInfo = computed(() => {
+  const overview = systemParametersStore.getSystemParametersOverview;
+  const dbUsedValue = overview.dbUsedSize?.value;
+  const dbTotalValue = overview.dbTotalSize?.value;
+  const dbUsedText =
+    dbUsedValue !== null && dbUsedValue !== undefined ? `${dbUsedValue}[${overview.dbUsedSize.unit}]` : 'No disponible';
+  const dbTotalText =
+    dbTotalValue !== null && dbTotalValue !== undefined
+      ? `${dbTotalValue}[${overview.dbTotalSize.unit}]`
+      : 'No disponible';
+  const uptimeText =
+    overview.systemUptime?.value !== null && overview.systemUptime?.value !== undefined
+      ? `${overview.systemUptime.value}[${overview.systemUptime.unit}]`
+      : 'No disponible';
+
   return [
     {
       label: 'Nombre del servidor',
-      data: systemParametersStore.getSystemParametersOverview.hostname || '',
+      data: overview.hostname || '',
     },
     {
       label: 'Nombre de la base de datos',
-      data: systemParametersStore.getSystemParametersOverview.dbName || '',
+      data: overview.dbName || '',
     },
     {
       label: 'Almacenamiento de la base de datos',
-      data:
-        systemParametersStore.getSystemParametersOverview.dbUsedSize.value +
-          '[' +
-          systemParametersStore.getSystemParametersOverview.dbUsedSize.unit +
-          ']' +
-          ' usados de ' +
-          systemParametersStore.getSystemParametersOverview.dbTotalSize.value +
-          '[' +
-          systemParametersStore.getSystemParametersOverview.dbTotalSize.unit +
-          ']' || '',
+      data: `${dbUsedText} usados de ${dbTotalText}`,
     },
     {
       label: 'Plataforma del servidor',
-      data: systemParametersStore.getSystemParametersOverview.platform || '',
+      data: overview.platform || '',
     },
     {
       label: 'Tiempo de operación del servidor',
-      data:
-        systemParametersStore.getSystemParametersOverview.systemUptime.value +
-          '[' +
-          systemParametersStore.getSystemParametersOverview.systemUptime.unit +
-          ']' || '',
+      data: uptimeText,
     },
     // { label: 'IP del servidor', data: '' },
   ];

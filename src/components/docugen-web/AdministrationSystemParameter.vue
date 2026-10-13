@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <template v-if="!loading">
+    <template v-if="systemParameter._id">
       <!-- Breadcrums -->
       <v-breadcrumbs :items="breadcrumbs" class="pa-0 mb-4 font-weight-bold">
         <template #divider>
@@ -16,10 +16,14 @@
       <AdministrationSystemParameterDatabaseUsedSize
         v-if="systemParameter.name === 'database_used_size'"
         :systemParameter="systemParameter"
+        :loading="loading"
+        @page-change="loadValuesPage"
       />
       <AdministrationSystemParameterSystemUptime
         v-if="systemParameter.name === 'system_uptime'"
         :systemParameter="systemParameter"
+        :loading="loading"
+        @page-change="loadValuesPage"
       />
     </template>
   </v-container>
@@ -49,8 +53,12 @@ const breadcrumbs = computed(() => [
 
 onMounted(async () => {
   const systemParameterId = route.params.systemParameterId;
-  await actions.systemParameterGetter(systemParameterId);
+  await actions.systemParameterGetter(systemParameterId, 1);
 });
+
+const loadValuesPage = async (page) => {
+  await actions.systemParameterGetter(route.params.systemParameterId, page);
+};
 </script>
 
 <style scoped></style>

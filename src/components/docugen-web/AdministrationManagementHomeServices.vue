@@ -39,34 +39,32 @@
           <v-card variant="outlined" width="100%" min-width="500">
             <v-card-title class="text-center text-subtitle-1">{{ chart.title }}</v-card-title>
             <v-card-item>
-              <Line :data="chart.data" :options="chartOptions" />
+              <div class="chart-wrapper">
+                <Line :data="chart.data" :options="chartOptions" />
+              </div>
             </v-card-item>
-            <!-- <v-card-actions class="d-flex justify-space-between align-center">
+            <v-card-actions class="d-flex justify-center align-center ga-3">
               <v-btn
                 size="small"
-                variant="plain"
-                @click=""
-                icon="mdi-skip-previous"
-              >
-              </v-btn>
-              <v-btn
-                size="small"
-                variant="plain"
-                @click="incOffset(1)"
+                variant="tonal"
                 icon="mdi-chevron-left"
-              >
-              </v-btn>
-              <v-spacer></v-spacer>
+                aria-label="Ver datos más antiguos"
+                :disabled="historyLoading || !usageHistory?.pagination?.hasOlder"
+                @click="loadUsageHistory((usageHistory?.pagination?.page || 1) + 1)"
+              />
+              <span class="text-caption text-center">{{ rangeLabel }}</span>
               <v-btn
                 size="small"
-                variant="plain"
-                @click="incOffset(-1)"
+                variant="tonal"
                 icon="mdi-chevron-right"
-              >
-              </v-btn>
-              <v-btn size="small"  variant="plain" @click="" icon="mdi-skip-next">
-              </v-btn>
-            </v-card-actions> -->
+                aria-label="Ver datos más recientes"
+                :disabled="historyLoading || !usageHistory?.pagination?.hasNewer"
+                @click="loadUsageHistory(usageHistory.pagination.page - 1)"
+              />
+            </v-card-actions>
+            <v-card-item v-if="historyError">
+              <v-alert type="error" variant="tonal" density="compact">{{ historyError }}</v-alert>
+            </v-card-item>
           </v-card>
         </v-col>
       </v-row>
@@ -78,10 +76,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { Line } from 'vue-chartjs';
 import { useProcesses } from '../../composables/docugen-web/useProcesses.js';
-import { useProcessesStore } from '../../stores/docugen-web/processesStore.js';
 import { useMyProcesses } from '../../composables/docugen-web/useMyProcesses.js';
-import { useMyProcessesStore } from '../../stores/docugen-web/myProcessesStore.js';
-import { extractTime } from '../../helpers/utils.js';
 import {
   Chart as ChartJS,
   Title,
@@ -100,70 +95,54 @@ const props = defineProps({
     required: true,
   },
 });
-const {
-  processes,
-  actions: processes_actions,
-  loading: processes_loading,
-  success: processes_success,
-} = useProcesses();
-const {
-  myProcesses,
-  actions: myProcesses_actions,
-  loading: myProcesses_loading,
-  success: myProcesses_success,
-} = useMyProcesses();
-const processesStore = useProcessesStore();
-const myProcessesStore = useMyProcessesStore();
-const dateOffset = ref({
-  edition: 0,
-  processing: 0,
+const { actions: processes_actions } = useProcesses();
+const { actions: myProcesses_actions } = useMyProcesses();
+const usageHistory = ref(null);
+const todayCounts = ref({ edition: 0, processing: 0 });
+const historyLoading = ref(false);
+const historyError = ref('');
+
+const formatDate = (date) => {
+  if (!date) return '';
+  const [year, month, day] = date.split('-');
+  return `${day}/${month}/${year}`;
+};
+
+const rangeLabel = computed(() => {
+  const pagination = usageHistory.value?.pagination;
+  if (!pagination) return 'Cargando historial…';
+  return `${formatDate(pagination.startDate)} – ${formatDate(pagination.endDate)}`;
 });
 
-// Functions
-const getCurrentDate = () => {
-  const currentTime = new Date();
-  return extractTime(currentTime.toISOString(), 'America/La_Paz', 'numeric').date;
-};
-const getHistoricalProcessesCounting = (module) => {
-  if (!module) throw new Error('No module argument provided.');
-  let data = {};
-  let dataset = [];
-  if (props.account.role === 'admin') {
-    dataset = processesStore.getHistoricalProcessesCountingWindow(module, dateOffset.value[module]);
+const loadUsageHistory = async (page = 1) => {
+  historyLoading.value = true;
+  historyError.value = '';
+  try {
+    const history =
+      props.account.role === 'admin'
+        ? await processes_actions.processUsageHistoryGetter({ page })
+        : await myProcesses_actions.myProcessUsageHistoryGetter({ page });
+    usageHistory.value = history;
+    if (history.todayCounts) todayCounts.value = history.todayCounts;
+  } catch (error) {
+    historyError.value =
+      error.response?.data?.message || error.message || 'No fue posible cargar el historial.';
+  } finally {
+    historyLoading.value = false;
   }
-  if (props.account.role === 'dev') {
-    dataset = myProcessesStore.getMyHistoricalProcessesCountingWindow(
-      module,
-      dateOffset.value[module]
-    );
-  }
-  data.x = dataset.map((e) => e.date);
-  data.y = dataset.map((e) => e.count);
-  return data;
-};
-const getTodayProcessesCount = (module) => {
-  if (!module) throw new Error('No module argument provided.');
-  let count = 0;
-  if (props.account.role === 'admin') {
-    count = processesStore.getProcessesCount(module, getCurrentDate());
-  }
-  if (props.account.role === 'dev') {
-    count = myProcessesStore.getMyProcessesCount(module, getCurrentDate());
-  }
-  return count;
 };
 
 // Chart Data
-const chartData = (xArray, yArray) => {
-  if (!xArray || !yArray) throw new Error('No dataset provided.');
+const chartData = (module) => {
+  const days = usageHistory.value?.days || [];
   return {
-    labels: xArray,
+    labels: days.map(({ date }) => formatDate(date)),
     datasets: [
       {
         label: 'Uso diario',
         backgroundColor: '#1867C0',
         borderRadius: 4,
-        data: yArray,
+        data: days.map((day) => day[module]),
       },
     ],
   };
@@ -185,7 +164,7 @@ const chartOptions = {
       ticks: { maxRotation: 45, minRotation: 45 },
     },
     y: {
-      beginAtZero: false,
+      beginAtZero: true,
       title: { display: true, text: 'Uso de servicio' },
     },
   },
@@ -195,11 +174,11 @@ const chartOptions = {
 const panels = computed(() => {
   return [
     {
-      counter: getTodayProcessesCount('edition'),
+      counter: todayCounts.value.edition,
       description: 'Uso del módulo de Edición hoy',
     },
     {
-      counter: getTodayProcessesCount('processing'),
+      counter: todayCounts.value.processing,
       description: 'Uso del módulo de Generación hoy',
     },
   ];
@@ -208,28 +187,18 @@ const charts = computed(() => {
   return [
     {
       title: 'Historial de uso del módulo de Edición de Plantillas',
-      data: chartData(
-        getHistoricalProcessesCounting('edition').x,
-        getHistoricalProcessesCounting('edition').y
-      ),
+      data: chartData('edition'),
     },
     {
       title: 'Historial de uso del módulo de Generación de Documentos',
-      data: chartData(
-        getHistoricalProcessesCounting('processing').x,
-        getHistoricalProcessesCounting('processing').y
-      ),
+      data: chartData('processing'),
     },
   ];
 });
 
 // Hooks
 onMounted(async () => {
-  if (props.account.role === 'admin')
-    await processes_actions.processesGetter({ requestedModules: ['edition', 'processing'] });
-  // if (props.account.role === 'dev' && myProcesses_success === null)
-  if (props.account.role === 'dev')
-    await myProcesses_actions.myProcessesGetter({ associated_account: props.account.id });
+  await loadUsageHistory(1);
 });
 </script>
 
@@ -245,5 +214,10 @@ onMounted(async () => {
 }
 .count-panel_description {
   font-size: 0.8rem;
+}
+.chart-wrapper {
+  height: 260px;
+  position: relative;
+  width: 100%;
 }
 </style>

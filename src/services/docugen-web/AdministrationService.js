@@ -28,9 +28,10 @@ export const AdministrationService = {
       payload
     );
   },
-  monitorSystemParameter: (id) => {
+  monitorSystemParameter: (id, params) => {
     return axiosInstance.get(
-      ADMINISTRATION_BASE_PATH + MONITOR_PATH + RESOURCE_SYSTEM_PARAMETERS_PATH + `/${id}`
+      ADMINISTRATION_BASE_PATH + MONITOR_PATH + RESOURCE_SYSTEM_PARAMETERS_PATH + `/${id}`,
+      { params }
     );
   },
   monitorSystemParameters: () => {

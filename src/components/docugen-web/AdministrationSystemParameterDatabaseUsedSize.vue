@@ -25,6 +25,26 @@
     <v-card-item>
       <h3 class="text-center">Gráfico uso de Almacenamiento usado de Base de Datos</h3>
       <div class="chart-wrapper"><Line :data="chartData" :options="chartOptions" /></div>
+      <div class="d-flex justify-center align-center ga-3 mt-4">
+        <v-btn
+          icon="mdi-chevron-left"
+          aria-label="Ver datos más antiguos"
+          variant="tonal"
+          :disabled="loading || !pagination.hasNextPage"
+          @click="$emit('page-change', pagination.page + 1)"
+        />
+        <span class="text-caption text-center">{{ rangeLabel }}</span>
+        <v-btn
+          icon="mdi-chevron-right"
+          aria-label="Ver datos más recientes"
+          variant="tonal"
+          :disabled="loading || !pagination.hasPrevPage"
+          @click="$emit('page-change', pagination.page - 1)"
+        />
+      </div>
+      <div v-if="!chartData.labels.length" class="text-center text-medium-emphasis mt-2">
+        No hay datos válidos disponibles para este período.
+      </div>
     </v-card-item>
   </v-card>
 </template>
@@ -51,6 +71,43 @@ const props = defineProps({
     required: true,
     default: () => {},
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+});
+defineEmits(['page-change']);
+
+const pagination = computed(
+  () =>
+    props.systemParameter.pagination || {
+      page: 1,
+      totalPages: 1,
+      hasPrevPage: false,
+      hasNextPage: false,
+    }
+);
+
+const validValues = computed(() =>
+  (props.systemParameter.values || []).filter(
+    (item) =>
+      item.value !== null &&
+      item.value !== undefined &&
+      Number.isFinite(Number(item.value)) &&
+      item.createdAt
+  )
+);
+
+const formatTimestamp = (timestamp) => {
+  const time = extractTime(timestamp, 'America/La_Paz', 'short2');
+  return `${time.date} ${time.hour}`.trim();
+};
+
+const rangeLabel = computed(() => {
+  if (!validValues.value.length) return 'Sin datos';
+  const first = formatTimestamp(validValues.value[0].createdAt);
+  const last = formatTimestamp(validValues.value[validValues.value.length - 1].createdAt);
+  return first === last ? first : `${first} – ${last}`;
 });
 
 const status = (itemStatus) => {
@@ -68,18 +125,13 @@ const status = (itemStatus) => {
 // Chart Data
 const chartData = computed(() => {
   return {
-    labels: props.systemParameter.values.map((item) => {
-      return (
-        extractTime(item.createdAt, 'America/La_Paz', 'short2').date +
-        extractTime(item.createdAt, 'America/La_Paz', 'short2').hour
-      );
-    }),
+    labels: validValues.value.map((item) => formatTimestamp(item.createdAt)),
     datasets: [
       {
         label: 'Espacio usado (MB)',
         backgroundColor: '#1867C0',
         borderRadius: 4,
-        data: props.systemParameter.values.map((item) => parseFloat(item.value)),
+        data: validValues.value.map((item) => Number(item.value)),
       },
     ],
   };

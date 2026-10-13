@@ -7,6 +7,7 @@ const MANAGEMENT_BASE_PATH = SERVICES.path.docugen_web.management.base;
 const CONFIGURATION_PATH = SERVICES.path.docugen_web.management.configuration;
 const MONITOR_PATH = SERVICES.path.docugen_web.management.monitor;
 const PROCESSES_PATH = SERVICES.path.docugen_web.management.resource.processes.base;
+const PROCESS_USAGE_HISTORY_PATH = `${PROCESSES_PATH}/usage-history`;
 const NOTIFICATIONS_PATH = SERVICES.path.docugen_web.management.resource.notifications.base;
 const NOTIFICATION_ACKNOWLEDGEMENT_PATH =
   SERVICES.path.docugen_web.management.resource.notifications.acknowledgement;
@@ -18,6 +19,11 @@ export const ManagementService = {
   // Getters
   getProcesses: (params) => {
     return axiosInstance.get(MANAGEMENT_BASE_PATH + MONITOR_PATH + PROCESSES_PATH, { params });
+  },
+  getProcessUsageHistory: (params) => {
+    return axiosInstance.get(MANAGEMENT_BASE_PATH + MONITOR_PATH + PROCESS_USAGE_HISTORY_PATH, {
+      params,
+    });
   },
   getNotifications: (params) => {
     return axiosInstance.get(MANAGEMENT_BASE_PATH + MONITOR_PATH + NOTIFICATIONS_PATH, { params });

@@ -32,6 +32,31 @@ export const useProcesses = () => {
         loading.value = false;
       }
     },
+    processUsageHistoryGetter: async (params) => {
+      try {
+        loading.value = true;
+        const response = await ManagementService.getProcessUsageHistory(params);
+        success.value = response?.data?.success || false;
+        message.value = response?.data?.message || response.statusText;
+        code.value = response?.data?.code || 'EXXX';
+        return {
+          days: response.data.data.processUsageHistory,
+          todayCounts: response.data.data.todayCounts,
+          pagination: response.data.metadata.processUsageHistory,
+        };
+      } catch (err) {
+        console.error(err);
+        success.value = err.response?.data?.success || false;
+        message.value =
+          err.response?.data?.message ||
+          err.response?.statusText ||
+          'Error in processUsageHistoryGetter';
+        code.value = err.response?.data?.code || 'EXXX';
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    },
   };
 
   return { processes, actions, loading, success, message, code };

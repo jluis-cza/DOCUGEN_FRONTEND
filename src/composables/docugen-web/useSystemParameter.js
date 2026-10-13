@@ -45,12 +45,15 @@ export const useSystemParameter = () => {
         notificationStore.setNotification(data);
       }
     },
-    systemParameterGetter: async (id) => {
+    systemParameterGetter: async (id, page = 1) => {
       try {
         loading.value = true;
         systemParameterId.value = id;
-        const response = await AdministrationService.monitorSystemParameter(id);
-        systemParametersStore.setSystemParameter(id, response.data.data.systemParameter);
+        const response = await AdministrationService.monitorSystemParameter(id, { page });
+        systemParametersStore.setSystemParameter(id, {
+          ...response.data.data.systemParameter,
+          pagination: response.data.metadata?.systemParameterValues,
+        });
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success;
         code.value = response?.data?.code || 'EXXX';

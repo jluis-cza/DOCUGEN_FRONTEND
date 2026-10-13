@@ -43,6 +43,31 @@ export const useMyProcesses = () => {
         loading.value = false;
       }
     },
+    myProcessUsageHistoryGetter: async (params) => {
+      try {
+        loading.value = true;
+        const response = await ManagementService.getProcessUsageHistory(params);
+        success.value = response?.data?.success || false;
+        message.value = response?.data?.message || response.statusText;
+        code.value = response?.data?.code || 'EXXX';
+        return {
+          days: response.data.data.processUsageHistory,
+          todayCounts: response.data.data.todayCounts,
+          pagination: response.data.metadata.processUsageHistory,
+        };
+      } catch (err) {
+        console.error(err);
+        success.value = err.response?.data?.success || false;
+        message.value =
+          err.response?.data?.message ||
+          err.response?.statusText ||
+          'Error in myProcessUsageHistoryGetter';
+        code.value = err.response?.data?.code || 'EXXX';
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    },
   };
 
   return { myProcesses, timelineProcesses, actions, loading, success, message, code };
