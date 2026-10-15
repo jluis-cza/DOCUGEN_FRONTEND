@@ -1,5 +1,10 @@
 <template>
-  <v-dialog v-model="showDialogBox" persistent max-width="400">
+  <v-dialog
+    v-model="showDialogBox"
+    persistent
+    max-width="400"
+    :transition="{ component: Transition, name: 'fade-transition' }"
+  >
     <v-card>
       <v-card-item class="text-left text-dark">
         <template #prepend>
@@ -73,6 +78,8 @@
               variant="tonal"
               class="mx-2"
               :class="action.color"
+              :disabled="isProcessing"
+              :loading="processingAction === action.key"
               @click="selectAction(action.key)"
             >
               {{ action.name }}
@@ -80,11 +87,14 @@
           </template>
         </v-card-actions>
       </v-form>
+      <v-alert v-if="interactionError" type="error" variant="tonal" class="ma-4">
+        {{ interactionError }}
+      </v-alert>
     </v-card>
   </v-dialog>
 </template>
 <script setup>
-import { ref, computed, watch, toRaw } from 'vue';
+import { ref, computed, watch, Transition } from 'vue';
 import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
 import { RULES } from '../../helpers/rules.js';
 
@@ -92,7 +102,6 @@ const dialogBoxStore = useDialogBoxStore();
 const onReception = computed(() => dialogBoxStore.getDialogBox.metadata.isRequested);
 // Layout
 const showDialogBox = ref(false);
-const showData = ref(false);
 const title = ref('');
 const icon = ref('');
 const text = ref('');
@@ -100,6 +109,9 @@ const hasParameters = ref(false);
 const parameters = ref([]);
 const parametersGroupsInfo = ref([]);
 const actions = ref([]);
+const isProcessing = ref(false);
+const processingAction = ref('');
+const interactionError = ref('');
 // Rules
 const rules = {
   RULE_TEXT_REQUIRED: (value) => RULES.text.input.required(value),
@@ -120,37 +132,66 @@ const rules = {
 const form = ref(null);
 
 const setDialogBox = () => {
-  title.value = dialogBoxStore.getDialogBox.data.title;
-  icon.value = dialogBoxStore.getDialogBox.data.icon;
-  text.value = dialogBoxStore.getDialogBox.data.text;
-  actions.value = dialogBoxStore.getDialogBox.data.actions;
+  const data = dialogBoxStore.getDialogBox.data;
+  title.value = data.title || '';
+  icon.value = data.icon || '';
+  text.value = data.text || '';
+  actions.value = Array.isArray(data.actions) ? data.actions : [];
+  parameters.value = [];
+  parametersGroupsInfo.value = [];
+  hasParameters.value = false;
+  interactionError.value = '';
+  const receivedParameters = Array.isArray(data.parameters) ? data.parameters : [];
+  hasParameters.value = receivedParameters.length > 0;
+  if (hasParameters.value) processParameters(receivedParameters);
   showDialogBox.value = true;
 };
 
 const selectAction = async (key) => {
-  const { valid } = await form.value.validate();
-  dialogBoxStore.resolveDialogBoxData(key, parameters.value, valid);
-  const exit = await dialogBoxStore.requestDialogBoxProcedure();
-  if (exit) {
-    await form.value.reset();
-    showDialogBox.value = false;
-    dialogBoxStore.resetDialogBox();
+  if (isProcessing.value) return;
+  isProcessing.value = true;
+  processingAction.value = key;
+  interactionError.value = '';
+
+  try {
+    let valid = true;
+    if (key !== 'n' && hasParameters.value && form.value) {
+      const validation = await form.value.validate();
+      valid = validation.valid;
+    }
+    dialogBoxStore.resolveDialogBoxData(key, parameters.value, valid);
+    const exit = await dialogBoxStore.requestDialogBoxProcedure();
+    if (exit) {
+      await form.value?.reset();
+      showDialogBox.value = false;
+      dialogBoxStore.resetDialogBox();
+      parameters.value = [];
+      parametersGroupsInfo.value = [];
+      hasParameters.value = false;
+    }
+  } catch (error) {
+    interactionError.value =
+      error instanceof Error ? error.message : 'No se pudo completar la acción del diálogo.';
+  } finally {
+    isProcessing.value = false;
+    processingAction.value = '';
   }
 };
 
 const processParameters = (receivedParameters) => {
   parameters.value = [...receivedParameters].sort((a, b) => {
-    const compareGroup = a.group.localeCompare(b.group);
+    const compareGroup = String(a.group || '').localeCompare(String(b.group || ''));
     if (compareGroup !== 0) return compareGroup;
     return Number(a.member) - Number(b.member);
   });
 
   parametersGroupsInfo.value = Object.values(
     receivedParameters.reduce((acc, item) => {
-      if (!acc[item.group]) {
-        acc[item.group] = { name: item.group, members: 0 };
+      const group = item.group || '';
+      if (!acc[group]) {
+        acc[group] = { name: group, members: 0 };
       }
-      acc[item.group].members += 1;
+      acc[group].members += 1;
       return acc;
     }, {})
   );
@@ -176,9 +217,6 @@ const getRules = (ruleSet) => {
 
 watch(onReception, (newValue, oldValue) => {
   if (oldValue === false && newValue === true) {
-    const receivedParameters = dialogBoxStore.getDialogBox.data.parameters;
-    hasParameters.value = receivedParameters.length > 0 ? true : false;
-    if (hasParameters.value) processParameters(receivedParameters);
     setDialogBox();
   }
 });

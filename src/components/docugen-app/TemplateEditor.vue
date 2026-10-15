@@ -126,7 +126,7 @@
             <div class="stage-toolbar d-flex justify-space-between align-center">
               <div class="d-flex align-center ga-2 flex-wrap">
                 <v-chip size="small" color="primary" variant="tonal">
-                  {{ template.dimensions.width }} × {{ template.dimensions.height }}
+                  {{ template.dimensions.width }} × {{ template.dimensions.height }} px
                 </v-chip>
                 <v-chip size="small" color="secondary" variant="tonal">
                   {{ template.elements.length }} elementos
@@ -622,15 +622,25 @@
               />
               <v-text-field
                 v-model.number="template.dimensions.width"
-                label="Ancho"
+                label="Ancho (px)"
                 type="number"
+                min="100"
+                max="5000"
+                step="1"
+                hint="Entre 100 y 5000 px"
+                persistent-hint
                 density="comfortable"
                 @change="markDirty"
               />
               <v-text-field
                 v-model.number="template.dimensions.height"
-                label="Alto"
+                label="Alto (px)"
                 type="number"
+                min="100"
+                max="5000"
+                step="1"
+                hint="Entre 100 y 5000 px"
+                persistent-hint
                 density="comfortable"
                 @change="markDirty"
               />

@@ -136,8 +136,8 @@
               </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="4">
-              <v-sheet border rounded class="pa-3 mb-3">
+            <v-col cols="12" md="6" class="d-flex">
+              <v-sheet border rounded class="pa-3 mb-3 flex-grow-1">
                 <div class="text-caption text-medium-emphasis mb-2">Estado</div>
                 <v-chip
                   :color="getTemplateStatusColor(selectedTemplateDetails.status)"
@@ -148,18 +148,8 @@
                 </v-chip>
               </v-sheet>
             </v-col>
-            <v-col cols="12" md="4">
-              <v-sheet border rounded class="pa-3 mb-3">
-                <div class="text-caption text-medium-emphasis mb-2">Dimensiones</div>
-                <div class="text-body-2">
-                  {{ selectedTemplateDetails.dimensions?.width || 0 }} x
-                  {{ selectedTemplateDetails.dimensions?.height || 0 }}
-                  {{ selectedTemplateDetails.dimensions?.unit || 'px' }}
-                </div>
-              </v-sheet>
-            </v-col>
-            <v-col cols="12" md="4">
-              <v-sheet border rounded class="pa-3 mb-3">
+            <v-col cols="12" md="6" class="d-flex">
+              <v-sheet border rounded class="pa-3 mb-3 flex-grow-1">
                 <div class="text-caption text-medium-emphasis mb-2">Elementos</div>
                 <div class="text-body-2">{{ (selectedTemplateDetails.elements || []).length }}</div>
               </v-sheet>
@@ -170,6 +160,29 @@
                 <div class="text-caption text-medium-emphasis mb-2">Descripción</div>
                 <div class="text-body-2">
                   {{ selectedTemplateDetails.description || 'Sin descripción' }}
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12">
+              <v-sheet border rounded class="pa-3 mb-3">
+                <div class="text-caption text-medium-emphasis mb-2">Dimensiones</div>
+                <div class="d-flex flex-wrap align-center ga-2">
+                  <span class="text-body-2">
+                    {{ selectedTemplateDetails.dimensions?.width || 0 }} x
+                    {{ selectedTemplateDetails.dimensions?.height || 0 }}
+                    {{ selectedTemplateDetails.dimensions?.unit || 'px' }}
+                  </span>
+                  <span v-if="templateDimensionSummary" class="text-caption text-medium-emphasis">
+                    {{ templateDimensionSummary.inches }}
+                    ({{ templateDimensionSummary.millimeters }})
+                  </span>
+                  <span
+                    v-if="templateDimensionSummary?.paperSize"
+                    class="text-caption text-medium-emphasis"
+                  >
+                    {{ templateDimensionSummary.paperSize }}
+                  </span>
                 </div>
               </v-sheet>
             </v-col>
@@ -268,7 +281,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="dialogOpen" max-width="500" persistent>
+    <v-dialog v-model="dialogOpen" max-width="560" persistent>
       <v-card>
         <v-card-title>Crear plantilla</v-card-title>
         <v-card-text>
@@ -281,13 +294,59 @@
             item-title="title"
             item-value="value"
           />
-          <v-text-field v-model.number="form.dimensions.width" label="Ancho" type="number" />
-          <v-text-field v-model.number="form.dimensions.height" label="Alto" type="number" />
+          <v-select
+            v-model="selectedPaperSize"
+            label="Tamaño de papel"
+            :items="PAPER_SIZES"
+            item-title="label"
+            item-value="value"
+            @update:model-value="applyPaperSize"
+          />
+          <v-row dense>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model.number="form.dimensions.width"
+                label="Ancho (px)"
+                type="number"
+                min="100"
+                max="5000"
+                step="1"
+                :rules="[dimensionRule]"
+                hint="Entre 100 y 5000 px"
+                persistent-hint
+                @update:model-value="selectedPaperSize = 'custom'"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model.number="form.dimensions.height"
+                label="Alto (px)"
+                type="number"
+                min="100"
+                max="5000"
+                step="1"
+                :rules="[dimensionRule]"
+                hint="Entre 100 y 5000 px"
+                persistent-hint
+                @update:model-value="selectedPaperSize = 'custom'"
+              />
+            </v-col>
+          </v-row>
+          <div class="text-caption text-medium-emphasis mt-2">
+            * Conversión utilizada: 96 px = 1 pulgada (25,4 mm).
+          </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn text @click="dialogOpen = false">Cancelar</v-btn>
-          <v-btn color="primary" @click="createNewTemplate">Guardar</v-btn>
+          <v-btn
+            color="primary"
+            :loading="loading"
+            :disabled="!canCreateTemplate"
+            @click="createNewTemplate"
+          >
+            Crear plantilla
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -338,7 +397,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
@@ -373,12 +432,110 @@ const detailsLoading = ref(false);
 const search = ref('');
 const importInputRef = ref(null);
 const selectedTemplateDetails = ref(null);
+const PIXELS_PER_INCH = 96;
+const MIN_DIMENSION = 100;
+const MAX_DIMENSION = 5000;
+const PAPER_SIZES = [
+  {
+    value: 'letter',
+    name: 'Carta',
+    label: 'Carta — 8.5 × 11 in (216 × 279 mm)',
+    width: 816,
+    height: 1056,
+  },
+  {
+    value: 'legal',
+    name: 'Legal',
+    label: 'Legal — 8.5 × 14 in (216 × 356 mm)',
+    width: 816,
+    height: 1344,
+  },
+  {
+    value: 'oficio',
+    name: 'Oficio',
+    label: 'Oficio — 8.5 × 13 in (216 × 330 mm)',
+    width: 816,
+    height: 1248,
+  },
+  {
+    value: 'a4',
+    name: 'A4',
+    label: 'A4 — 8.27 × 11.69 in (210 × 297 mm)',
+    width: 794,
+    height: 1123,
+  },
+  {
+    value: 'a3',
+    name: 'A3',
+    label: 'A3 — 11.69 × 16.54 in (297 × 420 mm)',
+    width: 1123,
+    height: 1587,
+  },
+  {
+    value: 'a5',
+    name: 'A5',
+    label: 'A5 — 5.83 × 8.27 in (148 × 210 mm)',
+    width: 559,
+    height: 794,
+  },
+  {
+    value: 'tabloid',
+    name: 'Tabloide',
+    label: 'Tabloide — 11 × 17 in (279 × 432 mm)',
+    width: 1056,
+    height: 1632,
+  },
+  { value: 'custom', label: 'Personalizado', width: null, height: null },
+];
+const selectedPaperSize = ref('a4');
 
 const form = ref({
   name: '',
   description: '',
   status: 'draft',
   dimensions: { width: 794, height: 1123 },
+});
+const isValidDimension = (value) =>
+  Number.isInteger(Number(value)) &&
+  Number(value) >= MIN_DIMENSION &&
+  Number(value) <= MAX_DIMENSION;
+const dimensionRule = (value) =>
+  isValidDimension(value) ||
+  `Ingresa un número entero entre ${MIN_DIMENSION} y ${MAX_DIMENSION} px.`;
+const canCreateTemplate = computed(
+  () =>
+    Boolean(form.value.name.trim()) &&
+    isValidDimension(form.value.dimensions.width) &&
+    isValidDimension(form.value.dimensions.height) &&
+    !loading.value
+);
+const templateDimensionSummary = computed(() => {
+  const dimensions = selectedTemplateDetails.value?.dimensions;
+  if (!dimensions || (dimensions.unit && dimensions.unit !== 'px')) return null;
+
+  const width = Number(dimensions.width);
+  const height = Number(dimensions.height);
+  if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
+
+  const widthInches = width / PIXELS_PER_INCH;
+  const heightInches = height / PIXELS_PER_INCH;
+  const paperSize = PAPER_SIZES.find(
+    (paper) => paper.value !== 'custom' && paper.width === width && paper.height === height
+  );
+  const landscapePaperSize =
+    paperSize ||
+    PAPER_SIZES.find(
+      (paper) => paper.value !== 'custom' && paper.width === height && paper.height === width
+    );
+  const isLandscape = !paperSize && Boolean(landscapePaperSize);
+
+  return {
+    inches: `${widthInches.toFixed(2)} × ${heightInches.toFixed(2)} in`,
+    millimeters: `${(widthInches * 25.4).toFixed(1)} × ${(heightInches * 25.4).toFixed(1)} mm`,
+    paperSize: landscapePaperSize
+      ? `Tamaño estándar: ${landscapePaperSize.name}${isLandscape ? ' (horizontal)' : ''}`
+      : 'Tamaño personalizado',
+  };
 });
 
 const headers = [
@@ -486,7 +643,20 @@ const openTemplateDetails = async (item) => {
 };
 
 const openCreateDialog = () => {
+  form.value = {
+    name: '',
+    description: '',
+    status: 'draft',
+    dimensions: { width: 794, height: 1123 },
+  };
+  selectedPaperSize.value = 'a4';
   dialogOpen.value = true;
+};
+
+const applyPaperSize = (paperSizeValue) => {
+  const paperSize = PAPER_SIZES.find(({ value }) => value === paperSizeValue);
+  if (!paperSize || paperSize.value === 'custom') return;
+  form.value.dimensions = { width: paperSize.width, height: paperSize.height };
 };
 
 const openStatusDialog = (template) => {
@@ -533,7 +703,7 @@ const confirmStatusUpdate = async () => {
 };
 
 const createNewTemplate = async () => {
-  if (!form.value.name.trim()) return;
+  if (!canCreateTemplate.value) return;
 
   const payload = {
     name: form.value.name,
@@ -548,18 +718,26 @@ const createNewTemplate = async () => {
     metadata: {},
   };
 
-  const created = await createTemplate(payload);
-  dialogOpen.value = false;
-  form.value = {
-    name: '',
-    description: '',
-    status: 'draft',
-    dimensions: { width: 794, height: 1123 },
-  };
+  try {
+    const created = await createTemplate(payload);
+    dialogOpen.value = false;
+    form.value = {
+      name: '',
+      description: '',
+      status: 'draft',
+      dimensions: { width: 794, height: 1123 },
+    };
 
-  await loadTemplates();
-  if (created && created._id) {
-    openEditor(created._id);
+    await loadTemplates();
+    if (created && created._id) {
+      openEditor(created._id);
+    }
+  } catch (error) {
+    notificationStore.setNotification({
+      message: error.response?.data?.message || error.message || 'No se pudo crear la plantilla.',
+      code: error.response?.data?.code || 'EXXX',
+      mode: 'automatic',
+    });
   }
 };
 

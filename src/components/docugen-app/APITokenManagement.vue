@@ -1,15 +1,7 @@
 <template>
   <div class="api-tokens-container">
-    <!-- Header -->
-    <div class="tokens-header mb-4">
-      <h1 class="text-h4 font-weight-bold">Mis Tokens de API</h1>
-      <p class="text-caption text-medium-emphasis mt-2">
-        Gestiona tokens independientes para acceso programático a la API
-      </p>
-    </div>
-
-    <!-- Create Token Button -->
-    <div class="mb-4">
+    <div class="d-flex justify-space-between align-center flex-wrap ga-3 mb-4">
+      <h1 class="text-h5 font-weight-bold">Mis Tokens de API</h1>
       <v-btn color="primary" prepend-icon="mdi-plus" @click="showCreateDialog = true">
         Crear Nuevo Token
       </v-btn>
@@ -17,7 +9,12 @@
 
     <!-- Tokens Table -->
     <v-card class="elevation-1">
-      <div v-if="tokens.length > 0" class="tokens-table-container">
+      <v-card-text v-if="!hasLoadedTokens" class="pa-8">
+        <v-progress-linear indeterminate color="primary" class="mb-4" />
+        <div class="text-center text-caption text-medium-emphasis">Cargando tokens...</div>
+      </v-card-text>
+
+      <div v-else-if="tokens.length > 0" class="tokens-table-container">
         <v-table class="tokens-table" density="comfortable">
           <thead>
             <tr>
@@ -72,16 +69,6 @@
                     Editar
                   </v-btn>
                   <v-btn
-                    v-if="token.status === 'active'"
-                    prepend-icon="mdi-lock"
-                    variant="tonal"
-                    size="small"
-                    color="warning"
-                    @click="confirmRevoke(token)"
-                  >
-                    Revocar
-                  </v-btn>
-                  <v-btn
                     prepend-icon="mdi-delete"
                     variant="tonal"
                     size="small"
@@ -96,6 +83,15 @@
           </tbody>
         </v-table>
       </div>
+
+      <v-card-text v-else-if="tokensLoadError" class="text-center pa-8">
+        <v-icon size="48" class="mb-4 text-error">mdi-alert-circle-outline</v-icon>
+        <div class="text-subtitle-2 text-error">No se pudieron cargar los tokens</div>
+        <div class="text-caption text-medium-emphasis mb-4">
+          Comprueba tu conexión e inténtalo nuevamente.
+        </div>
+        <v-btn size="small" color="primary" @click="loadTokens">Reintentar</v-btn>
+      </v-card-text>
 
       <v-card-text v-else class="text-center pa-8">
         <v-icon size="48" class="mb-4 text-disabled">mdi-key-link</v-icon>
@@ -112,7 +108,7 @@
     <!-- Create Token Dialog -->
     <v-dialog v-model="showCreateDialog" max-width="500">
       <v-card>
-        <v-card-title class="bg-primary text-white">
+        <v-card-title>
           <v-icon icon="mdi-plus" class="mr-2" />
           Crear Nuevo Token de API
         </v-card-title>
@@ -145,24 +141,20 @@
 
           <div class="mb-4">
             <v-select
-              v-model="newToken.scopes"
-              :items="availableScopes"
-              label="Permisos"
-              multiple
-              hint="Qué puede hacer este token"
-              persistent-hint
-            />
-          </div>
-
-          <div class="mb-4">
-            <v-checkbox v-model="enableExpiration" label="Este token debe expirar en:" />
-            <v-select
-              v-if="enableExpiration"
               v-model="newToken.expiresIn"
               :items="expirationOptions"
-              label="Tiempo de expiración"
+              item-title="title"
+              item-value="value"
+              label="Tiempo de expiración *"
               class="mt-2"
+              :rules="[(value) => Boolean(value) || 'Selecciona un tiempo de expiración.']"
+              required
+              hide-details="auto"
+              @update:model-value="formErrors.expiresIn = ''"
             />
+            <div v-if="formErrors.expiresIn" class="text-caption text-error mt-1">
+              {{ formErrors.expiresIn }}
+            </div>
           </div>
 
           <v-alert type="info" class="mb-4" icon="mdi-information" variant="tonal">
@@ -176,7 +168,14 @@
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="text" @click="closeCreateDialog">Cancelar</v-btn>
-          <v-btn color="primary" @click="handleCreateToken" :loading="loading"> Crear Token </v-btn>
+          <v-btn
+            color="primary"
+            @click="handleCreateToken"
+            :loading="loading"
+            :disabled="loading || !newToken.expiresIn"
+          >
+            Crear Token
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -184,14 +183,14 @@
     <!-- Token Generated Dialog (Show Once) -->
     <v-dialog v-model="showTokenDialog" max-width="500">
       <v-card>
-        <v-card-title class="bg-success text-white">
+        <v-card-title>
           <v-icon icon="mdi-check-circle" class="mr-2" />
           Token Creado Exitosamente
         </v-card-title>
 
         <v-card-text class="pa-6">
           <v-alert type="warning" class="mb-4" icon="mdi-alert" variant="tonal">
-            <div class="text-subtitle-2 font-weight-bold mb-2">⚠️ COPIA TU TOKEN AHORA</div>
+            <div class="text-subtitle-2 font-weight-bold mb-2">COPIA TU TOKEN AHORA</div>
             <div class="text-caption">
               Este es el último momento que verás tu token. No se puede recuperar después.
             </div>
@@ -206,7 +205,11 @@
                 variant="outlined"
                 class="font-family-monospace"
               />
-              <v-btn icon="mdi-content-copy" @click="copyToClipboard(generatedToken.token)" />
+              <v-btn
+                icon="mdi-content-copy"
+                aria-label="Copiar token"
+                @click="copyToClipboard(generatedToken.token)"
+              />
             </div>
           </div>
 
@@ -236,7 +239,7 @@
     <!-- Edit Token Dialog -->
     <v-dialog v-model="showEditDialog" max-width="500">
       <v-card>
-        <v-card-title class="bg-primary text-white">
+        <v-card-title>
           <v-icon icon="mdi-pencil" class="mr-2" />
           Editar Token
         </v-card-title>
@@ -244,12 +247,6 @@
         <v-card-text class="pa-6">
           <v-text-field v-model="editingToken.name" label="Nombre" />
           <v-textarea v-model="editingToken.description" label="Descripción" rows="2" />
-          <v-select
-            v-model="editingToken.scopes"
-            :items="availableScopes"
-            label="Permisos"
-            multiple
-          />
         </v-card-text>
 
         <v-card-actions class="pa-4">
@@ -264,40 +261,10 @@
       </v-card>
     </v-dialog>
 
-    <!-- Confirm Revoke Dialog -->
-    <v-dialog v-model="showRevokeConfirm" max-width="400">
-      <v-card>
-        <v-card-title class="bg-warning text-white">
-          <v-icon icon="mdi-alert-circle" class="mr-2" />
-          Revocar Token
-        </v-card-title>
-
-        <v-card-text class="pa-6">
-          <p class="mb-4">
-            ¿Está seguro que desea revocar <strong>{{ tokenToRevoke?.name }}</strong
-            >?
-          </p>
-          <p class="text-caption text-medium-emphasis">
-            Este token ya no funcionará. Cualquier aplicación que lo use dejará de funcionar.
-          </p>
-        </v-card-text>
-
-        <v-card-actions class="pa-4">
-          <v-spacer />
-          <v-btn variant="tonal" class="bg-secondary" @click="showRevokeConfirm = false">
-            Cancelar
-          </v-btn>
-          <v-btn variant="tonal" class="bg-primary" @click="handleRevokeToken" :loading="loading">
-            Sí, Revocar
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <!-- Confirm Delete Dialog -->
     <v-dialog v-model="showDeleteConfirm" max-width="400">
       <v-card>
-        <v-card-title class="bg-error text-white">
+        <v-card-title>
           <v-icon icon="mdi-delete" class="mr-2" />
           Eliminar Token
         </v-card-title>
@@ -339,47 +306,42 @@ const {
   getTokens,
   createToken,
   updateToken,
-  revokeToken,
   deleteToken,
 } = useAPITokens();
 const notificationStore = useNotificationStore();
+const showNotification = ({ message, type, duration, code }) => {
+  notificationStore.setNotification({
+    message,
+    code: code || (type === 'success' ? 'S0000' : 'EXXX'),
+    mode: duration === 'persistent' ? 'persistent' : 'short',
+  });
+};
 
 // UI state
 const showCreateDialog = ref(false);
 const showTokenDialog = ref(false);
 const showEditDialog = ref(false);
-const showRevokeConfirm = ref(false);
 const showDeleteConfirm = ref(false);
+const hasLoadedTokens = ref(false);
+const tokensLoadError = ref(false);
 
 // Form data
+// TODO: Add permission selection only after backend route-level scope enforcement is implemented.
 const newToken = ref({
   name: '',
   description: '',
-  scopes: ['documents:generate'],
-  expiresIn: null,
+  expiresIn: '',
 });
 
 const generatedToken = ref(null);
 const editingToken = ref(null);
-const tokenToRevoke = ref(null);
 const tokenToDelete = ref(null);
-const enableExpiration = ref(false);
 const formErrors = ref({});
-
-// Constants
-const availableScopes = [
-  { title: 'Generar Documentos', value: 'documents:generate' },
-  { title: 'Leer Documentos', value: 'documents:read' },
-  { title: 'Leer Plantillas', value: 'templates:read' },
-  { title: 'Escribir Plantillas', value: 'templates:write' },
-  { title: 'Acceso Completo', value: 'api:full' },
-];
 
 const expirationOptions = [
   { title: '30 días', value: '30d' },
   { title: '90 días', value: '90d' },
   { title: '1 año', value: '1y' },
-  { title: 'Nunca', value: null },
 ];
 
 // Methods
@@ -411,6 +373,14 @@ const handleCreateToken = async () => {
 
   if (!newToken.value.name.trim()) {
     formErrors.value.name = 'El nombre es requerido';
+  }
+  if (!newToken.value.expiresIn) {
+    formErrors.value.expiresIn = 'Selecciona un tiempo de expiración.';
+  }
+  if (Object.keys(formErrors.value).length) return;
+  const expiresAt = calculateExpiration(newToken.value.expiresIn);
+  if (!expiresAt || expiresAt <= new Date()) {
+    formErrors.value.expiresIn = 'Selecciona un período de expiración válido.';
     return;
   }
 
@@ -418,23 +388,22 @@ const handleCreateToken = async () => {
     const response = await createToken({
       name: newToken.value.name,
       description: newToken.value.description,
-      scopes: newToken.value.scopes,
-      expiresAt: newToken.value.expiresIn ? calculateExpiration(newToken.value.expiresIn) : null,
+      expiresAt,
     });
 
     const createdToken = normalizeCreatedToken(response);
     generatedToken.value = createdToken;
-    showCreateDialog.value = false;
+    closeCreateDialog();
     showTokenDialog.value = true;
 
-    notificationStore.showNotification({
+    showNotification({
       message: 'Token creado exitosamente',
       type: 'success',
       duration: 'short',
       code: 'S3001',
     });
   } catch (error) {
-    notificationStore.showNotification({
+    showNotification({
       message: error.response?.data?.message || 'Error creando token',
       type: 'error',
       duration: 'persistent',
@@ -446,18 +415,56 @@ const handleCreateToken = async () => {
 const calculateExpiration = (expiresIn) => {
   const now = new Date();
   if (expiresIn === '30d') now.setDate(now.getDate() + 30);
-  if (expiresIn === '90d') now.setDate(now.getDate() + 90);
-  if (expiresIn === '1y') now.setFullYear(now.getFullYear() + 1);
-  return expiresIn ? now : null;
+  else if (expiresIn === '90d') now.setDate(now.getDate() + 90);
+  else if (expiresIn === '1y') now.setFullYear(now.getFullYear() + 1);
+  else return null;
+  return now;
 };
 
-const copyToClipboard = (text) => {
-  navigator.clipboard.writeText(text);
-  notificationStore.showNotification({
-    message: 'Token copiado al portapapeles',
-    type: 'success',
-    duration: 'short',
-  });
+const copyWithFallback = (text) => {
+  const temporaryInput = document.createElement('textarea');
+  temporaryInput.value = text;
+  temporaryInput.setAttribute('readonly', '');
+  temporaryInput.style.position = 'fixed';
+  temporaryInput.style.opacity = '0';
+  document.body.appendChild(temporaryInput);
+  try {
+    temporaryInput.select();
+    if (!document.execCommand('copy')) {
+      throw new Error('El navegador no pudo copiar el token.');
+    }
+  } finally {
+    temporaryInput.remove();
+  }
+};
+
+const copyToClipboard = async (text) => {
+  try {
+    if (!text) throw new Error('No hay un token disponible para copiar.');
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        copyWithFallback(text);
+      }
+    } else {
+      copyWithFallback(text);
+    }
+
+    showNotification({
+      message: 'Token copiado al portapapeles',
+      type: 'success',
+      duration: 'short',
+    });
+  } catch (error) {
+    showNotification({
+      message:
+        error.message ||
+        'No se pudo copiar el token. Selecciónalo manualmente y cópialo de forma segura.',
+      type: 'error',
+      duration: 'persistent',
+    });
+  }
 };
 
 const editToken = (token) => {
@@ -470,43 +477,18 @@ const handleUpdateToken = async () => {
     await updateToken(editingToken.value.id, {
       name: editingToken.value.name,
       description: editingToken.value.description,
-      scopes: editingToken.value.scopes,
     });
 
     showEditDialog.value = false;
-    notificationStore.showNotification({
+    showNotification({
       message: 'Token actualizado exitosamente',
       type: 'success',
       duration: 'short',
       code: 'S3004',
     });
   } catch (error) {
-    notificationStore.showNotification({
+    showNotification({
       message: error.response?.data?.message || 'Error actualizando token',
-      type: 'error',
-      duration: 'persistent',
-    });
-  }
-};
-
-const confirmRevoke = (token) => {
-  tokenToRevoke.value = token;
-  showRevokeConfirm.value = true;
-};
-
-const handleRevokeToken = async () => {
-  try {
-    await revokeToken(tokenToRevoke.value.id);
-    showRevokeConfirm.value = false;
-    notificationStore.showNotification({
-      message: 'Token revocado exitosamente',
-      type: 'success',
-      duration: 'short',
-      code: 'S3005',
-    });
-  } catch (error) {
-    notificationStore.showNotification({
-      message: error.response?.data?.message || 'Error revocando token',
       type: 'error',
       duration: 'persistent',
     });
@@ -522,14 +504,14 @@ const handleDeleteToken = async () => {
   try {
     await deleteToken(tokenToDelete.value.id);
     showDeleteConfirm.value = false;
-    notificationStore.showNotification({
+    showNotification({
       message: 'Token eliminado exitosamente',
       type: 'success',
       duration: 'short',
       code: 'S3006',
     });
   } catch (error) {
-    notificationStore.showNotification({
+    showNotification({
       message: error.response?.data?.message || 'Error eliminando token',
       type: 'error',
       duration: 'persistent',
@@ -542,27 +524,36 @@ const closeCreateDialog = () => {
   newToken.value = {
     name: '',
     description: '',
-    scopes: ['documents:generate'],
-    expiresIn: null,
+    expiresIn: '',
   };
-  enableExpiration.value = false;
   clearErrors();
 };
 
+const loadTokens = async () => {
+  hasLoadedTokens.value = false;
+  tokensLoadError.value = false;
+  try {
+    await getTokens();
+  } catch (error) {
+    tokensLoadError.value = true;
+    showNotification({
+      message: error.response?.data?.message || 'No se pudieron cargar los tokens de API.',
+      type: 'error',
+      duration: 'persistent',
+      code: error.response?.data?.code || 'EXXX',
+    });
+  } finally {
+    hasLoadedTokens.value = true;
+  }
+};
+
 // Lifecycle
-onMounted(() => {
-  getTokens();
-});
+onMounted(loadTokens);
 </script>
 
 <style scoped>
 .api-tokens-container {
   padding: 24px;
-}
-
-.tokens-header {
-  border-bottom: 1px solid var(--v-border-color);
-  padding-bottom: 16px;
 }
 
 .font-family-monospace {
