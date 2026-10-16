@@ -198,9 +198,9 @@
             <v-col cols="12" md="6">
               <v-sheet border rounded class="pa-3 mb-3">
                 <div class="text-caption text-medium-emphasis mb-2">Metadata</div>
-                <code class="text-caption d-block">{{
+                <pre class="metadata-json text-caption mb-0">{{
                   JSON.stringify(selectedTemplateDetails.metadata || {}, null, 2)
-                }}</code>
+                }}</pre>
               </v-sheet>
             </v-col>
 
@@ -977,3 +977,14 @@ onMounted(async () => {
   await loadTemplates();
 });
 </script>
+
+<style scoped>
+.metadata-json {
+  max-height: 240px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+</style>

@@ -23,10 +23,58 @@ const inferParameterType = (element) => {
   return 'text';
 };
 
+const inferPlaceholderType = (element, field) => {
+  if (field === 'text' && element?.type === 'checkbox') return 'text';
+  if (field === 'src' && element?.type === 'image') return 'image';
+  if (field === 'qrValue' && element?.type === 'qr') return 'qr';
+  return inferParameterType(element);
+};
+
 const paramSort = (a, b) => {
   const keyA = String(a.key || '').toLowerCase();
   const keyB = String(b.key || '').toLowerCase();
   return keyA.localeCompare(keyB);
+};
+
+const getImageBase64 = (value) => {
+  const normalized = String(value || '').trim();
+  const dataUrlMatch = normalized.match(/^data:(image\/(?:png|jpeg));base64,([\s\S]+)$/i);
+  const mimeType = dataUrlMatch?.[1]?.toLowerCase() || '';
+  const base64 = (dataUrlMatch ? dataUrlMatch[2] : normalized).replace(/\s/g, '');
+  if (!base64 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64) || base64.length % 4 === 1) {
+    return null;
+  }
+
+  try {
+    const binary = atob(base64);
+    if (!binary.length || binary.length > 2 * 1024 * 1024) return null;
+    const canonicalBase64 = btoa(binary);
+    const isPng =
+      binary.length >= 24 &&
+      [137, 80, 78, 71, 13, 10, 26, 10].every(
+        (byte, index) => binary.charCodeAt(index) === byte
+      ) &&
+      binary.slice(16, 20) !== '\0\0\0\0' &&
+      binary.slice(20, 24) !== '\0\0\0\0';
+    const isJpeg =
+      binary.length >= 4 &&
+      binary.charCodeAt(0) === 255 &&
+      binary.charCodeAt(1) === 216 &&
+      binary.charCodeAt(2) === 255 &&
+      binary.charCodeAt(binary.length - 2) === 255 &&
+      binary.charCodeAt(binary.length - 1) === 217;
+    const detectedMimeType = isPng ? 'image/png' : isJpeg ? 'image/jpeg' : '';
+    if (!detectedMimeType || (mimeType && mimeType !== detectedMimeType)) return null;
+    return { dataUrl: `data:${detectedMimeType};base64,${canonicalBase64}` };
+  } catch {
+    return null;
+  }
+};
+
+export const normalizeImageValue = (value) => {
+  const normalized = String(value || '').trim();
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  return getImageBase64(normalized)?.dataUrl || normalized;
 };
 
 export const extractPlaceholders = (template) => {
@@ -57,7 +105,9 @@ export const extractPlaceholders = (template) => {
 
     const explicitKey = normalizePlaceholderKey(element.placeholderKey);
     if (explicitKey) {
-      if (!placeholderMap[explicitKey]) {
+      if (element.type === 'image' && placeholderMap[explicitKey]) {
+        placeholderMap[explicitKey].type = 'image';
+      } else if (!placeholderMap[explicitKey]) {
         placeholderMap[explicitKey] = {
           key: explicitKey,
           elementId: element.id,
@@ -70,29 +120,28 @@ export const extractPlaceholders = (template) => {
       }
     }
 
-    const textContent = [
-      element.text || '',
-      element.qrValue || '',
-      element.src || '',
-      element.placeholderKey || '',
-    ].join(' ');
-    const matches = textContent.match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g) || [];
-
-    matches.forEach((match) => {
-      const key = normalizePlaceholderKey(match);
-      if (!key) return;
-      if (!placeholderMap[key]) {
-        placeholderMap[key] = {
-          key,
-          elementId: element.id,
-          elementType: element.type,
-          description: `Usado en ${element.type}`,
-          example: '',
-          required: true,
-          type: inferParameterType(element),
-        };
-      }
-    });
+    for (const field of ['text', 'qrValue', 'src']) {
+      const matches = String(element[field] || '').match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g) || [];
+      matches.forEach((match) => {
+        const key = normalizePlaceholderKey(match);
+        if (!key) return;
+        if (field === 'src' && element.type === 'image' && placeholderMap[key]) {
+          placeholderMap[key].type = 'image';
+          return;
+        }
+        if (!placeholderMap[key]) {
+          placeholderMap[key] = {
+            key,
+            elementId: element.id,
+            elementType: element.type,
+            description: `Usado en ${element.type}`,
+            example: '',
+            required: true,
+            type: inferPlaceholderType(element, field),
+          };
+        }
+      });
+    }
   });
 
   return Object.fromEntries(Object.entries(placeholderMap).sort(([a], [b]) => a.localeCompare(b)));
@@ -151,8 +200,10 @@ const validateValueByType = (key, value, type, allowedValues) => {
       }
     }
     case 'image': {
-      const isValidUrl = /^https?:\/\//.test(stringValue) || /^data:image\//.test(stringValue);
-      if (!isValidUrl) return 'debe ser una URL o base64 de imagen';
+      if (/^https?:\/\//i.test(stringValue)) return null;
+      if (!getImageBase64(stringValue)) {
+        return 'debe ser una URL HTTP(S) o una imagen PNG/JPEG válida en Base64 (máximo 2 MB)';
+      }
       return null;
     }
     case 'qr': {
@@ -264,7 +315,11 @@ export const usePresentationConfig = () => {
   };
 
   const updateConfigData = (key, value) => {
-    const nextValue = value ?? '';
+    const placeholder = placeholders.value[key];
+    const nextValue =
+      placeholder?.type === 'image' && value !== undefined && value !== null
+        ? normalizeImageValue(value)
+        : value ?? '';
     configData.value[key] = nextValue;
     if (validationErrors.value[key]) {
       validationErrors.value[key] = null;
@@ -272,7 +327,13 @@ export const usePresentationConfig = () => {
   };
 
   const setConfigDataBulk = (data) => {
-    configData.value = { ...createEmptyDataObject(placeholders.value), ...(data || {}) };
+    const normalizedData = { ...createEmptyDataObject(placeholders.value), ...(data || {}) };
+    Object.values(placeholders.value).forEach((placeholder) => {
+      if (placeholder.type === 'image' && normalizedData[placeholder.key]) {
+        normalizedData[placeholder.key] = normalizeImageValue(normalizedData[placeholder.key]);
+      }
+    });
+    configData.value = normalizedData;
     validationErrors.value = {};
   };
 

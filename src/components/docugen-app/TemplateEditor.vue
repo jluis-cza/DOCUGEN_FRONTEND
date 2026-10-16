@@ -1,21 +1,42 @@
 <template>
-  <div class="editor-shell">
+  <div class="editor-root">
+    <div v-if="!templateLoaded && !templateLoading" class="editor-load-error">
+      <v-card max-width="560" class="pa-6 text-center" rounded="xl">
+        <v-icon color="error" size="48">mdi-file-alert-outline</v-icon>
+        <h2 class="text-h6 mt-3">No se pudo abrir la plantilla</h2>
+        <p class="text-body-2 text-medium-emphasis mt-2">
+          {{ templateLoadError || 'La plantilla no está disponible.' }}
+        </p>
+        <v-btn class="mt-4" color="primary" @click="backToTemplates"> Volver a plantillas </v-btn>
+      </v-card>
+    </div>
+
+    <div v-if="templateLoaded" class="editor-shell">
     <v-app-bar color="surface" flat class="editor-topbar border-b" density="comfortable">
       <template #prepend>
         <v-btn icon="mdi-arrow-left" variant="text" color="primary" @click="backToTemplates" />
       </template>
 
-      <div class="d-flex align-center ga-3">
+        <div class="editor-heading">
         <div class="text-start">
           <div class="text-caption text-medium-emphasis">Plantillas</div>
           <div class="text-subtitle-1 font-weight-bold">
             {{ template.name || 'Nueva plantilla' }}
           </div>
         </div>
+          <v-chip
+            v-if="hasUnsavedChanges"
+            class="editor-dirty-chip"
+            color="warning"
+            size="small"
+            variant="tonal"
+          >
+            Cambios sin guardar
+          </v-chip>
       </div>
 
       <template #append>
-        <div class="d-flex align-center ga-2 flex-wrap">
+          <div class="editor-actions">
           <v-btn
             size="small"
             variant="text"
@@ -35,12 +56,14 @@
             Rehacer
           </v-btn>
 
-          <v-btn variant="tonal" prepend-icon="mdi-content-save" size="small" @click="saveTemplate">
+            <v-btn
+              variant="tonal"
+              prepend-icon="mdi-content-save"
+              size="small"
+              @click="saveTemplate"
+            >
             Guardar
           </v-btn>
-          <v-chip v-if="hasUnsavedChanges" color="warning" size="small" variant="tonal">
-            Cambios sin guardar
-          </v-chip>
           <v-btn
             color="primary"
             prepend-icon="mdi-file-pdf-box"
@@ -57,10 +80,38 @@
       <div class="editor-layout">
         <div class="editor-sidebar">
           <v-card class="panel h-100 sidebar-panel" rounded="xl">
-            <div class="panel-header d-flex align-center justify-space-between">
-              <h4>Elementos</h4>
+              <div class="d-flex align-center mb-4">
+                <v-btn
+                  icon="mdi-chevron-left"
+                  variant="text"
+                  size="small"
+                  aria-label="Ir a Elementos"
+                  :disabled="elementSidebarTab === 'elements'"
+                  @click="navigateElementSidebar(-1)"
+                />
+                <v-tabs
+                  v-model="elementSidebarTab"
+                  class="flex-grow-1 sidebar-section-tabs"
+                  :show-arrows="false"
+                >
+                  <v-tab value="elements" prepend-icon="mdi-shape-outline">Elementos</v-tab>
+                  <v-tab value="resources" prepend-icon="mdi-image-multiple-outline"
+                    >Recursos</v-tab
+                  >
+                </v-tabs>
+                <v-btn
+                  icon="mdi-chevron-right"
+                  variant="text"
+                  size="small"
+                  aria-label="Ir a Recursos"
+                  :disabled="elementSidebarTab === 'resources'"
+                  @click="navigateElementSidebar(1)"
+                />
             </div>
 
+              <v-window v-model="elementSidebarTab" class="sidebar-tab-content">
+                <v-window-item value="elements">
+                  <div class="sidebar-content-scroll">
             <div class="toolbar-grid">
               <v-btn block color="primary" variant="tonal" @click="addTextElement">
                 <v-icon start icon="mdi-format-text" /> Texto
@@ -78,7 +129,7 @@
                 <v-icon start icon="mdi-format-list-bulleted" /> Lista
               </v-btn>
               <v-btn block color="secondary" variant="tonal" @click="addPlaceholder">
-                <v-icon start icon="mdi-variable" /> Placeholder
+                        <v-icon start icon="mdi-variable" /> Campo dinámico
               </v-btn>
               <v-btn block color="secondary" variant="tonal" @click="addImageElement">
                 <v-icon start icon="mdi-image" /> Imagen
@@ -111,6 +162,76 @@
                 <v-icon start icon="mdi-numeric" /> Nº página
               </v-btn>
             </div>
+                  </div>
+                </v-window-item>
+                <v-window-item value="resources">
+                  <div class="sidebar-content-scroll resource-panel">
+                    <div class="text-body-2 mb-2">
+                      Imágenes estáticas de la plantilla. PNG y JPEG, hasta 2 MB por imagen y 6 MB
+                      en total.
+                    </div>
+                    <input
+                      ref="imageResourceInput"
+                      class="d-none"
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      @change="handleImageResourceUpload"
+                    />
+                    <v-btn
+                      block
+                      color="secondary"
+                      variant="tonal"
+                      prepend-icon="mdi-upload"
+                      class="mb-3"
+                      @click="imageResourceInput?.click()"
+                    >
+                      Subir imagen
+                    </v-btn>
+                    <div v-if="imageResourceError" class="text-caption text-error mb-2">
+                      {{ imageResourceError }}
+                    </div>
+                    <div v-if="!imageResources.length" class="text-caption text-medium-emphasis">
+                      Aún no hay imágenes. Sube recursos y selecciónalos en un elemento imagen.
+                    </div>
+                    <v-card
+                      v-for="resource in imageResources"
+                      :key="resource.id"
+                      class="pa-2 mb-2"
+                      variant="tonal"
+                    >
+                      <img
+                        :src="resource.dataUrl"
+                        :alt="resource.name"
+                        class="resource-thumbnail mb-2"
+                      />
+                      <div class="text-body-2 text-truncate" :title="resource.name">
+                        {{ resource.name }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis mb-2">
+                        {{ formatResourceSize(resource.size) }}
+                      </div>
+                      <div class="d-flex ga-1">
+                        <v-btn
+                          size="small"
+                          variant="text"
+                          prepend-icon="mdi-image-plus"
+                          @click="useImageResource(resource)"
+                        >
+                          Usar imagen
+                        </v-btn>
+                        <v-btn
+                          icon="mdi-delete-outline"
+                          size="small"
+                          variant="text"
+                          color="error"
+                          :aria-label="`Eliminar recurso ${resource.name}`"
+                          @click="removeImageResource(resource)"
+                        />
+                      </div>
+                    </v-card>
+                  </div>
+                </v-window-item>
+              </v-window>
           </v-card>
         </div>
 
@@ -162,7 +283,11 @@
                   variant="text"
                   :color="panMode ? 'primary' : undefined"
                   :aria-pressed="panMode"
-                  :aria-label="panMode ? 'Desactivar desplazamiento de hoja' : 'Activar desplazamiento de hoja'"
+                    :aria-label="
+                      panMode
+                        ? 'Desactivar desplazamiento de hoja'
+                        : 'Activar desplazamiento de hoja'
+                    "
                   title="Modo para mover la hoja"
                   @click="panMode = !panMode"
                 />
@@ -244,7 +369,12 @@
                         height="20"
                         patternUnits="userSpaceOnUse"
                       >
-                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" stroke-width="1" />
+                          <path
+                            d="M 20 0 L 0 0 0 20"
+                            fill="none"
+                            stroke="#e5e7eb"
+                            stroke-width="1"
+                          />
                       </pattern>
                     </defs>
 
@@ -261,10 +391,16 @@
                       :x="template.page.margin.left"
                       :y="template.page.margin.top"
                       :width="
-                        Math.max(0, width - template.page.margin.left - template.page.margin.right)
+                          Math.max(
+                            0,
+                            width - template.page.margin.left - template.page.margin.right
+                          )
                       "
                       :height="
-                        Math.max(0, height - template.page.margin.top - template.page.margin.bottom)
+                          Math.max(
+                            0,
+                            height - template.page.margin.top - template.page.margin.bottom
+                          )
                       "
                       fill="none"
                       stroke="#94a3b8"
@@ -340,8 +476,8 @@
                         />
 
                         <image
-                          v-if="!isImagePlaceholder(element)"
-                          :href="element.src"
+                            v-if="getImageSource(element)"
+                            :href="getImageSource(element)"
                           :x="element.x"
                           :y="element.y"
                           :width="element.width"
@@ -425,8 +561,19 @@
                           :y="Number(element.y) + Number(element.fontSize || 12) + 2"
                           :font-size="element.fontSize || 12"
                           :fill="element.color || '#111111'"
+                            :font-family="element.fontFamily || 'Arial, sans-serif'"
+                            :font-style="element.italic ? 'italic' : undefined"
+                            :text-decoration="element.underline ? 'underline' : undefined"
+                          >
+                            <tspan
+                              v-for="(run, runIndex) in getInlineTextRuns(getElementLabel(element))"
+                              :key="`${element.id}-checkbox-${runIndex}`"
+                              :font-weight="getRunFontWeight(run)"
+                              :font-style="run.italic ? 'italic' : undefined"
+                              :text-decoration="run.underlined ? 'underline' : undefined"
                         >
-                          {{ getElementLabel(element) }}
+                              {{ run.text }}
+                            </tspan>
                         </text>
                       </g>
 
@@ -446,8 +593,14 @@
                             :key="`${element.id}-${rowIndex}-${columnIndex}`"
                           >
                             <rect
-                              :x="element.x + ((columnIndex - 1) * element.width) / getTableColumnCount(element)"
-                              :y="element.y + (rowIndex * element.height) / getTableRows(element).length"
+                                :x="
+                                  element.x +
+                                  ((columnIndex - 1) * element.width) / getTableColumnCount(element)
+                                "
+                                :y="
+                                  element.y +
+                                  (rowIndex * element.height) / getTableRows(element).length
+                                "
                               :width="element.width / getTableColumnCount(element)"
                               :height="element.height / getTableRows(element).length"
                               fill="none"
@@ -455,13 +608,35 @@
                               :stroke-width="element.strokeWidth || 1"
                             />
                             <text
-                              :x="element.x + ((columnIndex - 1) * element.width) / getTableColumnCount(element) + 4"
-                              :y="element.y + (rowIndex * element.height) / getTableRows(element).length + (element.fontSize || 12)"
+                                :x="
+                                  element.x +
+                                  ((columnIndex - 1) * element.width) /
+                                    getTableColumnCount(element) +
+                                  4
+                                "
+                                :y="
+                                  element.y +
+                                  (rowIndex * element.height) / getTableRows(element).length +
+                                  (element.fontSize || 12)
+                                "
                               :font-size="element.fontSize || 12"
                               :fill="element.color || '#111111'"
                               :font-weight="element.fontWeight || 400"
+                                :font-family="element.fontFamily || 'Arial, sans-serif'"
+                                :font-style="element.italic ? 'italic' : undefined"
+                                :text-decoration="element.underline ? 'underline' : undefined"
+                              >
+                                <tspan
+                                  v-for="(run, runIndex) in getInlineTextRuns(
+                                    row[columnIndex - 1] || ''
+                                  )"
+                                  :key="`${element.id}-${rowIndex}-${columnIndex}-${runIndex}`"
+                                  :font-weight="getRunFontWeight(run)"
+                                  :font-style="run.italic ? 'italic' : undefined"
+                                  :text-decoration="run.underlined ? 'underline' : undefined"
                             >
-                              {{ row[columnIndex - 1] || '' }}
+                                  {{ run.text }}
+                                </tspan>
                             </text>
                           </g>
                         </g>
@@ -489,8 +664,19 @@
                           :font-size="element.fontSize || 12"
                           :fill="element.color || '#111111'"
                           :font-weight="element.fontWeight || 400"
+                            :font-family="element.fontFamily || 'Arial, sans-serif'"
+                            :font-style="element.italic ? 'italic' : undefined"
+                            :text-decoration="element.underline ? 'underline' : undefined"
+                          >
+                            <tspan
+                              v-for="(run, runIndex) in getInlineTextRuns(getElementLabel(element))"
+                              :key="`${element.id}-signature-${runIndex}`"
+                              :font-weight="getRunFontWeight(run)"
+                              :font-style="run.italic ? 'italic' : undefined"
+                              :text-decoration="run.underlined ? 'underline' : undefined"
                         >
-                          {{ getElementLabel(element) }}
+                              {{ run.text }}
+                            </tspan>
                         </text>
                       </g>
 
@@ -502,46 +688,79 @@
                             'text',
                             'title',
                             'subtitle',
+                              'placeholder',
                             'date',
                             'pageNumber',
                             'footer',
                           ].includes(element.type)
                         "
                         :x="getAlignedTextX(element)"
-                        :y="element.y + (element.height || 20) / 2"
+                          :y="element.y + Number(element.fontSize || 18)"
                         :text-anchor="getTextAnchor(element)"
                         :font-size="element.fontSize || 18"
                         :fill="element.color || '#111111'"
                         :font-weight="element.fontWeight || 400"
+                          :font-family="element.fontFamily || 'Arial, sans-serif'"
+                          :font-style="element.italic ? 'italic' : undefined"
+                          :text-decoration="element.underline ? 'underline' : undefined"
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
-                        style="cursor: pointer; font-family: 'Inter', sans-serif"
+                          style="cursor: pointer"
                       >
                         <tspan
                           v-for="(line, index) in getWrappedTextLines(element)"
                           :key="`${element.id}-${index}`"
                           :x="getAlignedTextX(element)"
-                          :dy="index === 0 ? 0 : Number(element.fontSize || 18) * 1.35"
+                            :dy="
+                              index === 0
+                                ? 0
+                                : getTextLineHeight(element.fontSize, element.lineSpacing)
+                            "
+                            :style="
+                              element.align === 'justify' &&
+                              index < getWrappedTextLines(element).length - 1
+                                ? { wordSpacing: `${getJustifiedWordSpacing(line, element)}px` }
+                                : undefined
+                            "
                         >
-                          {{ line }}
+                            <tspan
+                              v-for="(run, runIndex) in line.runs"
+                              :key="`${element.id}-${index}-${runIndex}`"
+                              :font-weight="getRunFontWeight(run)"
+                              :font-style="run.italic ? 'italic' : undefined"
+                              :text-decoration="run.underlined ? 'underline' : undefined"
+                            >
+                              {{ run.text }}
+                            </tspan>
                         </tspan>
                       </text>
 
                       <text
                         v-else
                         :x="getAlignedTextX(element)"
-                        :y="element.y + (element.height || 20) / 2"
+                          :y="element.y + Number(element.fontSize || 18)"
                         :text-anchor="getTextAnchor(element)"
                         :font-size="element.fontSize || 18"
                         :fill="element.color || '#111111'"
                         :font-weight="element.fontWeight || 400"
+                          :font-family="element.fontFamily || 'Arial, sans-serif'"
+                          :font-style="element.italic ? 'italic' : undefined"
+                          :text-decoration="element.underline ? 'underline' : undefined"
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
-                        style="cursor: pointer; font-family: 'Inter', sans-serif"
+                          style="cursor: pointer"
                       >
-                        {{ getElementLabel(element) }}
+                          <tspan
+                            v-for="(run, runIndex) in getInlineTextRuns(getElementLabel(element))"
+                            :key="`${element.id}-label-${runIndex}`"
+                            :font-weight="getRunFontWeight(run)"
+                            :font-style="run.italic ? 'italic' : undefined"
+                            :text-decoration="run.underlined ? 'underline' : undefined"
+                          >
+                            {{ run.text }}
+                          </tspan>
                       </text>
 
                       <g
@@ -610,7 +829,9 @@
                   <v-btn
                     block
                     variant="text"
-                    :prepend-icon="contextMenu.element?.locked ? 'mdi-lock-open-outline' : 'mdi-lock-outline'"
+                      :prepend-icon="
+                        contextMenu.element?.locked ? 'mdi-lock-open-outline' : 'mdi-lock-outline'
+                      "
                     size="small"
                     @click="toggleSelectedElementLock"
                   >
@@ -661,8 +882,46 @@
 
         <div class="editor-sidebar">
           <v-card class="panel h-100 properties-panel" rounded="xl">
-            <div class="panel-header d-flex align-center justify-space-between">
-              <h4>Propiedades</h4>
+              <div class="d-flex align-center mb-4">
+                <v-btn
+                  icon="mdi-chevron-left"
+                  variant="text"
+                  size="small"
+                  aria-label="Ir a Propiedades"
+                  :disabled="sidebarTab === 'properties'"
+                  @click="navigateSidebar(-1)"
+                />
+                <v-tabs
+                  v-model="sidebarTab"
+                  class="flex-grow-1 sidebar-section-tabs"
+                  :show-arrows="false"
+                >
+                  <v-tab value="properties" prepend-icon="mdi-tune-variant">Propiedades</v-tab>
+                  <v-tab value="parameters" prepend-icon="mdi-variable">Parámetros</v-tab>
+                </v-tabs>
+                <v-btn
+                  icon="mdi-chevron-right"
+                  variant="text"
+                  size="small"
+                  aria-label="Ir a Parámetros"
+                  :disabled="sidebarTab === 'parameters'"
+                  @click="navigateSidebar(1)"
+                />
+              </div>
+
+              <v-window v-model="sidebarTab" class="sidebar-tab-content">
+                <v-window-item value="properties">
+                  <div class="sidebar-content-scroll">
+                  <div
+                    class="properties-section-header d-flex align-center justify-space-between mb-3"
+                  >
+                    <h4>
+                      {{
+                        selectedElement
+                          ? `Propiedades: ${getElementTypeLabel(selectedElement)}`
+                          : 'Propiedades de página'
+                      }}
+                    </h4>
               <v-btn
                 v-if="selectedElement"
                 size="small"
@@ -673,21 +932,94 @@
                 Eliminar
               </v-btn>
             </div>
-
             <template v-if="selectedElement">
-              <v-text-field
-                v-if="!['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)"
+                    <v-textarea
+                      v-if="
+                        !['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)
+                      "
                 v-model="selectedElement.text"
                 label="Texto / etiqueta"
                 density="comfortable"
-                @change="markDirty"
+                      auto-grow
+                      rows="2"
+                      @update:model-value="handleTextInput"
+                      @change="handleTextLayoutChange"
               />
+                    <div
+                      v-if="TEXT_MARKUP_TYPES.includes(selectedElement.type)"
+                      class="text-caption text-medium-emphasis mb-2"
+                    >
+                      Usa <code>&lt;bold&gt;</code>, <code>&lt;semibold&gt;</code>,
+                      <code>&lt;italic&gt;</code> y <code>&lt;underlined&gt;</code> para dar formato
+                      a fragmentos.
+                    </div>
+                    <div
+                      v-if="
+                        !['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)
+                      "
+                      class="d-flex flex-column ga-1 mb-3"
+                    >
+                      <v-btn
+                        size="small"
+                        variant="tonal"
+                        prepend-icon="mdi-variable"
+                        @click="insertGeneratedPlaceholder"
+                      >
+                        Insertar placeholder
+                      </v-btn>
+                      <div v-if="selectedPlaceholderError" class="text-caption text-error">
+                        {{ selectedPlaceholderError }}
+                      </div>
+                      <div v-else class="text-caption text-medium-emphasis">
+                        Puedes escribir <code v-pre>{{ clave }}</code> o insertar una clave única.
+                      </div>
+                    </div>
+                    <v-radio-group
+                      v-if="selectedElement.type === 'image'"
+                      v-model="selectedElement.imageMode"
+                      label="Origen de imagen"
+                      inline
+                      density="comfortable"
+                      hide-details
+                      class="mb-3"
+                      @update:model-value="setImageMode"
+                    >
+                      <v-radio label="Dinámica" value="dynamic" />
+                      <v-radio label="Estática" value="static" />
+                    </v-radio-group>
+                    <div
+                      v-if="
+                        selectedElement.type === 'image' && selectedElement.imageMode === 'static'
+                      "
+                      class="mb-3"
+                    >
+                      <div class="text-body-2 mb-2">
+                        {{ selectedImageResource?.name || 'Selecciona una imagen de Recursos' }}
+                      </div>
+                      <v-btn
+                        size="small"
+                        variant="tonal"
+                        prepend-icon="mdi-image-multiple-outline"
+                        @click="elementSidebarTab = 'resources'"
+                      >
+                        Elegir recurso
+                      </v-btn>
+                    </div>
               <v-text-field
-                v-if="['image', 'placeholder'].includes(selectedElement.type)"
+                      v-if="
+                        selectedElement.type === 'placeholder' ||
+                        (selectedElement.type === 'image' && selectedElement.imageMode !== 'static')
+                      "
                 v-model="selectedElement.src"
                 label="URL / origen"
+                      :hint="
+                        selectedElement.type === 'image'
+                          ? 'En modo dinámico se usa una URL o un dato de imagen enviado al generar.'
+                          : undefined
+                      "
+                      :persistent-hint="selectedElement.type === 'image'"
                 density="comfortable"
-                @change="markDirty"
+                      @change="handleImageSourceChange"
               />
               <v-text-field
                 v-if="selectedElement.type === 'qr'"
@@ -705,8 +1037,10 @@
                 "
                 v-model="selectedElement.placeholderKey"
                 label="Clave del dato"
+                      hint="Identificador del valor dinámico usado por el elemento."
+                      persistent-hint
                 density="comfortable"
-                @change="markDirty"
+                      @change="handlePlaceholderKeyChange"
               />
 
               <v-row dense>
@@ -716,6 +1050,7 @@
                     label="X"
                     type="number"
                     min="0"
+                          :disabled="selectedElement.locked"
                     suffix="px"
                     density="comfortable"
                     @change="commitSelectedElementGeometry"
@@ -727,6 +1062,7 @@
                     label="Y"
                     type="number"
                     min="0"
+                          :disabled="selectedElement.locked"
                     suffix="px"
                     density="comfortable"
                     @change="commitSelectedElementGeometry"
@@ -741,7 +1077,7 @@
                     :max="width"
                     suffix="px"
                     density="comfortable"
-                    @change="commitSelectedElementGeometry"
+                          @change="commitSelectedElementWidth"
                   />
                 </v-col>
                 <v-col cols="6">
@@ -749,27 +1085,46 @@
                     v-model.number="selectedElement.height"
                     label="Alto"
                     type="number"
-                    min="1"
+                          :min="['line', 'separator'].includes(selectedElement.type) ? 0 : 1"
                     :max="height"
                     suffix="px"
                     density="comfortable"
-                    @change="commitSelectedElementGeometry"
+                          @change="commitSelectedElementHeight"
                   />
                 </v-col>
                 <v-col cols="6">
                   <v-text-field
-                  v-if="!['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)"
+                          v-if="
+                            !['rect', 'line', 'separator', 'image', 'qr'].includes(
+                              selectedElement.type
+                            )
+                          "
                   v-model.number="selectedElement.fontSize"
                     label="Tamaño"
                     type="number"
                     suffix="px"
                     density="comfortable"
-                    @change="markDirty"
+                          @change="handleTextLayoutChange"
+                        />
+                      </v-col>
+                      <v-col v-if="TEXT_LAYOUT_TYPES.includes(selectedElement.type)" cols="6">
+                        <v-text-field
+                          v-model.number="selectedElement.lineSpacing"
+                          label="Interlineado"
+                          type="number"
+                          :min="selectedElement.fontSize || 1"
+                          suffix="px"
+                          density="comfortable"
+                          @change="handleTextLayoutChange"
                   />
                 </v-col>
                 <v-col cols="6">
                   <v-text-field
-                    v-if="!['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)"
+                          v-if="
+                            !['rect', 'line', 'separator', 'image', 'qr'].includes(
+                              selectedElement.type
+                            )
+                          "
                     v-model="selectedElement.color"
                     label="Color"
                     type="color"
@@ -781,16 +1136,90 @@
 
               <v-divider class="my-3" />
 
+                    <v-checkbox
+                      v-if="
+                        [
+                          'text',
+                          'title',
+                          'subtitle',
+                          'paragraph',
+                          'list',
+                          'placeholder',
+                          'date',
+                          'pageNumber',
+                          'footer',
+                        ].includes(selectedElement.type)
+                      "
+                      :model-value="selectedElement.autoHeight !== false"
+                      label="Expandir altura automáticamente"
+                      density="comfortable"
+                      hide-details
+                      @update:model-value="setTextAutoHeight"
+                    />
+                    <div
+                      v-if="
+                        [
+                          'text',
+                          'title',
+                          'subtitle',
+                          'paragraph',
+                          'list',
+                          'placeholder',
+                          'date',
+                          'pageNumber',
+                          'footer',
+                        ].includes(selectedElement.type)
+                      "
+                      class="text-caption text-medium-emphasis mb-3"
+                    >
+                      El ajuste respeta el ancho, la fuente y los saltos de línea. Puedes cambiar el
+                      alto manualmente para desactivarlo.
+                    </div>
+
               <v-select
-                v-if="!['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)"
+                      v-if="
+                        !['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)
+                      "
                 v-model="selectedElement.align"
                 label="Alineación"
-                :items="['left', 'center', 'right']"
+                      :items="[
+                        { title: 'Izquierda', value: 'left' },
+                        { title: 'Centro', value: 'center' },
+                        { title: 'Derecha', value: 'right' },
+                        { title: 'Justificada', value: 'justify' },
+                      ]"
                 density="comfortable"
                 @change="markDirty"
               />
               <v-select
-                v-if="['text', 'title', 'subtitle', 'paragraph', 'list', 'placeholder', 'date', 'pageNumber', 'signature', 'footer', 'table', 'checkbox'].includes(selectedElement.type)"
+                      v-if="
+                        !['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)
+                      "
+                      v-model="selectedElement.fontFamily"
+                      label="Tipo de fuente"
+                      :items="[
+                        { title: 'Arial', value: 'Arial' },
+                        { title: 'Times New Roman', value: 'Times New Roman' },
+                        { title: 'Courier New', value: 'Courier New' },
+                        { title: 'Roboto', value: 'Roboto' },
+                        { title: 'Lato', value: 'Lato' },
+                        { title: 'Montserrat', value: 'Montserrat' },
+                        { title: 'Open Sans', value: 'Open Sans' },
+                      ]"
+                      density="comfortable"
+                      @update:model-value="handleTextLayoutChange"
+                    />
+                    <div
+                      v-if="
+                        !['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)
+                      "
+                      class="text-caption text-medium-emphasis mb-3"
+                    >
+                      Roboto, Lato, Montserrat y Open Sans se incrustan en el PDF. Las fuentes
+                      estándar se asignan a sus equivalentes PDF.
+                    </div>
+                    <v-select
+                      v-if="TEXT_STYLE_TYPES.includes(selectedElement.type)"
                 v-model="selectedElement.fontWeight"
                 label="Grosor de fuente"
                 :items="[
@@ -801,7 +1230,23 @@
                 item-title="title"
                 item-value="value"
                 density="comfortable"
-                @update:model-value="markDirty"
+                      @update:model-value="handleTextLayoutChange"
+                    />
+                    <v-checkbox
+                      v-if="TEXT_STYLE_TYPES.includes(selectedElement.type)"
+                      v-model="selectedElement.italic"
+                      label="Cursiva"
+                      density="comfortable"
+                      hide-details
+                      @update:model-value="handleTextLayoutChange"
+                    />
+                    <v-checkbox
+                      v-if="TEXT_STYLE_TYPES.includes(selectedElement.type)"
+                      v-model="selectedElement.underline"
+                      label="Subrayado"
+                      density="comfortable"
+                      hide-details
+                      @update:model-value="handleTextLayoutChange"
               />
               <v-text-field
                 v-if="['rect', 'checkbox'].includes(selectedElement.type)"
@@ -838,7 +1283,11 @@
                 @update:model-value="markDirty"
               />
               <v-text-field
-                v-if="['rect', 'line', 'separator', 'checkbox', 'signature', 'table'].includes(selectedElement.type)"
+                      v-if="
+                        ['rect', 'line', 'separator', 'checkbox', 'signature', 'table'].includes(
+                          selectedElement.type
+                        )
+                      "
                 v-model="selectedElement.stroke"
                 label="Color de borde"
                 type="color"
@@ -846,7 +1295,11 @@
                 @change="markDirty"
               />
               <v-text-field
-                v-if="['rect', 'line', 'separator', 'checkbox', 'signature', 'table'].includes(selectedElement.type)"
+                      v-if="
+                        ['rect', 'line', 'separator', 'checkbox', 'signature', 'table'].includes(
+                          selectedElement.type
+                        )
+                      "
                 v-model.number="selectedElement.strokeWidth"
                 label="Grosor de borde"
                 type="number"
@@ -885,15 +1338,27 @@
               />
               <div class="text-caption text-medium-emphasis mb-1">Márgenes (px)</div>
               <v-row dense>
-                <v-col v-for="side in ['top', 'right', 'bottom', 'left']" :key="side" cols="6">
+                      <v-col
+                        v-for="side in ['top', 'right', 'bottom', 'left']"
+                        :key="side"
+                        cols="6"
+                      >
                   <v-text-field
                     v-model.number="template.page.margin[side]"
-                    :label="side === 'top' ? 'Superior' : side === 'right' ? 'Derecho' : side === 'bottom' ? 'Inferior' : 'Izquierdo'"
+                          :label="
+                            side === 'top'
+                              ? 'Superior'
+                              : side === 'right'
+                                ? 'Derecho'
+                                : side === 'bottom'
+                                  ? 'Inferior'
+                                  : 'Izquierdo'
+                          "
                     type="number"
                     min="0"
                     suffix="px"
                     density="comfortable"
-                    @update:model-value="markDirty"
+                          @change="commitPageSettings"
                   />
                 </v-col>
               </v-row>
@@ -930,9 +1395,11 @@
                 density="comfortable"
                 @change="markDirty"
               />
-
-              <v-divider class="my-3" />
-
+                  </template>
+                  </div>
+                </v-window-item>
+                <v-window-item value="parameters">
+                  <div class="sidebar-content-scroll">
               <div class="panel-helper">
                 <div class="text-caption text-medium-emphasis mb-2">Parámetros dinámicos</div>
                 <div v-if="dynamicParameters.length" class="d-flex flex-column ga-2 mb-3">
@@ -969,7 +1436,9 @@
                       label="Valores permitidos (separados por comas)"
                       density="compact"
                       hide-details
-                      @update:model-value="(value) => setParameterAllowedValues(parameter, value)"
+                          @update:model-value="
+                            (value) => setParameterAllowedValues(parameter, value)
+                          "
                     />
                     <div class="d-flex align-center ga-2">
                       <v-btn
@@ -1019,25 +1488,14 @@
                 <v-btn class="mt-2" size="small" variant="tonal" @click="addDynamicParameter">
                   Añadir parámetro
                 </v-btn>
+                    <div class="text-caption text-medium-emphasis mt-3">
+                      Los textos sin <code v-pre>{{ clave }}</code> son estáticos. Selecciona un
+                      elemento y usa el icono de enlace para insertar un parámetro dinámico.
               </div>
-
-              <v-divider class="my-3" />
-
-              <div class="panel-helper">
-                <div class="text-caption text-medium-emphasis mb-2">Campos dinámicos</div>
-                <v-chip-group column>
-                  <v-chip size="small" label @click="insertPlaceholder('cliente_nombre')"
-                    >cliente_nombre</v-chip
-                  >
-                  <v-chip size="small" label @click="insertPlaceholder('empresa')">empresa</v-chip>
-                  <v-chip size="small" label @click="insertPlaceholder('cliente_id')"
-                    >cliente_id</v-chip
-                  >
-                  <v-chip size="small" label @click="insertPlaceholder('fecha')">fecha</v-chip>
-                  <v-chip size="small" label @click="insertPlaceholder('codigo')">codigo</v-chip>
-                </v-chip-group>
               </div>
-            </template>
+                  </div>
+                </v-window-item>
+              </v-window>
           </v-card>
         </div>
       </div>
@@ -1061,10 +1519,49 @@
       </v-card>
     </v-container>
   </div>
+
+    <v-dialog v-model="templateLoading" persistent width="400">
+      <v-card>
+        <v-card-text class="pa-8 text-center">
+          <v-progress-circular indeterminate color="primary" class="mb-4" />
+          <div class="text-subtitle-1 font-weight-bold">Cargando plantilla...</div>
+          <div class="text-caption text-medium-emphasis">Por favor espera</div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import {
+  getTextContentHeight,
+  getTextLineHeight,
+  parseTextMarkup,
+  wrapTextToWidth,
+} from '../../helpers/docugen-app/textLayout.js';
+import '@fontsource/roboto/latin-400.css';
+import '@fontsource/roboto/latin-400-italic.css';
+import '@fontsource/roboto/latin-600.css';
+import '@fontsource/roboto/latin-600-italic.css';
+import '@fontsource/roboto/latin-700.css';
+import '@fontsource/roboto/latin-700-italic.css';
+import '@fontsource/lato/latin-400.css';
+import '@fontsource/lato/latin-400-italic.css';
+import '@fontsource/lato/latin-700.css';
+import '@fontsource/lato/latin-700-italic.css';
+import '@fontsource/montserrat/latin-400.css';
+import '@fontsource/montserrat/latin-400-italic.css';
+import '@fontsource/montserrat/latin-600.css';
+import '@fontsource/montserrat/latin-600-italic.css';
+import '@fontsource/montserrat/latin-700.css';
+import '@fontsource/montserrat/latin-700-italic.css';
+import '@fontsource/open-sans/latin-400.css';
+import '@fontsource/open-sans/latin-400-italic.css';
+import '@fontsource/open-sans/latin-600.css';
+import '@fontsource/open-sans/latin-600-italic.css';
+import '@fontsource/open-sans/latin-700.css';
+import '@fontsource/open-sans/latin-700-italic.css';
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
@@ -1085,11 +1582,18 @@ const baseTemplate = () => ({
   page: { backgroundColor: '#ffffff', margin: { top: 40, right: 40, bottom: 40, left: 40 } },
   canvas: { version: 1, zoom: 1, background: '#ffffff' },
   elements: [],
-  metadata: { dynamicParameters: [] },
+  metadata: { dynamicParameters: [], resources: [] },
 });
 
 const template = ref(baseTemplate());
+const templateLoaded = ref(false);
+const templateLoading = ref(true);
+const templateLoadError = ref('');
 const selectedElement = ref(null);
+const sidebarTab = ref('properties');
+const elementSidebarTab = ref('elements');
+const imageResourceInput = ref(null);
+const imageResourceError = ref('');
 const dragState = ref(null);
 const svgRef = ref(null);
 const pageViewport = ref(null);
@@ -1110,6 +1614,72 @@ const future = ref([]);
 const contextMenu = ref({ visible: false, x: 0, y: 0, element: null });
 const savedSnapshot = ref('');
 const rulerOrigin = 28;
+const MAX_IMAGE_RESOURCE_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_RESOURCES_BYTES = 6 * 1024 * 1024;
+
+const imageResources = computed(() =>
+  Array.isArray(template.value.metadata?.resources) ? template.value.metadata.resources : []
+);
+const selectedImageResource = computed(() =>
+  imageResources.value.find((resource) => resource.id === selectedElement.value?.resourceId)
+);
+
+const navigateSidebar = (direction) => {
+  sidebarTab.value = direction < 0 ? 'properties' : 'parameters';
+};
+
+const navigateElementSidebar = (direction) => {
+  elementSidebarTab.value = direction < 0 ? 'elements' : 'resources';
+};
+
+function getPlaceholderValidationError(elements = template.value.elements) {
+  const metadataKeys = new Set();
+  for (const parameter of template.value.metadata.dynamicParameters || []) {
+    const key = String(parameter?.key || '').trim();
+    if (!key) continue;
+    if (!/^[A-Za-z0-9_.-]+$/.test(key) || key === 'page_number') {
+      return `La clave de parámetro "${key}" no es válida o está reservada.`;
+    }
+    if (metadataKeys.has(key)) return `El placeholder "${key}" está definido más de una vez.`;
+    metadataKeys.add(key);
+  }
+
+  for (const element of elements) {
+    const explicitKey = String(element.placeholderKey || '').trim();
+    if (explicitKey) {
+      if (!/^[A-Za-z0-9_.-]+$/.test(explicitKey)) {
+        return `La clave "${explicitKey}" tiene un identificador inválido.`;
+      }
+      if (explicitKey === 'page_number' && element.type !== 'pageNumber') {
+        return 'El identificador "page_number" está reservado para la numeración de páginas.';
+      }
+    }
+
+    const fields = ['text', 'src', 'qrValue'];
+    for (const field of fields) {
+      const content = element[field];
+      if (typeof content !== 'string') continue;
+
+      const tokens = [...content.matchAll(/\{\{([^{}]*)\}\}/g)];
+      for (const token of tokens) {
+        const key = token[1].trim();
+        if (!/^[A-Za-z0-9_.-]+$/.test(key)) {
+          return `El placeholder "${token[0]}" tiene un identificador inválido. Usa letras, números, ".", "_" o "-".`;
+        }
+        if (key === 'page_number' && element.type !== 'pageNumber') {
+          return 'El identificador "page_number" está reservado para la numeración de páginas.';
+        }
+      }
+
+      const contentWithoutTokens = content.replace(/\{\{[^{}]*\}\}/g, '');
+      if (contentWithoutTokens.includes('{{') || contentWithoutTokens.includes('}}')) {
+        return 'Hay un placeholder incompleto. Debe tener el formato {{clave}}.';
+      }
+    }
+  }
+
+  return '';
+}
 
 function getRulerStep(zoomLevel) {
   const targetStep = 60 / zoomLevel;
@@ -1121,10 +1691,8 @@ function getRulerStep(zoomLevel) {
 
 function getVisibleRulerTicks(offset, zoomLevel, viewportLength) {
   const step = getRulerStep(zoomLevel);
-  const firstValue =
-    Math.floor((-rulerOrigin - offset) / (zoomLevel * step)) * step;
-  const lastValue =
-    Math.ceil((viewportLength - rulerOrigin - offset) / (zoomLevel * step)) * step;
+  const firstValue = Math.floor((-rulerOrigin - offset) / (zoomLevel * step)) * step;
+  const lastValue = Math.ceil((viewportLength - rulerOrigin - offset) / (zoomLevel * step)) * step;
   const count = Math.max(0, Math.min(500, Math.floor((lastValue - firstValue) / step) + 1));
 
   return Array.from({ length: count }, (_, index) => ({
@@ -1133,20 +1701,15 @@ function getVisibleRulerTicks(offset, zoomLevel, viewportLength) {
 }
 
 const horizontalRulerTicks = computed(() =>
-  getVisibleRulerTicks(
-    panOffset.value.x,
-    zoom.value,
-    canvasShellSize.value.width
-  )
+  getVisibleRulerTicks(panOffset.value.x, zoom.value, canvasShellSize.value.width)
 );
 const verticalRulerTicks = computed(() =>
-  getVisibleRulerTicks(
-    panOffset.value.y,
-    zoom.value,
-    canvasShellSize.value.height
-  )
+  getVisibleRulerTicks(panOffset.value.y, zoom.value, canvasShellSize.value.height)
 );
 const hasUnsavedChanges = computed(() => serializeTemplate() !== savedSnapshot.value);
+const selectedPlaceholderError = computed(() =>
+  selectedElement.value ? getPlaceholderValidationError([selectedElement.value]) : ''
+);
 const selectedItemStatus = computed(() => {
   if (!selectedElement.value) return 'Hoja';
   const elementTypes = {
@@ -1187,6 +1750,7 @@ const pageSizeStatus = computed(() => {
     { name: 'A5', width: 148, height: 210 },
     { name: 'Carta', width: 215.9, height: 279.4 },
     { name: 'Legal', width: 215.9, height: 355.6 },
+    { name: 'Oficio', width: 215.9, height: 330.2 },
     { name: 'Tabloide', width: 279.4, height: 431.8 },
   ];
   const matchedSize = namedSizes.find(
@@ -1210,10 +1774,18 @@ const serializeTemplate = () =>
     metadata: template.value.metadata,
   });
 
+const serializeHistoryState = () =>
+  JSON.stringify({
+    document: JSON.parse(serializeTemplate()),
+    selectedElementId: selectedElement.value?.id || null,
+    pageSelected: pageSelected.value,
+  });
+
 const applySnapshot = (snapshot) => {
   if (!snapshot) return;
   try {
-    const nextState = JSON.parse(snapshot);
+    const parsedSnapshot = JSON.parse(snapshot);
+    const nextState = parsedSnapshot.document || parsedSnapshot;
     template.value = {
       ...template.value,
       ...nextState,
@@ -1222,9 +1794,12 @@ const applySnapshot = (snapshot) => {
     };
     width.value = Number(template.value.dimensions.width || 794);
     height.value = Number(template.value.dimensions.height || 1123);
-    if (!template.value.elements.some((item) => item.id === selectedElement.value?.id)) {
-      selectedElement.value = template.value.elements[0] || null;
-    }
+    template.value.elements.forEach(adjustTextElementHeight);
+    const selectedId = parsedSnapshot.document
+      ? parsedSnapshot.selectedElementId
+      : selectedElement.value?.id;
+    selectedElement.value = template.value.elements.find((item) => item.id === selectedId) || null;
+    pageSelected.value = Boolean(parsedSnapshot.pageSelected) && !selectedElement.value;
   } catch (error) {
     console.warn('Snapshot inválido', error);
   }
@@ -1251,7 +1826,17 @@ const replacePlaceholderKey = (value, oldKey, newKey) => {
 
 const renameDynamicParameter = (parameter, value) => {
   const previousKey = parameter.key;
-  const nextKey = String(value || '').trim().replace(/\s+/g, '_');
+  const nextKey = String(value || '')
+    .trim()
+    .replace(/\s+/g, '_');
+  if (!/^[A-Za-z0-9_.-]+$/.test(nextKey) || nextKey === 'page_number') return;
+  if (
+    template.value.metadata.dynamicParameters.some(
+      (item) => item !== parameter && item.key === nextKey
+    )
+  ) {
+    return;
+  }
   parameter.key = nextKey;
   normalizeDynamicParameter(parameter);
   const normalizedKey = parameter.key;
@@ -1286,16 +1871,29 @@ const removeDynamicParameter = (key) => {
       }
     }
   });
-  template.value.metadata.dynamicParameters = (template.value.metadata.dynamicParameters || [])
-    .filter((parameter) => parameter.key !== key);
+  template.value.metadata.dynamicParameters = (
+    template.value.metadata.dynamicParameters || []
+  ).filter((parameter) => parameter.key !== key);
   syncDynamicParametersFromTemplate();
   pushHistory();
 };
 
 const buildDynamicKey = (type) => {
   const label = type === 'image' ? 'imagen' : type === 'qr' ? 'qr' : 'param';
-  const current = template.value.elements.filter((element) => element.type === type);
-  const nextIndex = current.length + 1;
+  const existingKeys = new Set([
+    ...template.value.elements.map((element) => element.placeholderKey),
+    ...(template.value.metadata.dynamicParameters || []).map((parameter) => parameter.key),
+  ]);
+  template.value.elements.forEach((element) => {
+    for (const value of [element.text, element.src, element.qrValue]) {
+      if (typeof value !== 'string') continue;
+      for (const match of value.matchAll(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g)) {
+        existingKeys.add(match[1]);
+      }
+    }
+  });
+  let nextIndex = 1;
+  while (existingKeys.has(`${label}${nextIndex}`)) nextIndex += 1;
   return `${label}${nextIndex}`;
 };
 
@@ -1318,12 +1916,13 @@ const addDynamicParameter = () => {
   const current = Array.isArray(template.value.metadata?.dynamicParameters)
     ? template.value.metadata.dynamicParameters
     : [];
+  const key = buildDynamicKey('text');
 
   const next = [
     ...current,
     {
-      key: `param_${current.length + 1}`,
-      label: `param_${current.length + 1}`,
+      key,
+      label: key,
       type: 'text',
       required: true,
     },
@@ -1335,21 +1934,47 @@ const addDynamicParameter = () => {
   pushHistory();
 };
 
+const inferParameterType = (element) => {
+  if (element?.type === 'checkbox') return 'boolean';
+  if (element?.type === 'date') return 'date';
+  if (element?.type === 'image') return 'image';
+  if (element?.type === 'qr') return 'qr';
+  if (['paragraph', 'list', 'footer'].includes(element?.type)) return 'textarea';
+  return 'text';
+};
+
+const inferPlaceholderType = (element, field) => {
+  if (field === 'text' && element?.type === 'checkbox') return 'text';
+  if (field === 'src' && element?.type === 'image') return 'image';
+  if (field === 'qrValue' && element?.type === 'qr') return 'qr';
+  return inferParameterType(element);
+};
+
 const syncDynamicParametersFromTemplate = () => {
   const source = Array.isArray(template.value?.metadata?.dynamicParameters)
     ? template.value.metadata.dynamicParameters
     : [];
   const map = new Map();
+  const referencedKeys = new Set();
+
+  template.value.elements.forEach((element) => {
+    if (element.placeholderKey) referencedKeys.add(element.placeholderKey.trim());
+    for (const field of ['text', 'src', 'qrValue']) {
+      const matches = String(element[field] || '').match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g) || [];
+      matches.forEach((match) => referencedKeys.add(match.replace(/[{}]/g, '').trim()));
+    }
+  });
 
   source.forEach((item) => {
     if (!item?.key) return;
     const key = item.key.trim().replace(/\s+/g, '_');
     if (!key || key === 'page_number') return;
+    if (item.source === 'placeholder' && !referencedKeys.has(key)) return;
     map.set(key, {
       ...item,
       key,
       label: item.label || key,
-      type: item.type || 'text',
+      type: item.type || inferParameterType({ type: item.elementType }),
       required: Boolean(item.required),
     });
   });
@@ -1358,46 +1983,37 @@ const syncDynamicParametersFromTemplate = () => {
     if (element.type === 'pageNumber') return;
 
     const keyFromPlaceholder = (element.placeholderKey || '').trim().replace(/\s+/g, '_');
+    if (element.type === 'image' && keyFromPlaceholder && map.has(keyFromPlaceholder)) {
+      map.get(keyFromPlaceholder).type = 'image';
+    }
     if (keyFromPlaceholder && !map.has(keyFromPlaceholder)) {
       map.set(keyFromPlaceholder, {
         key: keyFromPlaceholder,
         label: keyFromPlaceholder,
-        type:
-          element.type === 'qr'
-            ? 'qr'
-            : element.type === 'image'
-              ? 'image'
-              : element.type === 'date'
-                ? 'date'
-                : 'text',
+        type: inferParameterType(element),
         required: true,
+        source: 'placeholder',
       });
     }
 
-    const candidateText = [
-      element.text || '',
-      element.qrValue || '',
-      element.src || '',
-      element.placeholderKey || '',
-    ].join(' ');
-    const matches = candidateText.match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g) || [];
+    for (const field of ['text', 'src', 'qrValue']) {
+      const matches = String(element[field] || '').match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g) || [];
     matches.forEach((match) => {
       const key = match.replace(/[{}]/g, '').trim().replace(/\s+/g, '_');
+        if (field === 'src' && element.type === 'image' && map.has(key)) {
+          map.get(key).type = 'image';
+          return;
+        }
       if (!key || map.has(key)) return;
       map.set(key, {
         key,
         label: key,
-        type:
-          element.type === 'qr'
-            ? 'qr'
-            : element.type === 'image'
-              ? 'image'
-              : element.type === 'date'
-                ? 'date'
-                : 'text',
+          type: inferPlaceholderType(element, field),
         required: true,
+          source: 'placeholder',
       });
     });
+    }
   });
 
   const next = [...map.values()].sort((a, b) => String(a.key).localeCompare(String(b.key)));
@@ -1408,7 +2024,7 @@ const syncDynamicParametersFromTemplate = () => {
 };
 
 const pushHistory = () => {
-  const snapshot = serializeTemplate();
+  const snapshot = serializeHistoryState();
   if (!history.value.length || history.value[history.value.length - 1] !== snapshot) {
     history.value.push(snapshot);
     if (history.value.length > 40) history.value.shift();
@@ -1443,47 +2059,80 @@ const redo = () => {
 };
 
 const getWrappedTextLines = (element) => {
-  const baseText = String(element?.text || '').replace(/\r\n/g, '\n');
-  if (!baseText && element?.type !== 'paragraph' && element?.type !== 'list') {
-    return [getElementLabel(element) || ''];
-  }
-
+  const baseText = String(element?.text || getElementLabel(element) || '');
   const fontSize = Number(element?.fontSize || 16);
-  const maxWidth = Math.max(80, Number(element?.width || 180));
-  const charsPerLine = Math.max(12, Math.floor(maxWidth / (fontSize * 0.62)));
+  const maxWidth = Math.max(1, Number(element?.width || 180));
+  const measureText = (text, run = {}) => {
+    if (typeof document !== 'undefined' && !textMeasureContext) {
+      textMeasureContext = document.createElement('canvas').getContext('2d');
+    }
+    if (!textMeasureContext) return Array.from(text).length * fontSize * 0.55;
+    const configuredWeight = Number(element.fontWeight);
+    const baseWeight = Number.isFinite(configuredWeight) ? configuredWeight : 400;
+    const weight = run.bold ? 700 : run.semibold ? 600 : baseWeight;
+    const fontStyle = run.italic || element.italic ? 'italic ' : '';
+    textMeasureContext.font = `${fontStyle}${weight} ${fontSize}px "${element.fontFamily || 'Arial'}"`;
+    return textMeasureContext.measureText(text).width;
+  };
+  const lines = wrapTextToWidth(baseText, maxWidth, measureText);
+  if (element.autoHeight !== false) return lines;
+
   const maxLines = Math.max(
     1,
-    Math.floor((Number(element?.height || 60) || 60) / (fontSize * 1.35))
+    Math.floor(Number(element?.height || 1) / getTextLineHeight(fontSize, element.lineSpacing))
   );
-
-  const chunks = [];
-  const paragraphs = baseText.split(/\n/);
-
-  paragraphs.forEach((paragraph) => {
-    const words = paragraph.split(/\s+/).filter(Boolean);
-    let current = '';
-
-    words.forEach((word) => {
-      const candidate = current ? `${current} ${word}` : word;
-      if (candidate.length <= charsPerLine) {
-        current = candidate;
-        return;
-      }
-
-      if (current) {
-        chunks.push(current);
-      }
-      current = word;
-    });
-
-    if (current) {
-      chunks.push(current);
-    }
-  });
-
-  const lines = chunks.length ? chunks : [''];
   const fitted = lines.slice(0, maxLines);
   return fitted.length ? fitted : [''];
+};
+
+let textMeasureContext;
+const TEXT_LAYOUT_TYPES = [
+  'text',
+  'title',
+  'subtitle',
+  'paragraph',
+  'list',
+  'placeholder',
+  'date',
+  'pageNumber',
+  'footer',
+];
+const TEXT_STYLE_TYPES = [...TEXT_LAYOUT_TYPES, 'checkbox', 'signature', 'table'];
+const TEXT_MARKUP_TYPES = TEXT_STYLE_TYPES;
+const getInlineTextRuns = (value) => parseTextMarkup(value);
+const getRunFontWeight = (run) => (run.bold ? 700 : run.semibold ? 600 : undefined);
+
+const adjustTextElementHeight = (element) => {
+  if (!element || !TEXT_LAYOUT_TYPES.includes(element.type) || element.autoHeight === false) return;
+  const lineCount = getWrappedTextLines(element).length;
+  const requiredHeight = getTextContentHeight(
+    lineCount,
+    element.fontSize || 16,
+    element.lineSpacing
+  );
+  const availableHeight = Math.max(1, height.value - Number(element.y || 0));
+  element.height = Math.max(Number(element.height || 1), Math.min(requiredHeight, availableHeight));
+};
+
+const getJustifiedWordSpacing = (line, element) => {
+  const spaces = (line.text.match(/\s/g) || []).length;
+  if (!spaces || typeof document === 'undefined') return 0;
+
+  if (!textMeasureContext) {
+    textMeasureContext = document.createElement('canvas').getContext('2d');
+    }
+  if (!textMeasureContext) return 0;
+
+  const configuredWeight = Number(element.fontWeight);
+  const baseWeight = Number.isFinite(configuredWeight) ? configuredWeight : 400;
+  const lineWidth = line.runs.reduce((width, run) => {
+    const weight = run.bold ? 700 : run.semibold ? 600 : baseWeight;
+    const fontStyle = run.italic || element.italic ? 'italic ' : '';
+    textMeasureContext.font = `${fontStyle}${weight} ${Number(element.fontSize || 18)}px "${element.fontFamily || 'Arial'}"`;
+    return width + textMeasureContext.measureText(run.text).width;
+  }, 0);
+  const remainingWidth = Number(element.width || 0) - lineWidth;
+  return Math.max(0, remainingWidth / spaces);
 };
 
 const constrainPanOffset = (x, y, zoomLevel = zoom.value) => {
@@ -1535,24 +2184,35 @@ const resetZoom = () => {
 };
 
 const backToTemplates = async () => {
-  if (hasUnsavedChanges.value && !(await saveTemplate())) return;
+  if (templateLoaded.value && hasUnsavedChanges.value && !(await saveTemplate())) return;
   router.push('/dashboard/templates');
 };
 
 const loadTemplate = async () => {
-  if (!templateId.value) return;
+  if (!templateId.value) {
+    templateLoadError.value = 'No se encontró el identificador de la plantilla.';
+    templateLoading.value = false;
+    return;
+  }
 
   try {
     const item = await getTemplate(templateId.value);
+    if (!item?._id) throw new Error('La plantilla no existe o no tienes permisos.');
     const normalizedItem = item && typeof item === 'object' ? item : {};
 
     template.value = {
       ...baseTemplate(),
       ...normalizedItem,
       dimensions: normalizedItem.dimensions || { width: 794, height: 1123, unit: 'px' },
-      page: normalizedItem.page || {
-        backgroundColor: '#ffffff',
-        margin: { top: 40, right: 40, bottom: 40, left: 40 },
+      page: {
+        backgroundColor: normalizedItem.page?.backgroundColor || '#ffffff',
+        margin: {
+          top: 40,
+          right: 40,
+          bottom: 40,
+          left: 40,
+          ...(normalizedItem.page?.margin || {}),
+        },
       },
       canvas: normalizedItem.canvas || { version: 1, zoom: 1, background: '#ffffff' },
       elements: Array.isArray(normalizedItem.elements) ? normalizedItem.elements : [],
@@ -1561,21 +2221,48 @@ const loadTemplate = async () => {
         dynamicParameters: Array.isArray(normalizedItem.metadata?.dynamicParameters)
           ? normalizedItem.metadata.dynamicParameters
           : [],
+        resources: Array.isArray(normalizedItem.metadata?.resources)
+          ? normalizedItem.metadata.resources
+          : [],
       },
     };
 
+    template.value.elements.forEach((element) => {
+      if (element.type === 'image' && !element.imageMode) {
+        element.imageMode =
+          element.resourceId || String(element.src || '').startsWith('resource:')
+            ? 'static'
+            : 'dynamic';
+        if (element.imageMode === 'static' && !element.resourceId) {
+          element.resourceId = String(element.src || '').replace(/^resource:/, '');
+        }
+      }
+      if (TEXT_LAYOUT_TYPES.includes(element.type) && element.autoHeight === undefined) {
+        element.autoHeight = true;
+      }
+      if (TEXT_LAYOUT_TYPES.includes(element.type) && !Number(element.lineSpacing)) {
+        element.lineSpacing = getTextLineHeight(element.fontSize);
+      }
+    });
     syncDynamicParametersFromTemplate();
 
     width.value = Number(template.value.dimensions.width || 794);
     height.value = Number(template.value.dimensions.height || 1123);
-    history.value = [serializeTemplate()];
+    await nextTick();
+    if (document.fonts?.ready) await document.fonts.ready;
+    template.value.elements.forEach(adjustTextElementHeight);
+    selectedElement.value = template.value.elements[0] || null;
+    pageSelected.value = false;
+    history.value = [serializeHistoryState()];
     future.value = [];
     savedSnapshot.value = serializeTemplate();
-    selectedElement.value = template.value.elements[0] || null;
+    templateLoaded.value = true;
   } catch (error) {
     console.error('No se pudo cargar la plantilla:', error);
-    template.value = baseTemplate();
-    selectedElement.value = null;
+    templateLoadError.value =
+      error.response?.data?.message || error.message || 'Error desconocido cargando plantilla.';
+  } finally {
+    templateLoading.value = false;
   }
 };
 
@@ -1589,6 +2276,7 @@ const makeElement = (type, extra = {}) => {
     width: 180,
     height: 40,
     text: 'Texto',
+    ...(TEXT_LAYOUT_TYPES.includes(type) ? { autoHeight: true } : {}),
     fontSize: 16,
     color: '#111111',
     fill: '#ffffff',
@@ -1597,10 +2285,23 @@ const makeElement = (type, extra = {}) => {
     opacity: 1,
     checked: true,
     align: 'left',
-    ...(type === 'image' ? { placeholderKey: generatedKey, src: `{{${generatedKey}}}` } : {}),
+    fontFamily: 'Arial',
+    italic: false,
+    underline: false,
+    ...(type === 'image'
+      ? {
+          imageMode: 'dynamic',
+          placeholderKey: generatedKey,
+          resourceId: '',
+          src: `{{${generatedKey}}}`,
+        }
+      : {}),
     ...(type === 'qr' ? { placeholderKey: generatedKey, qrValue: `{{${generatedKey}}}` } : {}),
     ...extra,
   };
+  if (TEXT_LAYOUT_TYPES.includes(type) && !Number(base.lineSpacing)) {
+    base.lineSpacing = getTextLineHeight(base.fontSize);
+  }
 
   template.value.elements.push(base);
   selectedElement.value = base;
@@ -1648,19 +2349,22 @@ const addListElement = () =>
     height: 28,
     fontSize: 15,
   });
-const addPlaceholder = () =>
-  makeElement('placeholder', {
-    text: '{{cliente_nombre}}',
-    placeholderKey: 'cliente_nombre',
+const addPlaceholder = () => {
+  const key = buildDynamicKey('text');
+  makeElement('text', {
+    text: `{{${key}}}`,
+    placeholderKey: key,
     x: 50,
     y: 330,
     width: 220,
     height: 30,
     fontSize: 16,
   });
+};
 const addImageElement = () => {
   const key = buildDynamicKey('image');
   makeElement('image', {
+    imageMode: 'dynamic',
     placeholderKey: key,
     src: `{{${key}}}`,
     x: 50,
@@ -1668,6 +2372,135 @@ const addImageElement = () => {
     width: 180,
     height: 110,
   });
+};
+
+const setImageMode = (mode) => {
+  if (selectedElement.value?.type !== 'image') return;
+
+  if (mode === 'static') {
+    selectedElement.value.imageMode = 'static';
+    selectedElement.value.placeholderKey = '';
+    selectedElement.value.resourceId = '';
+    selectedElement.value.src = '';
+  } else {
+    const key = selectedElement.value.placeholderKey || buildDynamicKey('image');
+    selectedElement.value.imageMode = 'dynamic';
+    selectedElement.value.resourceId = '';
+    selectedElement.value.placeholderKey = key;
+    selectedElement.value.src = `{{${key}}}`;
+  }
+  syncDynamicParametersFromTemplate();
+  pushHistory();
+};
+
+const handleImageSourceChange = () => {
+  const element = selectedElement.value;
+  if (!element) return;
+  if (element.type === 'image' && element.imageMode !== 'static') {
+    const placeholder = String(element.src || '').match(/^\s*\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}\s*$/);
+    element.placeholderKey = placeholder?.[1] || '';
+  }
+  syncDynamicParametersFromTemplate();
+  markDirty();
+};
+
+const formatResourceSize = (size) =>
+  size < 1024 * 1024 ? `${Math.ceil(size / 1024)} KB` : `${(size / (1024 * 1024)).toFixed(1)} MB`;
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        reject(new Error('No se pudo leer el archivo de imagen.'));
+        return;
+      }
+      resolve(reader.result);
+    };
+    reader.onerror = () =>
+      reject(reader.error || new Error('No se pudo leer el archivo de imagen.'));
+    reader.readAsDataURL(file);
+  });
+
+const handleImageResourceUpload = async (event) => {
+  const file = event.target.files?.[0];
+  imageResourceError.value = '';
+  if (!file) return;
+
+  const supportedTypes = ['image/png', 'image/jpeg'];
+  if (!supportedTypes.includes(file.type)) {
+    imageResourceError.value = 'Formato no compatible. Sube una imagen PNG o JPEG.';
+    event.target.value = '';
+    return;
+  }
+  if (file.size > MAX_IMAGE_RESOURCE_BYTES) {
+    imageResourceError.value = 'La imagen supera el límite de 2 MB.';
+    event.target.value = '';
+    return;
+  }
+  const currentSize = imageResources.value.reduce(
+    (total, resource) => total + Number(resource.size || 0),
+    0
+  );
+  if (currentSize + file.size > MAX_IMAGE_RESOURCES_BYTES) {
+    imageResourceError.value =
+      'Los recursos de imagen de la plantilla no pueden superar 6 MB en total.';
+    event.target.value = '';
+    return;
+  }
+
+  try {
+    const dataUrl = await readFileAsDataUrl(file);
+    const id = `image-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    template.value.metadata.resources = [
+      ...imageResources.value,
+      { id, name: file.name.slice(0, 120), mimeType: file.type, size: file.size, dataUrl },
+    ];
+    imageResourceError.value = '';
+    pushHistory();
+  } catch (error) {
+    imageResourceError.value = error.message || 'No se pudo cargar el recurso de imagen.';
+  } finally {
+    event.target.value = '';
+  }
+};
+
+const useImageResource = (resource) => {
+  if (selectedElement.value?.type !== 'image') {
+    makeElement('image', {
+      imageMode: 'static',
+      placeholderKey: '',
+      resourceId: resource.id,
+      src: `resource:${resource.id}`,
+      x: 50,
+      y: 80,
+      width: 180,
+      height: 110,
+    });
+    return;
+  }
+
+  selectedElement.value.imageMode = 'static';
+  selectedElement.value.placeholderKey = '';
+  selectedElement.value.resourceId = resource.id;
+  selectedElement.value.src = `resource:${resource.id}`;
+  syncDynamicParametersFromTemplate();
+  pushHistory();
+};
+
+const removeImageResource = (resource) => {
+  const isInUse = template.value.elements.some(
+    (element) => element.type === 'image' && element.resourceId === resource.id
+  );
+  if (isInUse) {
+    imageResourceError.value = `No se puede eliminar "${resource.name}" mientras esté asignada a un elemento imagen.`;
+    return;
+  }
+  template.value.metadata.resources = imageResources.value.filter(
+    (item) => item.id !== resource.id
+  );
+  imageResourceError.value = '';
+  pushHistory();
 };
 const addQrElement = () => {
   const key = buildDynamicKey('qr');
@@ -1771,10 +2604,11 @@ const insertPlaceholder = (key) => {
       'table',
     ].includes(selectedElement.value.type)
   ) {
-    const value = selectedElement.value.text
-      ? `${selectedElement.value.text} {{${key}}}`
-      : `{{${key}}}`;
-    selectedElement.value.text = value;
+    const token = `{{${key}}}`;
+    const currentText = selectedElement.value.text || '';
+    if (!currentText.includes(token)) {
+      selectedElement.value.text = currentText ? `${currentText} ${token}` : token;
+    }
   }
 
   if (selectedElement.value.type === 'placeholder') {
@@ -1787,6 +2621,12 @@ const insertPlaceholder = (key) => {
     if (parameter) parameter.type = 'boolean';
   }
 
+  if (selectedElement.value.type === 'date') {
+    selectedElement.value.placeholderKey = key;
+    selectedElement.value.text = `{{${key}}}`;
+    if (parameter) parameter.type = 'date';
+  }
+
   if (selectedElement.value.type === 'image') {
     selectedElement.value.placeholderKey = key;
     selectedElement.value.src = `{{${key}}}`;
@@ -1796,9 +2636,44 @@ const insertPlaceholder = (key) => {
   if (selectedElement.value.type === 'qr') {
     selectedElement.value.placeholderKey = key;
     selectedElement.value.qrValue = `{{${key}}}`;
-    if (parameter) parameter.type = 'qr';
   }
 
+  if (parameter) parameter.type = inferParameterType(selectedElement.value);
+  syncDynamicParametersFromTemplate();
+  pushHistory();
+};
+
+const handleTextInput = () => {
+  if (selectedElement.value) adjustTextElementHeight(selectedElement.value);
+  syncDynamicParametersFromTemplate();
+};
+
+const handlePlaceholderKeyChange = () => {
+  syncDynamicParametersFromTemplate();
+  markDirty();
+};
+
+const handleTextLayoutChange = () => {
+  if (selectedElement.value) adjustTextElementHeight(selectedElement.value);
+  markDirty();
+};
+
+const setTextAutoHeight = (enabled) => {
+  if (!selectedElement.value) return;
+  selectedElement.value.autoHeight = Boolean(enabled);
+  if (enabled) adjustTextElementHeight(selectedElement.value);
+  markDirty();
+};
+
+const insertGeneratedPlaceholder = () => {
+  if (!selectedElement.value) return;
+  const key = buildDynamicKey('text');
+  const token = `{{${key}}}`;
+  const currentText = String(selectedElement.value.text || '');
+  selectedElement.value.text = currentText
+    ? `${currentText}${/\s$/.test(currentText) ? '' : ' '}${token}`
+    : token;
+  adjustTextElementHeight(selectedElement.value);
   syncDynamicParametersFromTemplate();
   pushHistory();
 };
@@ -1812,9 +2687,42 @@ const constrainElementToPage = (element) => {
   const pageWidth = Number(template.value.dimensions.width || width.value);
   const pageHeight = Number(template.value.dimensions.height || height.value);
   element.width = Math.max(1, Math.min(Number(element.width) || 1, pageWidth));
-  element.height = Math.max(1, Math.min(Number(element.height) || 1, pageHeight));
-  element.x = Math.max(0, Math.min(Number(element.x) || 0, pageWidth - element.width));
-  element.y = Math.max(0, Math.min(Number(element.y) || 0, pageHeight - element.height));
+  const allowsZeroHeight = ['line', 'separator'].includes(element.type);
+  element.height = allowsZeroHeight
+    ? Math.max(0, Math.min(Number(element.height) || 0, pageHeight))
+    : Math.max(1, Math.min(Number(element.height) || 1, pageHeight));
+
+  const rotation = Number(element.rotation);
+  const radians = ((Number.isFinite(rotation) ? rotation : 0) * Math.PI) / 180;
+  const getRotatedBounds = () => ({
+    width:
+      Math.abs(element.width * Math.cos(radians)) + Math.abs(element.height * Math.sin(radians)),
+    height:
+      Math.abs(element.width * Math.sin(radians)) + Math.abs(element.height * Math.cos(radians)),
+  });
+  let rotatedBounds = getRotatedBounds();
+  if (rotatedBounds.width > pageWidth || rotatedBounds.height > pageHeight) {
+    const scale = Math.min(pageWidth / rotatedBounds.width, pageHeight / rotatedBounds.height);
+    element.width = Math.max(1, element.width * scale);
+    element.height = allowsZeroHeight
+      ? element.height * scale
+      : Math.max(1, element.height * scale);
+    rotatedBounds = getRotatedBounds();
+  }
+  const x = Number(element.x);
+  const y = Number(element.y);
+  const centerX = (Number.isFinite(x) ? x : 0) + element.width / 2;
+  const centerY = (Number.isFinite(y) ? y : 0) + element.height / 2;
+  const boundedCenterX = Math.max(
+    rotatedBounds.width / 2,
+    Math.min(centerX, pageWidth - rotatedBounds.width / 2)
+  );
+  const boundedCenterY = Math.max(
+    rotatedBounds.height / 2,
+    Math.min(centerY, pageHeight - rotatedBounds.height / 2)
+  );
+  element.x = Math.max(0, boundedCenterX - element.width / 2);
+  element.y = Math.max(0, boundedCenterY - element.height / 2);
 };
 
 const commitSelectedElementGeometry = () => {
@@ -1823,9 +2731,45 @@ const commitSelectedElementGeometry = () => {
   markDirty();
 };
 
-const commitPageDimensions = () => {
-  template.value.elements.forEach(constrainElementToPage);
+const commitSelectedElementWidth = () => {
+  if (!selectedElement.value) return;
+  constrainElementToPage(selectedElement.value);
+  adjustTextElementHeight(selectedElement.value);
   markDirty();
+};
+
+const commitSelectedElementHeight = () => {
+  if (!selectedElement.value) return;
+  selectedElement.value.autoHeight = false;
+  constrainElementToPage(selectedElement.value);
+  markDirty();
+};
+
+const commitPageDimensions = () => {
+  template.value.dimensions.width = Math.round(
+    Math.max(100, Math.min(5000, Number(template.value.dimensions.width) || 794))
+  );
+  template.value.dimensions.height = Math.round(
+    Math.max(100, Math.min(5000, Number(template.value.dimensions.height) || 1123))
+  );
+  commitPageSettings(false);
+  template.value.elements.forEach((element) => {
+    constrainElementToPage(element);
+    adjustTextElementHeight(element);
+  });
+  markDirty();
+};
+
+const commitPageSettings = (recordHistory = true) => {
+  const margin = template.value.page.margin;
+  for (const side of ['top', 'right', 'bottom', 'left']) {
+    margin[side] = Math.max(0, Math.floor(Number(margin[side]) || 0));
+  }
+  margin.left = Math.min(margin.left, template.value.dimensions.width - 1);
+  margin.right = Math.min(margin.right, template.value.dimensions.width - margin.left - 1);
+  margin.top = Math.min(margin.top, template.value.dimensions.height - 1);
+  margin.bottom = Math.min(margin.bottom, template.value.dimensions.height - margin.top - 1);
+  if (recordHistory) markDirty();
 };
 
 const clearSelectionIfEmpty = (event) => {
@@ -1917,15 +2861,20 @@ const startDrag = (event, element) => {
   event.stopPropagation();
   selectElement(element);
   if (element.locked) return;
-  constrainElementToPage(element);
 
   const svg = svgRef.value;
   if (!svg) return;
   svg.setPointerCapture?.(event.pointerId);
 
   const rect = svg.getBoundingClientRect();
-  const x = Math.max(0, Math.min(((event.clientX - rect.left) / rect.width) * width.value, width.value));
-  const y = Math.max(0, Math.min(((event.clientY - rect.top) / rect.height) * height.value, height.value));
+  const x = Math.max(
+    0,
+    Math.min(((event.clientX - rect.left) / rect.width) * width.value, width.value)
+  );
+  const y = Math.max(
+    0,
+    Math.min(((event.clientY - rect.top) / rect.height) * height.value, height.value)
+  );
 
   dragState.value = {
     id: element.id,
@@ -1971,10 +2920,7 @@ const handleCanvasWheel = (event) => {
   event.preventDefault();
 
   const previousZoom = zoom.value;
-  const nextZoom = Math.max(
-    0.25,
-    Math.min(2, previousZoom * Math.exp(-event.deltaY * 0.0015))
-  );
+  const nextZoom = Math.max(0.25, Math.min(2, previousZoom * Math.exp(-event.deltaY * 0.0015)));
   if (nextZoom === previousZoom) return;
 
   const viewportRect = pageViewport.value.getBoundingClientRect();
@@ -2003,14 +2949,27 @@ const stopDrag = (event) => {
     pagePanDrag.value = null;
   }
   const hadElementDrag = Boolean(dragState.value);
+  if (hadElementDrag) {
+    const element = template.value.elements.find((item) => item.id === dragState.value?.id);
+    if (element) constrainElementToPage(element);
+  }
   dragState.value = null;
   if (hadElementDrag) pushHistory();
 };
 
 const isImagePlaceholder = (element) => {
-  if (!element) return true;
-  const value = String(element.src || '');
-  return !value || value.includes('{{');
+  return !getImageSource(element);
+};
+
+const getImageSource = (element) => {
+  if (!element) return '';
+  if (element.imageMode === 'static' || element.resourceId) {
+    return (
+      imageResources.value.find((resource) => resource.id === element.resourceId)?.dataUrl || ''
+    );
+  }
+  const source = String(element.src || '');
+  return source && !source.includes('{{') ? source : '';
 };
 
 const getImagePlaceholderLabel = (element) => {
@@ -2046,6 +3005,29 @@ const getElementLabel = (element) => {
   return element.placeholderKey ? `{{${element.placeholderKey}}}` : element.text || '';
 };
 
+const getElementTypeLabel = (element) => {
+  const labels = {
+    text: 'Texto',
+    title: 'Título',
+    subtitle: 'Subtítulo',
+    paragraph: 'Párrafo',
+    list: 'Lista',
+    image: 'Imagen',
+    placeholder: 'Placeholder',
+    date: 'Fecha',
+    pageNumber: 'Número de página',
+    rect: 'Rectángulo',
+    line: 'Línea',
+    footer: 'Pie de página',
+    qr: 'Código QR',
+    signature: 'Firma',
+    separator: 'Separador',
+    table: 'Tabla',
+    checkbox: 'Casilla',
+  };
+  return labels[element?.type] || 'Elemento';
+};
+
 const getTextAnchor = (element) => {
   if (element.align === 'center') return 'middle';
   if (element.align === 'right') return 'end';
@@ -2060,12 +3042,27 @@ const getAlignedTextX = (element) => {
   return x;
 };
 
-const getTableRows = (element) => String(element.text || '').split('\n').map((row) => row.split('|'));
+const getTableRows = (element) =>
+  String(element.text || '')
+    .split('\n')
+    .map((row) => row.split('|'));
 
 const getTableColumnCount = (element) =>
   Math.max(1, ...getTableRows(element).map((row) => row.length));
 
 const saveTemplate = async () => {
+  if (!templateLoaded.value) return false;
+
+  const placeholderError = getPlaceholderValidationError();
+  if (placeholderError) {
+    notificationStore.setNotification({
+      message: placeholderError,
+      code: 'W0003',
+      mode: 'persistent',
+    });
+    return false;
+  }
+
   try {
     await updateTemplate(templateId.value, {
       name: template.value.name,
@@ -2077,7 +3074,7 @@ const saveTemplate = async () => {
       metadata: template.value.metadata,
       status: template.value.status,
     });
-    history.value = [serializeTemplate()];
+    history.value = [serializeHistoryState()];
     future.value = [];
     savedSnapshot.value = serializeTemplate();
     notificationStore.setNotification({
@@ -2097,6 +3094,11 @@ const saveTemplate = async () => {
 };
 
 const openPresentation = async () => {
+  if (!templateLoaded.value) return;
+  if (getPlaceholderValidationError()) {
+    await saveTemplate();
+    return;
+  }
   if (hasUnsavedChanges.value && !(await saveTemplate())) return;
   router.push(`/templates/${templateId.value}/present`);
 };
@@ -2120,7 +3122,7 @@ watch([width, height], () => {
 });
 
 onBeforeRouteLeave(() => {
-  if (!hasUnsavedChanges.value) return true;
+  if (!templateLoaded.value || !hasUnsavedChanges.value) return true;
   return window.confirm('Hay cambios sin guardar. ¿Deseas salir sin guardar?');
 });
 
@@ -2150,6 +3152,17 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.editor-root {
+  width: 100%;
+}
+
+.editor-load-error {
+  display: grid;
+  min-height: 60vh;
+  place-items: center;
+  padding: 24px;
+}
+
 .editor-shell {
   display: flex;
   flex-direction: column;
@@ -2169,6 +3182,33 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.editor-topbar :deep(.v-toolbar__prepend) {
+  margin-inline-end: 0;
+}
+
+.editor-heading {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 18px;
+  margin-left: clamp(32px, 12.5vw, 180px);
+}
+
+.editor-dirty-chip {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .editor-body {
@@ -2196,7 +3236,10 @@ onBeforeUnmount(() => {
 }
 
 .properties-panel {
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .sidebar-panel {
@@ -2213,18 +3256,54 @@ onBeforeUnmount(() => {
   padding: 18px;
 }
 
-.panel-header {
-  margin-bottom: 16px;
+.properties-section-header h4 {
+  margin: 0;
+}
+
+.sidebar-section-tabs :deep(.v-slide-group__prev),
+.sidebar-section-tabs :deep(.v-slide-group__next) {
+  display: none;
+}
+
+.sidebar-tab-content {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sidebar-tab-content :deep(.v-window__container),
+.sidebar-tab-content :deep(.v-window-item) {
+  height: 100%;
+  min-height: 0;
+}
+
+.sidebar-content-scroll {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.resource-panel {
+  max-height: none;
+}
+
+.resource-thumbnail {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
 }
 
 .toolbar-grid {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 6px;
-  min-height: 0;
+  flex: 0 0 auto;
 }
 
 .toolbar-grid .v-btn {
@@ -2420,6 +3499,14 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 960px) {
+  .editor-heading {
+    gap: 10px;
+  }
+
+  .editor-actions {
+    gap: 4px;
+  }
+
   .editor-shell {
     height: auto;
     min-height: calc(100vh - var(--v-layout-top, 0px) - var(--v-layout-bottom, 0px));
@@ -2451,6 +3538,20 @@ onBeforeUnmount(() => {
 
   .toolbar-grid {
     flex: none;
+    max-height: none;
+  }
+
+  .sidebar-tab-content {
+    flex: none;
+  }
+
+  .sidebar-tab-content :deep(.v-window__container),
+  .sidebar-tab-content :deep(.v-window-item) {
+    height: auto;
+  }
+
+  .sidebar-content-scroll {
+    height: auto;
     max-height: 35vh;
   }
 

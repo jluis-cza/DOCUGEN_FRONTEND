@@ -12,7 +12,7 @@
         <v-btn icon="mdi-arrow-left" variant="text" color="primary" @click="backToEditor" />
       </template>
 
-      <div class="d-flex align-center ga-3">
+      <div class="presentation-heading">
         <div class="text-start">
           <div class="text-caption text-medium-emphasis">Plantilla</div>
           <div class="text-subtitle-1 font-weight-bold">{{ template?.name || 'Documento' }}</div>
@@ -126,6 +126,49 @@
                       density="comfortable"
                       @update:model-value="(val) => updateConfigData(placeholder.key, val)"
                     />
+                    <div v-else-if="placeholder.type === 'image'" class="d-flex flex-column ga-2">
+                      <v-text-field
+                        :model-value="configData[placeholder.key] ?? ''"
+                        :label="placeholder.label || placeholder.key"
+                        autocomplete="off"
+                        :error="!!validationErrors[placeholder.key]"
+                        :error-messages="
+                          validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
+                        "
+                        hint="Imagen dinámica para este parámetro: pega una URL HTTP(S), un data URL o Base64 PNG/JPEG. También puedes cargar un archivo."
+                        persistent-hint
+                        density="comfortable"
+                        variant="outlined"
+                        @update:model-value="(val) => updateConfigData(placeholder.key, val)"
+                      />
+                      <input
+                        :ref="(el) => setImageFileInputRef(placeholder.key, el)"
+                        class="d-none"
+                        type="file"
+                        accept="image/png,image/jpeg"
+                        @change="(event) => handleImageParameterFile(placeholder.key, event)"
+                      />
+                      <div class="d-flex align-center ga-2">
+                        <v-btn
+                          size="x-small"
+                          variant="text"
+                          color="primary"
+                          prepend-icon="mdi-upload"
+                          @click="openImageFilePicker(placeholder.key)"
+                        >
+                          Subir imagen dinámica · {{ placeholder.label || placeholder.key }}
+                        </v-btn>
+                        <span class="text-caption text-medium-emphasis">PNG/JPEG · máx. 2 MB</span>
+                      </div>
+                      <v-img
+                        v-if="String(configData[placeholder.key] || '').startsWith('data:image/')"
+                        :src="configData[placeholder.key]"
+                        max-width="120"
+                        max-height="80"
+                        class="rounded border"
+                        cover
+                      />
+                    </div>
                     <v-textarea
                       v-else-if="placeholder.type === 'textarea'"
                       :model-value="configData[placeholder.key] ?? ''"
@@ -301,11 +344,13 @@ const showGeneratingDialog = ref(false);
 const isLoadingTemplate = ref(true);
 const showLoadError = ref(false);
 const loadErrorMessage = ref('');
+const imageFileInputs = ref({});
 
 const canGeneratePdf = computed(() => {
+  if (jsonError.value || isGenerating.value) return false;
   const hasParams = Object.keys(placeholders.value || {}).length > 0;
   if (!hasParams) return true;
-  return Object.keys(validationErrors.value || {}).length === 0 && !isGenerating.value;
+  return Object.keys(validationErrors.value || {}).length === 0;
 });
 
 const showNotification = (message, code, mode = 'persistent') => {
@@ -314,6 +359,49 @@ const showNotification = (message, code, mode = 'persistent') => {
     code,
     mode,
   });
+};
+
+const setImageFileInputRef = (key, element) => {
+  if (element) imageFileInputs.value[key] = element;
+  else delete imageFileInputs.value[key];
+};
+
+const openImageFilePicker = (key) => {
+  imageFileInputs.value[key]?.click();
+};
+
+const handleImageParameterFile = (key, event) => {
+  const input = event.target;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  if (!['image/png', 'image/jpeg'].includes(file.type)) {
+    showNotification('Formato no compatible. Selecciona una imagen PNG o JPEG.', 'W0002', 'persistent');
+    input.value = '';
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    showNotification('La imagen supera el límite de 2 MB.', 'W0002', 'persistent');
+    input.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (typeof reader.result !== 'string') {
+      showNotification('No se pudo leer el archivo de imagen.', 'W0002', 'persistent');
+      input.value = '';
+      return;
+    }
+    updateConfigData(key, reader.result);
+    validate();
+    input.value = '';
+  };
+  reader.onerror = () => {
+    showNotification(reader.error?.message || 'No se pudo leer el archivo de imagen.', 'W0002', 'persistent');
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
 };
 
 onMounted(async () => {
@@ -371,6 +459,9 @@ const updateJsonString = () => {
 const syncJsonToData = () => {
   try {
     const parsed = JSON.parse(jsonString.value);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Los datos deben ser un objeto JSON.');
+    }
     setConfigDataBulk(parsed);
     validate();
     jsonError.value = null;
@@ -386,6 +477,11 @@ const toggleViewMode = () => {
 };
 
 const generatePdf = async () => {
+  if (jsonError.value) {
+    showNotification('Corrige el JSON inválido antes de generar el PDF.', 'W0001', 'persistent');
+    return;
+  }
+
   if (!validate()) {
     const firstError =
       Object.values(validationErrors.value || {})[0] || 'Completa los valores requeridos';
@@ -460,6 +556,17 @@ Object.assign(window, {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.presentation-topbar :deep(.v-toolbar__prepend) {
+  margin-inline-end: 0;
+}
+
+.presentation-heading {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-left: clamp(32px, 12.5vw, 180px);
 }
 
 .presentation-body {
