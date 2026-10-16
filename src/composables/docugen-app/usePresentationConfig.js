@@ -39,7 +39,7 @@ export const extractPlaceholders = (template) => {
 
   metadataParams.forEach((param) => {
     const key = normalizePlaceholderKey(param?.key || param?.name || '');
-    if (!key) return;
+    if (!key || key === 'page_number') return;
     placeholderMap[key] = {
       key,
       elementId: param?.elementId || '',
@@ -53,6 +53,8 @@ export const extractPlaceholders = (template) => {
   });
 
   template.elements.forEach((element) => {
+    if (element.type === 'pageNumber') return;
+
     const explicitKey = normalizePlaceholderKey(element.placeholderKey);
     if (explicitKey) {
       if (!placeholderMap[explicitKey]) {

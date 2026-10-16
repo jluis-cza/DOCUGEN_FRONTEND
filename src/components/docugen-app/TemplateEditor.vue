@@ -35,16 +35,12 @@
             Rehacer
           </v-btn>
 
-          <div class="zoom-control d-flex align-center ga-1 rounded-pill border px-2 py-1">
-            <v-btn icon="mdi-minus" size="x-small" variant="text" @click="zoomOut" />
-            <span class="text-caption font-weight-bold">{{ Math.round(zoom * 100) }}%</span>
-            <v-btn icon="mdi-plus" size="x-small" variant="text" @click="zoomIn" />
-            <v-btn icon="mdi-refresh" size="x-small" variant="text" @click="resetZoom" />
-          </div>
-
           <v-btn variant="tonal" prepend-icon="mdi-content-save" size="small" @click="saveTemplate">
             Guardar
           </v-btn>
+          <v-chip v-if="hasUnsavedChanges" color="warning" size="small" variant="tonal">
+            Cambios sin guardar
+          </v-chip>
           <v-btn
             color="primary"
             prepend-icon="mdi-file-pdf-box"
@@ -63,9 +59,6 @@
           <v-card class="panel h-100 sidebar-panel" rounded="xl">
             <div class="panel-header d-flex align-center justify-space-between">
               <h4>Elementos</h4>
-              <v-chip color="primary" size="small" variant="tonal">{{
-                template.elements.length
-              }}</v-chip>
             </div>
 
             <div class="toolbar-grid">
@@ -122,58 +115,100 @@
         </div>
 
         <div class="editor-stage-col">
-          <v-card class="panel stage-panel" rounded="xl">
+          <v-card ref="stagePanel" class="panel stage-panel" rounded="xl">
             <div class="stage-toolbar d-flex justify-space-between align-center">
-              <div class="d-flex align-center ga-2 flex-wrap">
-                <v-chip size="small" color="primary" variant="tonal">
-                  {{ template.dimensions.width }} × {{ template.dimensions.height }} px
-                </v-chip>
-                <v-chip size="small" color="secondary" variant="tonal">
-                  {{ template.elements.length }} elementos
-                </v-chip>
-                <v-chip size="small" color="success" variant="tonal"
-                  >Zoom {{ Math.round(zoom * 100) }}%</v-chip
-                >
+              <div class="canvas-guides-control">
+                <v-checkbox
+                  v-model="showGrid"
+                  label="Cuadrícula"
+                  density="compact"
+                  color="primary"
+                  hide-details
+                  title="Mostrar u ocultar la cuadrícula de referencia"
+                />
+                <v-checkbox
+                  v-model="showMargins"
+                  label="Márgenes"
+                  density="compact"
+                  color="primary"
+                  hide-details
+                  title="Mostrar u ocultar la guía de márgenes"
+                />
               </div>
-              <div class="d-flex align-center ga-2">
+              <div class="d-flex align-center ga-1">
                 <v-btn
-                  icon="mdi-content-copy"
-                  variant="text"
+                  icon="mdi-minus"
                   size="small"
-                  :disabled="!selectedElement"
-                  @click="duplicateSelectedElement"
+                  variant="text"
+                  aria-label="Reducir zoom"
+                  title="Reducir zoom"
+                  @click="zoomOut"
+                />
+                <span class="zoom-percentage" aria-live="polite">
+                  {{ Math.round(zoom * 100) }}%
+                </span>
+                <v-btn
+                  icon="mdi-plus"
+                  size="small"
+                  variant="text"
+                  aria-label="Aumentar zoom"
+                  title="Aumentar zoom"
+                  @click="zoomIn"
+                />
+                <v-divider vertical class="mx-1" />
+                <v-btn
+                  size="small"
+                  :icon="panMode ? 'mdi-hand-back-right' : 'mdi-hand-back-right-outline'"
+                  variant="text"
+                  :color="panMode ? 'primary' : undefined"
+                  :aria-pressed="panMode"
+                  :aria-label="panMode ? 'Desactivar desplazamiento de hoja' : 'Activar desplazamiento de hoja'"
+                  title="Modo para mover la hoja"
+                  @click="panMode = !panMode"
                 />
                 <v-btn
-                  icon="mdi-delete"
-                  variant="text"
-                  color="error"
+                  icon="mdi-fit-to-page-outline"
                   size="small"
-                  :disabled="!selectedElement"
-                  @click="removeSelectedElement"
+                  variant="text"
+                  aria-label="Restablecer vista de hoja"
+                  title="Restablecer vista de hoja"
+                  @click="resetZoom"
                 />
               </div>
             </div>
 
-            <div class="canvas-shell" @click="closeContextMenu">
-              <div class="ruler ruler-horizontal">
+            <div
+              ref="canvasShell"
+              class="canvas-shell"
+              :class="{ 'page-is-panning': pagePanDrag }"
+              @click="closeContextMenu"
+              @wheel="handleCanvasWheel"
+            >
+              <div
+                class="ruler ruler-horizontal"
+                title="Regla en píxeles CSS; 96 px equivalen a 1 pulgada"
+              >
                 <div
-                  v-for="n in 36"
-                  :key="`h-${n}`"
+                  v-for="tick in horizontalRulerTicks"
+                  :key="`h-${tick.value}`"
                   class="tick"
-                  :style="{ left: `${(n - 1) * 30}px` }"
+                  :style="{ left: `${rulerOrigin + panOffset.x + tick.value * zoom}px` }"
                 >
-                  <span>{{ (n - 1) * 30 }}</span>
+                  <span>{{ tick.value }}</span>
                 </div>
               </div>
 
-              <div class="ruler ruler-vertical">
+              <div
+                class="ruler ruler-vertical"
+                title="Regla en píxeles CSS; 96 px equivalen a 1 pulgada"
+              >
                 <div
-                  v-for="n in 36"
-                  :key="`v-${n}`"
+                  v-for="tick in verticalRulerTicks"
+                  :key="`v-${tick.value}`"
                   class="tick"
-                  :style="{ top: `${(n - 1) * 30}px` }"
+                  :style="{ top: `${rulerOrigin + panOffset.y + tick.value * zoom}px` }"
                 >
-                  <span>{{ (n - 1) * 30 }}</span>
+                  <span>{{ tick.value }}</span>
                 </div>
               </div>
 
@@ -183,24 +218,27 @@
                   :style="{
                     width: `${width}px`,
                     height: `${height}px`,
-                    transform: `scale(${zoom})`,
+                    transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
                   }"
                 >
                   <svg
                     ref="svgRef"
                     :viewBox="`0 0 ${width} ${height}`"
                     class="template-canvas"
+                    :class="{ 'page-pan-active': panMode || pagePanDrag }"
                     :style="{ width: `${width}px`, height: `${height}px` }"
                     role="img"
                     aria-label="Vista previa de plantilla"
                     @pointermove="handlePointerMove"
                     @pointerup="stopDrag"
-                    @pointerleave="stopDrag"
+                    @pointercancel="stopDrag"
+                    @pointerdown.capture="handleCanvasPointerDown"
                     @pointerdown="clearSelectionIfEmpty"
                     @contextmenu.prevent
                   >
                     <defs>
                       <pattern
+                        v-if="showGrid"
                         id="editor-grid"
                         width="20"
                         height="20"
@@ -213,20 +251,46 @@
                     <rect
                       :width="width"
                       :height="height"
-                      fill="#ffffff"
+                      :fill="template.page?.backgroundColor || '#ffffff'"
                       stroke="#dfe3ec"
                       stroke-width="2"
-                      rx="8"
+                      @click.stop="selectPage"
                     />
                     <rect
+                      v-if="showMargins && template.page?.margin"
+                      :x="template.page.margin.left"
+                      :y="template.page.margin.top"
+                      :width="
+                        Math.max(0, width - template.page.margin.left - template.page.margin.right)
+                      "
+                      :height="
+                        Math.max(0, height - template.page.margin.top - template.page.margin.bottom)
+                      "
+                      fill="none"
+                      stroke="#94a3b8"
+                      stroke-width="1"
+                      stroke-dasharray="6 6"
+                      pointer-events="none"
+                    />
+                    <rect
+                      v-if="showGrid"
                       :width="width"
                       :height="height"
                       fill="url(#editor-grid)"
                       opacity="0.55"
-                      rx="8"
+                      @click.stop="selectPage"
                     />
 
-                    <g v-for="element in template.elements" :key="element.id">
+                    <g
+                      v-for="element in template.elements"
+                      :key="element.id"
+                      :opacity="element.opacity ?? 1"
+                      :transform="
+                        element.rotation
+                          ? `rotate(${element.rotation} ${Number(element.x) + Number(element.width || 0) / 2} ${Number(element.y) + Number(element.height || 0) / 2})`
+                          : undefined
+                      "
+                    >
                       <rect
                         v-if="element.type === 'rect'"
                         :x="element.x"
@@ -234,14 +298,8 @@
                         :width="element.width"
                         :height="element.height"
                         :fill="element.fill || '#eaf2ff'"
-                        :stroke="
-                          selectedElement?.id === element.id
-                            ? '#2563eb'
-                            : element.stroke || '#9ec5fe'
-                        "
-                        :stroke-width="
-                          selectedElement?.id === element.id ? 2 : element.strokeWidth || 1
-                        "
+                        :stroke="element.stroke || '#9ec5fe'"
+                        :stroke-width="element.strokeWidth || 1"
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
@@ -254,14 +312,8 @@
                         :y1="element.y"
                         :x2="Number(element.x) + Number(element.width || 120)"
                         :y2="Number(element.y) + Number(element.height || 0)"
-                        :stroke="
-                          selectedElement?.id === element.id
-                            ? '#2563eb'
-                            : element.stroke || '#9ec5fe'
-                        "
-                        :stroke-width="
-                          selectedElement?.id === element.id ? 2 : element.strokeWidth || 1
-                        "
+                        :stroke="element.stroke || '#9ec5fe'"
+                        :stroke-width="element.strokeWidth || 1"
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
@@ -298,6 +350,7 @@
                         />
 
                         <text
+                          v-if="isImagePlaceholder(element)"
                           :x="element.x + element.width / 2"
                           :y="element.y + element.height / 2"
                           text-anchor="middle"
@@ -354,12 +407,8 @@
                           :width="element.width || 18"
                           :height="element.height || 18"
                           :fill="element.fill || '#ffffff'"
-                          :stroke="
-                            selectedElement?.id === element.id
-                              ? '#2563eb'
-                              : element.stroke || '#94a3b8'
-                          "
-                          stroke-width="2"
+                          :stroke="element.stroke || '#94a3b8'"
+                          :stroke-width="element.strokeWidth || 2"
                           rx="4"
                         />
                         <path
@@ -371,6 +420,78 @@
                           stroke-linecap="round"
                           stroke-linejoin="round"
                         />
+                        <text
+                          :x="Number(element.x) + Number(element.width || 18) + 8"
+                          :y="Number(element.y) + Number(element.fontSize || 12) + 2"
+                          :font-size="element.fontSize || 12"
+                          :fill="element.color || '#111111'"
+                        >
+                          {{ getElementLabel(element) }}
+                        </text>
+                      </g>
+
+                      <g
+                        v-else-if="element.type === 'table'"
+                        @click="selectElement(element)"
+                        @contextmenu.prevent="openContextMenu($event, element)"
+                        @pointerdown="startDrag($event, element)"
+                        style="cursor: pointer"
+                      >
+                        <g
+                          v-for="(row, rowIndex) in getTableRows(element)"
+                          :key="`${element.id}-row-${rowIndex}`"
+                        >
+                          <g
+                            v-for="columnIndex in getTableColumnCount(element)"
+                            :key="`${element.id}-${rowIndex}-${columnIndex}`"
+                          >
+                            <rect
+                              :x="element.x + ((columnIndex - 1) * element.width) / getTableColumnCount(element)"
+                              :y="element.y + (rowIndex * element.height) / getTableRows(element).length"
+                              :width="element.width / getTableColumnCount(element)"
+                              :height="element.height / getTableRows(element).length"
+                              fill="none"
+                              :stroke="element.stroke || '#cbd5e1'"
+                              :stroke-width="element.strokeWidth || 1"
+                            />
+                            <text
+                              :x="element.x + ((columnIndex - 1) * element.width) / getTableColumnCount(element) + 4"
+                              :y="element.y + (rowIndex * element.height) / getTableRows(element).length + (element.fontSize || 12)"
+                              :font-size="element.fontSize || 12"
+                              :fill="element.color || '#111111'"
+                              :font-weight="element.fontWeight || 400"
+                            >
+                              {{ row[columnIndex - 1] || '' }}
+                            </text>
+                          </g>
+                        </g>
+                      </g>
+
+                      <g
+                        v-else-if="element.type === 'signature'"
+                        @click="selectElement(element)"
+                        @contextmenu.prevent="openContextMenu($event, element)"
+                        @pointerdown="startDrag($event, element)"
+                        style="cursor: pointer"
+                      >
+                        <line
+                          :x1="element.x"
+                          :y1="element.y"
+                          :x2="Number(element.x) + Number(element.width)"
+                          :y2="element.y"
+                          :stroke="element.stroke || '#111827'"
+                          :stroke-width="element.strokeWidth || 1"
+                        />
+                        <text
+                          :x="getAlignedTextX(element)"
+                          :y="element.y + (element.fontSize || 12) + 12"
+                          :text-anchor="getTextAnchor(element)"
+                          :font-size="element.fontSize || 12"
+                          :fill="element.color || '#111111'"
+                          :font-weight="element.fontWeight || 400"
+                        >
+                          {{ getElementLabel(element) }}
+                        </text>
                       </g>
 
                       <text
@@ -383,19 +504,15 @@
                             'subtitle',
                             'date',
                             'pageNumber',
-                            'signature',
                             'footer',
                           ].includes(element.type)
                         "
-                        :x="element.x"
+                        :x="getAlignedTextX(element)"
                         :y="element.y + (element.height || 20) / 2"
+                        :text-anchor="getTextAnchor(element)"
                         :font-size="element.fontSize || 18"
-                        :fill="
-                          selectedElement?.id === element.id
-                            ? '#1d4ed8'
-                            : element.color || '#111111'
-                        "
-                        :font-weight="selectedElement?.id === element.id ? 800 : 700"
+                        :fill="element.color || '#111111'"
+                        :font-weight="element.fontWeight || 400"
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
@@ -404,7 +521,7 @@
                         <tspan
                           v-for="(line, index) in getWrappedTextLines(element)"
                           :key="`${element.id}-${index}`"
-                          :x="element.x"
+                          :x="getAlignedTextX(element)"
                           :dy="index === 0 ? 0 : Number(element.fontSize || 18) * 1.35"
                         >
                           {{ line }}
@@ -413,15 +530,12 @@
 
                       <text
                         v-else
-                        :x="element.x"
+                        :x="getAlignedTextX(element)"
                         :y="element.y + (element.height || 20) / 2"
+                        :text-anchor="getTextAnchor(element)"
                         :font-size="element.fontSize || 18"
-                        :fill="
-                          selectedElement?.id === element.id
-                            ? '#1d4ed8'
-                            : element.color || '#111111'
-                        "
-                        :font-weight="selectedElement?.id === element.id ? 800 : 700"
+                        :fill="element.color || '#111111'"
+                        :font-weight="element.fontWeight || 400"
                         @click="selectElement(element)"
                         @contextmenu.prevent="openContextMenu($event, element)"
                         @pointerdown="startDrag($event, element)"
@@ -429,6 +543,57 @@
                       >
                         {{ getElementLabel(element) }}
                       </text>
+
+                      <g
+                        v-if="selectedElement?.id === element.id"
+                        class="element-selection"
+                        pointer-events="none"
+                      >
+                        <rect
+                          :x="Number(element.x || 0) - 4"
+                          :y="Number(element.y || 0) - 4"
+                          :width="Math.max(Number(element.width || 0), 8) + 8"
+                          :height="Math.max(Number(element.height || 0), 8) + 8"
+                          rx="2"
+                          fill="#3b82f6"
+                          fill-opacity="0.06"
+                          stroke="#2563eb"
+                          stroke-width="1.5"
+                          stroke-dasharray="5 3"
+                        />
+                        <circle
+                          :cx="Number(element.x || 0) - 4"
+                          :cy="Number(element.y || 0) - 4"
+                          r="3"
+                          fill="#ffffff"
+                          stroke="#2563eb"
+                          stroke-width="1.5"
+                        />
+                        <circle
+                          :cx="Number(element.x || 0) + Number(element.width || 0) + 4"
+                          :cy="Number(element.y || 0) - 4"
+                          r="3"
+                          fill="#ffffff"
+                          stroke="#2563eb"
+                          stroke-width="1.5"
+                        />
+                        <circle
+                          :cx="Number(element.x || 0) - 4"
+                          :cy="Number(element.y || 0) + Number(element.height || 0) + 4"
+                          r="3"
+                          fill="#ffffff"
+                          stroke="#2563eb"
+                          stroke-width="1.5"
+                        />
+                        <circle
+                          :cx="Number(element.x || 0) + Number(element.width || 0) + 4"
+                          :cy="Number(element.y || 0) + Number(element.height || 0) + 4"
+                          r="3"
+                          fill="#ffffff"
+                          stroke="#2563eb"
+                          stroke-width="1.5"
+                        />
+                      </g>
                     </g>
                   </svg>
                 </div>
@@ -445,20 +610,38 @@
                   <v-btn
                     block
                     variant="text"
+                    :prepend-icon="contextMenu.element?.locked ? 'mdi-lock-open-outline' : 'mdi-lock-outline'"
+                    size="small"
+                    @click="toggleSelectedElementLock"
+                  >
+                    {{ contextMenu.element?.locked ? 'Desbloquear' : 'Bloquear' }}
+                  </v-btn>
+                  <v-btn
+                    block
+                    variant="text"
+                    prepend-icon="mdi-arrange-bring-to-front"
+                    size="small"
+                    @click="reorderSelectedElement('front')"
+                  >
+                    Traer al frente
+                  </v-btn>
+                  <v-btn
+                    block
+                    variant="text"
+                    prepend-icon="mdi-arrange-send-to-back"
+                    size="small"
+                    @click="reorderSelectedElement('back')"
+                  >
+                    Enviar al fondo
+                  </v-btn>
+                  <v-btn
+                    block
+                    variant="text"
                     prepend-icon="mdi-content-copy"
                     size="small"
                     @click="duplicateSelectedElement"
                   >
                     Duplicar
-                  </v-btn>
-                  <v-btn
-                    block
-                    variant="text"
-                    prepend-icon="mdi-content-duplicate"
-                    size="small"
-                    @click="copySelectedElement"
-                  >
-                    Copiar
                   </v-btn>
                   <v-btn
                     block
@@ -477,7 +660,7 @@
         </div>
 
         <div class="editor-sidebar">
-          <v-card class="panel h-100" rounded="xl">
+          <v-card class="panel h-100 properties-panel" rounded="xl">
             <div class="panel-header d-flex align-center justify-space-between">
               <h4>Propiedades</h4>
               <v-btn
@@ -493,13 +676,14 @@
 
             <template v-if="selectedElement">
               <v-text-field
+                v-if="!['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)"
                 v-model="selectedElement.text"
                 label="Texto / etiqueta"
                 density="comfortable"
                 @change="markDirty"
               />
               <v-text-field
-                v-if="['image', 'qr', 'placeholder'].includes(selectedElement.type)"
+                v-if="['image', 'placeholder'].includes(selectedElement.type)"
                 v-model="selectedElement.src"
                 label="URL / origen"
                 density="comfortable"
@@ -516,7 +700,8 @@
                 v-if="
                   selectedElement.type === 'placeholder' ||
                   selectedElement.type === 'date' ||
-                  selectedElement.type === 'pageNumber'
+                selectedElement.type === 'pageNumber' ||
+                selectedElement.type === 'checkbox'
                 "
                 v-model="selectedElement.placeholderKey"
                 label="Clave del dato"
@@ -530,8 +715,10 @@
                     v-model.number="selectedElement.x"
                     label="X"
                     type="number"
+                    min="0"
+                    suffix="px"
                     density="comfortable"
-                    @change="markDirty"
+                    @change="commitSelectedElementGeometry"
                   />
                 </v-col>
                 <v-col cols="6">
@@ -539,8 +726,10 @@
                     v-model.number="selectedElement.y"
                     label="Y"
                     type="number"
+                    min="0"
+                    suffix="px"
                     density="comfortable"
-                    @change="markDirty"
+                    @change="commitSelectedElementGeometry"
                   />
                 </v-col>
                 <v-col cols="6">
@@ -548,8 +737,11 @@
                     v-model.number="selectedElement.width"
                     label="Ancho"
                     type="number"
+                    min="1"
+                    :max="width"
+                    suffix="px"
                     density="comfortable"
-                    @change="markDirty"
+                    @change="commitSelectedElementGeometry"
                   />
                 </v-col>
                 <v-col cols="6">
@@ -557,21 +749,27 @@
                     v-model.number="selectedElement.height"
                     label="Alto"
                     type="number"
+                    min="1"
+                    :max="height"
+                    suffix="px"
                     density="comfortable"
-                    @change="markDirty"
+                    @change="commitSelectedElementGeometry"
                   />
                 </v-col>
                 <v-col cols="6">
                   <v-text-field
-                    v-model.number="selectedElement.fontSize"
+                  v-if="!['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)"
+                  v-model.number="selectedElement.fontSize"
                     label="Tamaño"
                     type="number"
+                    suffix="px"
                     density="comfortable"
                     @change="markDirty"
                   />
                 </v-col>
                 <v-col cols="6">
                   <v-text-field
+                    v-if="!['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)"
                     v-model="selectedElement.color"
                     label="Color"
                     type="color"
@@ -584,13 +782,63 @@
               <v-divider class="my-3" />
 
               <v-select
+                v-if="!['rect', 'line', 'separator', 'image', 'qr'].includes(selectedElement.type)"
                 v-model="selectedElement.align"
                 label="Alineación"
                 :items="['left', 'center', 'right']"
                 density="comfortable"
                 @change="markDirty"
               />
+              <v-select
+                v-if="['text', 'title', 'subtitle', 'paragraph', 'list', 'placeholder', 'date', 'pageNumber', 'signature', 'footer', 'table', 'checkbox'].includes(selectedElement.type)"
+                v-model="selectedElement.fontWeight"
+                label="Grosor de fuente"
+                :items="[
+                  { title: 'Normal', value: '400' },
+                  { title: 'Seminegrita', value: '600' },
+                  { title: 'Negrita', value: '700' },
+                ]"
+                item-title="title"
+                item-value="value"
+                density="comfortable"
+                @update:model-value="markDirty"
+              />
               <v-text-field
+                v-if="['rect', 'checkbox'].includes(selectedElement.type)"
+                v-model="selectedElement.fill"
+                label="Relleno"
+                type="color"
+                density="comfortable"
+                @update:model-value="markDirty"
+              />
+              <v-checkbox
+                v-if="selectedElement.type === 'checkbox'"
+                v-model="selectedElement.checked"
+                label="Marcada"
+                density="comfortable"
+                hide-details
+                @update:model-value="markDirty"
+              />
+              <v-text-field
+                v-model.number="selectedElement.rotation"
+                label="Rotación"
+                type="number"
+                suffix="°"
+                density="comfortable"
+                @update:model-value="markDirty"
+              />
+              <v-slider
+                v-model.number="selectedElement.opacity"
+                label="Opacidad"
+                min="0"
+                max="1"
+                step="0.05"
+                thumb-label
+                density="comfortable"
+                @update:model-value="markDirty"
+              />
+              <v-text-field
+                v-if="['rect', 'line', 'separator', 'checkbox', 'signature', 'table'].includes(selectedElement.type)"
                 v-model="selectedElement.stroke"
                 label="Color de borde"
                 type="color"
@@ -598,11 +846,19 @@
                 @change="markDirty"
               />
               <v-text-field
+                v-if="['rect', 'line', 'separator', 'checkbox', 'signature', 'table'].includes(selectedElement.type)"
                 v-model.number="selectedElement.strokeWidth"
                 label="Grosor de borde"
                 type="number"
                 density="comfortable"
                 @change="markDirty"
+              />
+              <v-checkbox
+                v-model="selectedElement.locked"
+                label="Bloquear posición"
+                density="comfortable"
+                hide-details
+                @update:model-value="markDirty"
               />
             </template>
 
@@ -613,6 +869,13 @@
                 density="comfortable"
                 @change="markDirty"
               />
+              <v-text-field
+                v-model="template.page.backgroundColor"
+                label="Fondo de página"
+                type="color"
+                density="comfortable"
+                @update:model-value="markDirty"
+              />
               <v-textarea
                 v-model="template.description"
                 label="Descripción"
@@ -620,6 +883,20 @@
                 density="comfortable"
                 @change="markDirty"
               />
+              <div class="text-caption text-medium-emphasis mb-1">Márgenes (px)</div>
+              <v-row dense>
+                <v-col v-for="side in ['top', 'right', 'bottom', 'left']" :key="side" cols="6">
+                  <v-text-field
+                    v-model.number="template.page.margin[side]"
+                    :label="side === 'top' ? 'Superior' : side === 'right' ? 'Derecho' : side === 'bottom' ? 'Inferior' : 'Izquierdo'"
+                    type="number"
+                    min="0"
+                    suffix="px"
+                    density="comfortable"
+                    @update:model-value="markDirty"
+                  />
+                </v-col>
+              </v-row>
               <v-text-field
                 v-model.number="template.dimensions.width"
                 label="Ancho (px)"
@@ -630,7 +907,7 @@
                 hint="Entre 100 y 5000 px"
                 persistent-hint
                 density="comfortable"
-                @change="markDirty"
+                @change="commitPageDimensions"
               />
               <v-text-field
                 v-model.number="template.dimensions.height"
@@ -642,7 +919,7 @@
                 hint="Entre 100 y 5000 px"
                 persistent-hint
                 density="comfortable"
-                @change="markDirty"
+                @change="commitPageDimensions"
               />
               <v-select
                 v-model="template.status"
@@ -659,37 +936,85 @@
               <div class="panel-helper">
                 <div class="text-caption text-medium-emphasis mb-2">Parámetros dinámicos</div>
                 <div v-if="dynamicParameters.length" class="d-flex flex-column ga-2 mb-3">
-                  <div
+                  <v-card
                     v-for="(parameter, index) in dynamicParameters"
                     :key="parameter.key || index"
-                    class="d-flex ga-2 align-center"
+                    class="pa-2"
+                    variant="tonal"
                   >
                     <v-text-field
-                      v-model="parameter.key"
+                      :model-value="parameter.key"
                       label="Nombre"
                       density="compact"
                       hide-details
-                      @blur="normalizeDynamicParameter(parameter)"
+                      @update:model-value="(value) => renameDynamicParameter(parameter, value)"
                     />
-                    <v-select
-                      v-model="parameter.type"
-                      label="Tipo"
-                      :items="[
-                        'text',
-                        'textarea',
-                        'number',
-                        'date',
-                        'boolean',
-                        'image',
-                        'qr',
-                        'email',
-                        'url',
-                      ]"
+                    <v-text-field
+                      v-model="parameter.label"
+                      label="Etiqueta del formulario"
                       density="compact"
                       hide-details
+                      @update:model-value="markDirty"
                     />
-                    <v-checkbox v-model="parameter.required" hide-details density="compact" />
-                  </div>
+                    <v-textarea
+                      v-model="parameter.description"
+                      label="Descripción"
+                      rows="2"
+                      density="compact"
+                      hide-details
+                      @update:model-value="markDirty"
+                    />
+                    <v-text-field
+                      :model-value="(parameter.allowedValues || []).join(', ')"
+                      label="Valores permitidos (separados por comas)"
+                      density="compact"
+                      hide-details
+                      @update:model-value="(value) => setParameterAllowedValues(parameter, value)"
+                    />
+                    <div class="d-flex align-center ga-2">
+                      <v-btn
+                        icon="mdi-link-variant"
+                        size="small"
+                        variant="text"
+                        :disabled="!selectedElement || selectedElement.type === 'pageNumber'"
+                        :aria-label="`Vincular parámetro ${parameter.key} al elemento seleccionado`"
+                        @click="insertPlaceholder(parameter.key)"
+                      />
+                      <v-select
+                        v-model="parameter.type"
+                        label="Tipo"
+                        :items="[
+                          'text',
+                          'textarea',
+                          'number',
+                          'date',
+                          'boolean',
+                          'image',
+                          'qr',
+                          'email',
+                          'url',
+                        ]"
+                        density="compact"
+                        hide-details
+                        @update:model-value="markDirty"
+                      />
+                      <v-checkbox
+                        v-model="parameter.required"
+                        label="Requerido"
+                        hide-details
+                        density="compact"
+                        @update:model-value="markDirty"
+                      />
+                      <v-btn
+                        icon="mdi-delete-outline"
+                        size="small"
+                        variant="text"
+                        color="error"
+                        :aria-label="`Eliminar parámetro ${parameter.key}`"
+                        @click="removeDynamicParameter(parameter.key)"
+                      />
+                    </div>
+                  </v-card>
                 </div>
                 <v-btn class="mt-2" size="small" variant="tonal" @click="addDynamicParameter">
                   Añadir parámetro
@@ -716,13 +1041,31 @@
           </v-card>
         </div>
       </div>
+
+      <v-card class="editor-status-bar" rounded="lg" variant="tonal" role="status">
+        <v-chip size="small" color="primary" variant="tonal" prepend-icon="mdi-cursor-default">
+          {{ selectedItemStatus }}
+        </v-chip>
+        <v-chip size="small" variant="tonal" prepend-icon="mdi-shape-outline">
+          {{ template.elements.length }} elementos
+        </v-chip>
+        <v-chip size="small" variant="tonal" prepend-icon="mdi-file-document-outline">
+          {{ pageSizeStatus }}
+        </v-chip>
+        <v-chip size="small" variant="tonal" prepend-icon="mdi-magnify">
+          Zoom {{ Math.round(zoom * 100) }}%
+        </v-chip>
+        <span class="ruler-conversion" title="Conversión CSS estándar a 96 puntos por pulgada">
+          Regletas: px · 96 px = 1 pulgada
+        </span>
+      </v-card>
     </v-container>
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 import { TEMPLATE_STATUS_OPTIONS } from '../../helpers/docugen-app/templateStatus.js';
@@ -750,12 +1093,110 @@ const selectedElement = ref(null);
 const dragState = ref(null);
 const svgRef = ref(null);
 const pageViewport = ref(null);
+const canvasShell = ref(null);
+const stagePanel = ref(null);
+const canvasShellSize = ref({ width: 0, height: 0 });
 const width = ref(794);
 const height = ref(1123);
 const zoom = ref(1);
+const panOffset = ref({ x: 0, y: 0 });
+const pagePanDrag = ref(null);
+const panMode = ref(false);
+const pageSelected = ref(false);
+const showGrid = ref(true);
+const showMargins = ref(true);
 const history = ref([]);
 const future = ref([]);
 const contextMenu = ref({ visible: false, x: 0, y: 0, element: null });
+const savedSnapshot = ref('');
+const rulerOrigin = 28;
+
+function getRulerStep(zoomLevel) {
+  const targetStep = 60 / zoomLevel;
+  const magnitude = 10 ** Math.floor(Math.log10(targetStep));
+  const normalized = targetStep / magnitude;
+  const multiple = normalized < 1.5 ? 1 : normalized < 3.5 ? 2 : 5;
+  return multiple * magnitude;
+}
+
+function getVisibleRulerTicks(offset, zoomLevel, viewportLength) {
+  const step = getRulerStep(zoomLevel);
+  const firstValue =
+    Math.floor((-rulerOrigin - offset) / (zoomLevel * step)) * step;
+  const lastValue =
+    Math.ceil((viewportLength - rulerOrigin - offset) / (zoomLevel * step)) * step;
+  const count = Math.max(0, Math.min(500, Math.floor((lastValue - firstValue) / step) + 1));
+
+  return Array.from({ length: count }, (_, index) => ({
+    value: Number((firstValue + index * step).toFixed(6)),
+  }));
+}
+
+const horizontalRulerTicks = computed(() =>
+  getVisibleRulerTicks(
+    panOffset.value.x,
+    zoom.value,
+    canvasShellSize.value.width
+  )
+);
+const verticalRulerTicks = computed(() =>
+  getVisibleRulerTicks(
+    panOffset.value.y,
+    zoom.value,
+    canvasShellSize.value.height
+  )
+);
+const hasUnsavedChanges = computed(() => serializeTemplate() !== savedSnapshot.value);
+const selectedItemStatus = computed(() => {
+  if (!selectedElement.value) return 'Hoja';
+  const elementTypes = {
+    text: 'Texto',
+    title: 'Título',
+    subtitle: 'Subtítulo',
+    paragraph: 'Párrafo',
+    list: 'Lista',
+    image: 'Imagen',
+    placeholder: 'Placeholder',
+    date: 'Fecha',
+    pageNumber: 'Número de página',
+    rect: 'Caja',
+    line: 'Línea',
+    footer: 'Pie',
+    qr: 'Código QR',
+    signature: 'Firma',
+    separator: 'Separador',
+    table: 'Tabla',
+    checkbox: 'Casilla',
+  };
+  const elementIndex = template.value.elements.findIndex(
+    (element) => element.id === selectedElement.value.id
+  );
+  return `${elementTypes[selectedElement.value.type] || 'Elemento'}${elementIndex >= 0 ? ` #${elementIndex + 1}` : ''}`;
+});
+const pageSizeStatus = computed(() => {
+  const pageWidth = Number(template.value.dimensions.width || width.value);
+  const pageHeight = Number(template.value.dimensions.height || height.value);
+  const widthMm = (pageWidth * 25.4) / 96;
+  const heightMm = (pageHeight * 25.4) / 96;
+  const namedSizes = [
+    { name: 'A0', width: 841, height: 1189 },
+    { name: 'A1', width: 594, height: 841 },
+    { name: 'A2', width: 420, height: 594 },
+    { name: 'A3', width: 297, height: 420 },
+    { name: 'A4', width: 210, height: 297 },
+    { name: 'A5', width: 148, height: 210 },
+    { name: 'Carta', width: 215.9, height: 279.4 },
+    { name: 'Legal', width: 215.9, height: 355.6 },
+    { name: 'Tabloide', width: 279.4, height: 431.8 },
+  ];
+  const matchedSize = namedSizes.find(
+    (size) =>
+      (Math.abs(widthMm - size.width) <= 1.5 && Math.abs(heightMm - size.height) <= 1.5) ||
+      (Math.abs(widthMm - size.height) <= 1.5 && Math.abs(heightMm - size.width) <= 1.5)
+  );
+
+  return `${matchedSize?.name || 'Personalizada'} · ${pageWidth} × ${pageHeight} px · ${widthMm.toFixed(1)} × ${heightMm.toFixed(1)} mm · ${(pageWidth / 96).toFixed(2)} × ${(pageHeight / 96).toFixed(2)} pulg.`;
+});
 
 const serializeTemplate = () =>
   JSON.stringify({
@@ -763,6 +1204,8 @@ const serializeTemplate = () =>
     description: template.value.description,
     status: template.value.status,
     dimensions: template.value.dimensions,
+    page: template.value.page,
+    canvas: template.value.canvas,
     elements: template.value.elements,
     metadata: template.value.metadata,
   });
@@ -798,6 +1241,55 @@ const normalizeDynamicParameter = (parameter) => {
   parameter.type = parameter.type || 'text';
   parameter.required = Boolean(parameter.required);
   parameter.description = parameter.description || '';
+};
+
+const replacePlaceholderKey = (value, oldKey, newKey) => {
+  if (typeof value !== 'string' || !oldKey) return value;
+  const escapedKey = oldKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return value.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, 'g'), `{{${newKey}}}`);
+};
+
+const renameDynamicParameter = (parameter, value) => {
+  const previousKey = parameter.key;
+  const nextKey = String(value || '').trim().replace(/\s+/g, '_');
+  parameter.key = nextKey;
+  normalizeDynamicParameter(parameter);
+  const normalizedKey = parameter.key;
+  if (previousKey && normalizedKey && previousKey !== normalizedKey) {
+    template.value.elements.forEach((element) => {
+      if (element.placeholderKey === previousKey) element.placeholderKey = normalizedKey;
+      element.text = replacePlaceholderKey(element.text, previousKey, normalizedKey);
+      element.src = replacePlaceholderKey(element.src, previousKey, normalizedKey);
+      element.qrValue = replacePlaceholderKey(element.qrValue, previousKey, normalizedKey);
+    });
+  }
+  syncDynamicParametersFromTemplate();
+  pushHistory();
+};
+
+const setParameterAllowedValues = (parameter, value) => {
+  parameter.allowedValues = String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  pushHistory();
+};
+
+const removeDynamicParameter = (key) => {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const placeholderPattern = new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, 'g');
+  template.value.elements.forEach((element) => {
+    if (element.placeholderKey === key) element.placeholderKey = '';
+    for (const field of ['text', 'src', 'qrValue']) {
+      if (typeof element[field] === 'string') {
+        element[field] = element[field].replace(placeholderPattern, '');
+      }
+    }
+  });
+  template.value.metadata.dynamicParameters = (template.value.metadata.dynamicParameters || [])
+    .filter((parameter) => parameter.key !== key);
+  syncDynamicParametersFromTemplate();
+  pushHistory();
 };
 
 const buildDynamicKey = (type) => {
@@ -852,7 +1344,7 @@ const syncDynamicParametersFromTemplate = () => {
   source.forEach((item) => {
     if (!item?.key) return;
     const key = item.key.trim().replace(/\s+/g, '_');
-    if (!key) return;
+    if (!key || key === 'page_number') return;
     map.set(key, {
       ...item,
       key,
@@ -863,6 +1355,8 @@ const syncDynamicParametersFromTemplate = () => {
   });
 
   template.value.elements.forEach((element) => {
+    if (element.type === 'pageNumber') return;
+
     const keyFromPlaceholder = (element.placeholderKey || '').trim().replace(/\s+/g, '_');
     if (keyFromPlaceholder && !map.has(keyFromPlaceholder)) {
       map.set(keyFromPlaceholder, {
@@ -926,6 +1420,14 @@ const markDirty = () => {
   pushHistory();
 };
 
+const updateCanvasShellSize = () => {
+  if (!canvasShell.value) return;
+  canvasShellSize.value = {
+    width: canvasShell.value.clientWidth,
+    height: canvasShell.value.clientHeight,
+  };
+};
+
 const undo = () => {
   if (history.value.length <= 1) return;
   const current = history.value.pop();
@@ -984,29 +1486,58 @@ const getWrappedTextLines = (element) => {
   return fitted.length ? fitted : [''];
 };
 
+const constrainPanOffset = (x, y, zoomLevel = zoom.value) => {
+  const viewportWidth = Math.max(0, canvasShellSize.value.width - rulerOrigin);
+  const viewportHeight = Math.max(0, canvasShellSize.value.height - rulerOrigin);
+  const scaledWidth = width.value * zoomLevel;
+  const scaledHeight = height.value * zoomLevel;
+  const visibleWidth = Math.min(80, scaledWidth / 2);
+  const visibleHeight = Math.min(80, scaledHeight / 2);
+
+  return {
+    x: Math.max(visibleWidth - scaledWidth, Math.min(x, viewportWidth - visibleWidth)),
+    y: Math.max(visibleHeight - scaledHeight, Math.min(y, viewportHeight - visibleHeight)),
+  };
+};
+
+const centerPageInViewport = () => {
+  const viewportWidth = Math.max(0, canvasShellSize.value.width - rulerOrigin);
+  const viewportHeight = Math.max(0, canvasShellSize.value.height - rulerOrigin);
+  const centered = {
+    x: (viewportWidth - width.value * zoom.value) / 2,
+    y: (viewportHeight - height.value * zoom.value) / 2,
+  };
+  panOffset.value = constrainPanOffset(centered.x, centered.y);
+};
+
 const fitPageToViewport = () => {
   if (!pageViewport.value) return;
 
-  const padding = 48;
-  const viewportWidth = Math.max(320, pageViewport.value.clientWidth - padding);
-  const viewportHeight = Math.max(220, pageViewport.value.clientHeight - padding);
+  const viewportWidth = Math.max(320, pageViewport.value.clientWidth - 8);
+  const viewportHeight = Math.max(220, pageViewport.value.clientHeight - 8);
   const nextZoom = Math.min(viewportWidth / width.value, viewportHeight / height.value, 1);
   zoom.value = Number(Math.max(0.25, nextZoom).toFixed(2));
 };
 
 const zoomIn = () => {
   zoom.value = Math.min(2, Number((zoom.value + 0.1).toFixed(2)));
+  panOffset.value = constrainPanOffset(panOffset.value.x, panOffset.value.y);
 };
 
 const zoomOut = () => {
   zoom.value = Math.max(0.25, Number((zoom.value - 0.1).toFixed(2)));
+  panOffset.value = constrainPanOffset(panOffset.value.x, panOffset.value.y);
 };
 
 const resetZoom = () => {
   fitPageToViewport();
+  centerPageInViewport();
 };
 
-const backToTemplates = () => router.push('/dashboard/templates');
+const backToTemplates = async () => {
+  if (hasUnsavedChanges.value && !(await saveTemplate())) return;
+  router.push('/dashboard/templates');
+};
 
 const loadTemplate = async () => {
   if (!templateId.value) return;
@@ -1039,6 +1570,7 @@ const loadTemplate = async () => {
     height.value = Number(template.value.dimensions.height || 1123);
     history.value = [serializeTemplate()];
     future.value = [];
+    savedSnapshot.value = serializeTemplate();
     selectedElement.value = template.value.elements[0] || null;
   } catch (error) {
     console.error('No se pudo cargar la plantilla:', error);
@@ -1213,7 +1745,7 @@ const addCheckboxElement = () =>
 const addPageNumberElement = () =>
   makeElement('pageNumber', {
     text: 'Página {{page_number}}',
-    placeholderKey: 'page_number',
+    placeholderKey: '',
     x: 660,
     y: 1090,
     width: 80,
@@ -1224,6 +1756,7 @@ const addPageNumberElement = () =>
 
 const insertPlaceholder = (key) => {
   if (!selectedElement.value) return;
+  const parameter = template.value.metadata.dynamicParameters?.find((item) => item.key === key);
 
   if (
     [
@@ -1233,9 +1766,9 @@ const insertPlaceholder = (key) => {
       'paragraph',
       'list',
       'date',
-      'pageNumber',
       'signature',
       'footer',
+      'table',
     ].includes(selectedElement.value.type)
   ) {
     const value = selectedElement.value.text
@@ -1249,14 +1782,21 @@ const insertPlaceholder = (key) => {
     selectedElement.value.text = `{{${key}}}`;
   }
 
+  if (selectedElement.value.type === 'checkbox') {
+    selectedElement.value.placeholderKey = key;
+    if (parameter) parameter.type = 'boolean';
+  }
+
   if (selectedElement.value.type === 'image') {
     selectedElement.value.placeholderKey = key;
     selectedElement.value.src = `{{${key}}}`;
+    if (parameter) parameter.type = 'image';
   }
 
   if (selectedElement.value.type === 'qr') {
     selectedElement.value.placeholderKey = key;
     selectedElement.value.qrValue = `{{${key}}}`;
+    if (parameter) parameter.type = 'qr';
   }
 
   syncDynamicParametersFromTemplate();
@@ -1264,7 +1804,28 @@ const insertPlaceholder = (key) => {
 };
 
 const selectElement = (element) => {
+  pageSelected.value = false;
   selectedElement.value = element;
+};
+
+const constrainElementToPage = (element) => {
+  const pageWidth = Number(template.value.dimensions.width || width.value);
+  const pageHeight = Number(template.value.dimensions.height || height.value);
+  element.width = Math.max(1, Math.min(Number(element.width) || 1, pageWidth));
+  element.height = Math.max(1, Math.min(Number(element.height) || 1, pageHeight));
+  element.x = Math.max(0, Math.min(Number(element.x) || 0, pageWidth - element.width));
+  element.y = Math.max(0, Math.min(Number(element.y) || 0, pageHeight - element.height));
+};
+
+const commitSelectedElementGeometry = () => {
+  if (!selectedElement.value) return;
+  constrainElementToPage(selectedElement.value);
+  markDirty();
+};
+
+const commitPageDimensions = () => {
+  template.value.elements.forEach(constrainElementToPage);
+  markDirty();
 };
 
 const clearSelectionIfEmpty = (event) => {
@@ -1276,10 +1837,11 @@ const clearSelectionIfEmpty = (event) => {
 
 const openContextMenu = (event, element) => {
   selectElement(element);
+  const panelRect = stagePanel.value?.$el?.getBoundingClientRect();
   contextMenu.value = {
     visible: true,
-    x: event.clientX - 24,
-    y: event.clientY - 12,
+    x: Math.max(0, Math.min(event.clientX - (panelRect?.left || 0), (panelRect?.width || 0) - 160)),
+    y: Math.max(0, Math.min(event.clientY - (panelRect?.top || 0), (panelRect?.height || 0) - 130)),
     element,
   };
 };
@@ -1288,24 +1850,29 @@ const closeContextMenu = () => {
   contextMenu.value.visible = false;
 };
 
+const toggleSelectedElementLock = () => {
+  if (!selectedElement.value) return;
+  selectedElement.value.locked = !selectedElement.value.locked;
+  pushHistory();
+  closeContextMenu();
+};
+
+const reorderSelectedElement = (position) => {
+  const elements = template.value.elements;
+  const index = elements.findIndex((element) => element.id === selectedElement.value?.id);
+  if (index < 0) return;
+  const [element] = elements.splice(index, 1);
+  elements.splice(position === 'front' ? elements.length : 0, 0, element);
+  pushHistory();
+  closeContextMenu();
+};
+
 const duplicateSelectedElement = () => {
   if (!selectedElement.value) return;
   const clone = JSON.parse(JSON.stringify(selectedElement.value));
   clone.id = `${clone.type}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
   clone.x += 24;
   clone.y += 24;
-  template.value.elements.push(clone);
-  selectedElement.value = clone;
-  pushHistory();
-  closeContextMenu();
-};
-
-const copySelectedElement = () => {
-  if (!selectedElement.value) return;
-  const clone = JSON.parse(JSON.stringify(selectedElement.value));
-  clone.id = `${clone.type}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-  clone.x += 18;
-  clone.y += 18;
   template.value.elements.push(clone);
   selectedElement.value = clone;
   pushHistory();
@@ -1323,17 +1890,42 @@ const removeSelectedElement = () => {
   closeContextMenu();
 };
 
+const startPagePan = (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  if (!svgRef.value) return;
+
+  svgRef.value.setPointerCapture?.(event.pointerId);
+  pagePanDrag.value = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    startPanX: panOffset.value.x,
+    startPanY: panOffset.value.y,
+  };
+};
+
+const handleCanvasPointerDown = (event) => {
+  if (event.button === 1 || (event.button === 0 && panMode.value)) {
+    startPagePan(event);
+  }
+};
+
 const startDrag = (event, element) => {
+  if (event.button !== 0) return;
   event.preventDefault();
   event.stopPropagation();
   selectElement(element);
+  if (element.locked) return;
+  constrainElementToPage(element);
 
   const svg = svgRef.value;
   if (!svg) return;
+  svg.setPointerCapture?.(event.pointerId);
 
   const rect = svg.getBoundingClientRect();
-  const x = ((event.clientX - rect.left) / rect.width) * width.value;
-  const y = ((event.clientY - rect.top) / rect.height) * height.value;
+  const x = Math.max(0, Math.min(((event.clientX - rect.left) / rect.width) * width.value, width.value));
+  const y = Math.max(0, Math.min(((event.clientY - rect.top) / rect.height) * height.value, height.value));
 
   dragState.value = {
     id: element.id,
@@ -1345,6 +1937,15 @@ const startDrag = (event, element) => {
 };
 
 const handlePointerMove = (event) => {
+  if (pagePanDrag.value?.pointerId === event.pointerId) {
+    const drag = pagePanDrag.value;
+    panOffset.value = constrainPanOffset(
+      drag.startPanX + event.clientX - drag.startX,
+      drag.startPanY + event.clientY - drag.startY
+    );
+    return;
+  }
+
   if (!dragState.value || !svgRef.value) return;
 
   const svg = svgRef.value;
@@ -1355,22 +1956,61 @@ const handlePointerMove = (event) => {
   const current = template.value.elements.find((element) => element.id === dragState.value.id);
   if (!current) return;
 
-  current.x = Math.max(0, x - dragState.value.offsetX);
-  current.y = Math.max(0, y - dragState.value.offsetY);
+  current.x = Math.max(
+    0,
+    Math.min(x - dragState.value.offsetX, Math.max(0, width.value - Number(current.width || 0)))
+  );
+  current.y = Math.max(
+    0,
+    Math.min(y - dragState.value.offsetY, Math.max(0, height.value - Number(current.height || 0)))
+  );
+};
+
+const handleCanvasWheel = (event) => {
+  if (!pageSelected.value || !event.shiftKey || event.deltaY === 0) return;
+  event.preventDefault();
+
+  const previousZoom = zoom.value;
+  const nextZoom = Math.max(
+    0.25,
+    Math.min(2, previousZoom * Math.exp(-event.deltaY * 0.0015))
+  );
+  if (nextZoom === previousZoom) return;
+
+  const viewportRect = pageViewport.value.getBoundingClientRect();
+  const pointerX = event.clientX - viewportRect.left;
+  const pointerY = event.clientY - viewportRect.top;
+  const pageX = (pointerX - panOffset.value.x) / previousZoom;
+  const pageY = (pointerY - panOffset.value.y) / previousZoom;
+  zoom.value = Number(nextZoom.toFixed(2));
+  panOffset.value = constrainPanOffset(
+    pointerX - pageX * zoom.value,
+    pointerY - pageY * zoom.value
+  );
+};
+
+const selectPage = () => {
+  pageSelected.value = true;
+  selectedElement.value = null;
+  closeContextMenu();
 };
 
 const stopDrag = (event) => {
   if (event?.pointerId !== undefined && svgRef.value?.hasPointerCapture?.(event.pointerId)) {
     svgRef.value.releasePointerCapture(event.pointerId);
   }
+  if (pagePanDrag.value?.pointerId === event?.pointerId) {
+    pagePanDrag.value = null;
+  }
+  const hadElementDrag = Boolean(dragState.value);
   dragState.value = null;
-  pushHistory();
+  if (hadElementDrag) pushHistory();
 };
 
 const isImagePlaceholder = (element) => {
   if (!element) return true;
   const value = String(element.src || '');
-  return !value || value.includes('{{') || value.startsWith('data:image/svg+xml');
+  return !value || value.includes('{{');
 };
 
 const getImagePlaceholderLabel = (element) => {
@@ -1406,32 +2046,58 @@ const getElementLabel = (element) => {
   return element.placeholderKey ? `{{${element.placeholderKey}}}` : element.text || '';
 };
 
+const getTextAnchor = (element) => {
+  if (element.align === 'center') return 'middle';
+  if (element.align === 'right') return 'end';
+  return 'start';
+};
+
+const getAlignedTextX = (element) => {
+  const x = Number(element.x || 0);
+  const width = Number(element.width || 0);
+  if (element.align === 'center') return x + width / 2;
+  if (element.align === 'right') return x + width;
+  return x;
+};
+
+const getTableRows = (element) => String(element.text || '').split('\n').map((row) => row.split('|'));
+
+const getTableColumnCount = (element) =>
+  Math.max(1, ...getTableRows(element).map((row) => row.length));
+
 const saveTemplate = async () => {
   try {
     await updateTemplate(templateId.value, {
       name: template.value.name,
       description: template.value.description,
       dimensions: template.value.dimensions,
+      page: template.value.page,
+      canvas: template.value.canvas,
       elements: template.value.elements,
+      metadata: template.value.metadata,
       status: template.value.status,
     });
     history.value = [serializeTemplate()];
     future.value = [];
+    savedSnapshot.value = serializeTemplate();
     notificationStore.setNotification({
       message: message.value,
       code: code.value,
       mode: 'automatic',
     });
+    return true;
   } catch (error) {
     notificationStore.setNotification({
       message: error.response?.data?.message || error.message || 'No se pudo guardar la plantilla.',
       code: error.response?.data?.code || 'EXXX',
       mode: 'automatic',
     });
+    return false;
   }
 };
 
-const openPresentation = () => {
+const openPresentation = async () => {
+  if (hasUnsavedChanges.value && !(await saveTemplate())) return;
   router.push(`/templates/${templateId.value}/present`);
 };
 
@@ -1453,13 +2119,24 @@ watch([width, height], () => {
   fitPageToViewport();
 });
 
+onBeforeRouteLeave(() => {
+  if (!hasUnsavedChanges.value) return true;
+  return window.confirm('Hay cambios sin guardar. ¿Deseas salir sin guardar?');
+});
+
 onMounted(async () => {
   await loadTemplate();
+  updateCanvasShellSize();
   fitPageToViewport();
+  centerPageInViewport();
 
-  if (pageViewport.value && 'ResizeObserver' in window) {
-    const observer = new ResizeObserver(() => fitPageToViewport());
-    observer.observe(pageViewport.value);
+  if (canvasShell.value && 'ResizeObserver' in window) {
+    const observer = new ResizeObserver(() => {
+      updateCanvasShellSize();
+      fitPageToViewport();
+      centerPageInViewport();
+    });
+    observer.observe(canvasShell.value);
     window.__docugenPageResizeObserver = observer;
   }
 });
@@ -1474,12 +2151,19 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .editor-shell {
-  min-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100vh - var(--v-layout-top, 0px) - var(--v-layout-bottom, 0px));
+  height: calc(100dvh - var(--v-layout-top, 0px) - var(--v-layout-bottom, 0px));
+  min-height: 0;
+  overflow: hidden;
   background: linear-gradient(180deg, #f4f7ff 0%, #eef4fb 100%);
 }
 
 .editor-topbar {
   position: sticky;
+  flex: 0 0 auto;
   top: 0;
   z-index: 10;
   background: rgba(255, 255, 255, 0.9);
@@ -1488,12 +2172,18 @@ onBeforeUnmount(() => {
 }
 
 .editor-body {
-  height: calc(100vh - 120px);
-  padding-top: 16px;
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .editor-layout {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) 320px;
   gap: 16px;
@@ -1503,6 +2193,10 @@ onBeforeUnmount(() => {
 .editor-stage-col {
   min-height: 0;
   height: 100%;
+}
+
+.properties-panel {
+  overflow-y: auto;
 }
 
 .sidebar-panel {
@@ -1545,6 +2239,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   position: relative;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.9));
 }
@@ -1553,23 +2248,41 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 8px 12px 12px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.18);
   margin-bottom: 12px;
 }
 
-.zoom-control {
-  background: rgba(148, 163, 184, 0.08);
+.canvas-guides-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 12px;
+}
+
+.canvas-guides-control :deep(.v-selection-control) {
+  min-height: 32px;
+}
+
+.zoom-percentage {
+  min-width: 42px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .canvas-shell {
   position: relative;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   border-radius: 20px;
   background: linear-gradient(135deg, #f8fafc, #edf3ff);
   border: 1px solid rgba(148, 163, 184, 0.28);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  touch-action: none;
 }
 
 .ruler {
@@ -1581,18 +2294,18 @@ onBeforeUnmount(() => {
 }
 
 .ruler-horizontal {
-  left: 26px;
-  right: 18px;
+  left: 0;
+  right: 0;
   top: 0;
-  height: 24px;
+  height: 28px;
   overflow: hidden;
 }
 
 .ruler-vertical {
   left: 0;
-  top: 24px;
+  top: 0;
   bottom: 0;
-  width: 24px;
+  width: 28px;
   overflow: hidden;
 }
 
@@ -1629,16 +2342,15 @@ onBeforeUnmount(() => {
 
 .page-viewport {
   position: absolute;
-  inset: 28px 18px 18px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
+  inset: 28px 0 0 28px;
+  overflow: hidden;
 }
 
 .page-wrapper {
-  transform-origin: center center;
-  transition: transform 0.12s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1654,7 +2366,42 @@ onBeforeUnmount(() => {
   max-width: none;
   background: white;
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12);
-  border-radius: 16px;
+  border-radius: 0;
+}
+
+.page-pan-active {
+  cursor: grab;
+}
+
+.page-pan-active * {
+  cursor: grab !important;
+}
+
+.page-is-panning {
+  cursor: grabbing;
+}
+
+.page-is-panning * {
+  cursor: grabbing !important;
+}
+
+.editor-status-bar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 48px;
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.ruler-conversion {
+  margin-left: auto;
+  color: rgba(71, 85, 105, 0.9);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .context-menu {
@@ -1673,14 +2420,95 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 960px) {
-  .editor-body {
+  .editor-shell {
     height: auto;
+    min-height: calc(100vh - var(--v-layout-top, 0px) - var(--v-layout-bottom, 0px));
+    min-height: calc(100dvh - var(--v-layout-top, 0px) - var(--v-layout-bottom, 0px));
+    overflow: visible;
+  }
+
+  .editor-body {
+    flex: 1 0 auto;
+    height: auto;
+    min-height: 0;
   }
 
   .editor-layout {
+    flex: none;
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .editor-sidebar,
+  .editor-stage-col {
+    height: auto;
+  }
+
+  .sidebar-panel {
+    min-height: auto;
+  }
+
+  .toolbar-grid {
+    flex: none;
+    max-height: 35vh;
+  }
+
+  .stage-panel {
+    height: auto;
+  }
+
+  .stage-toolbar {
+    flex-wrap: wrap;
+    padding: 6px 4px 10px;
+  }
+
+  .canvas-guides-control {
+    column-gap: 6px;
+  }
+
+  .canvas-guides-control :deep(.v-label) {
+    font-size: 0.75rem;
+  }
+
+  .canvas-shell {
+    flex: none;
+    height: min(65vh, 700px);
+    min-height: 360px;
+  }
+
+  .properties-panel {
+    overflow: visible;
+  }
+
+  .editor-status-bar {
+    margin-top: 0;
+  }
+
+  .ruler-conversion {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .editor-body {
+    padding: 12px !important;
+  }
+
+  .editor-status-bar {
+    align-items: flex-start;
+  }
+
+  .editor-status-bar .v-chip {
+    max-width: 100%;
+  }
+
+  .editor-status-bar .v-chip :deep(.v-chip__content) {
+    white-space: normal;
+  }
+
+  .ruler-conversion {
+    width: 100%;
   }
 }
 </style>

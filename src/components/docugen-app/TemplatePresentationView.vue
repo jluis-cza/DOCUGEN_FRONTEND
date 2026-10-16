@@ -98,16 +98,69 @@
                     :key="placeholder.key"
                     class="placeholder-field"
                   >
+                    <v-select
+                      v-if="placeholder.allowedValues?.length"
+                      :model-value="configData[placeholder.key] ?? ''"
+                      :items="placeholder.allowedValues"
+                      :label="placeholder.label || placeholder.key"
+                      :error="!!validationErrors[placeholder.key]"
+                      :error-messages="
+                        validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
+                      "
+                      :hint="placeholder.description || `Usado en: ${placeholder.elementType}`"
+                      persistent-hint
+                      density="comfortable"
+                      variant="outlined"
+                      @update:model-value="(val) => updateConfigData(placeholder.key, val)"
+                    />
+                    <v-checkbox
+                      v-else-if="placeholder.type === 'boolean'"
+                      :model-value="configData[placeholder.key] === true || configData[placeholder.key] === 'true'"
+                      :label="placeholder.label || placeholder.key"
+                      :error="!!validationErrors[placeholder.key]"
+                      :error-messages="
+                        validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
+                      "
+                      :hint="placeholder.description || `Usado en: ${placeholder.elementType}`"
+                      persistent-hint
+                      density="comfortable"
+                      @update:model-value="(val) => updateConfigData(placeholder.key, val)"
+                    />
+                    <v-textarea
+                      v-else-if="placeholder.type === 'textarea'"
+                      :model-value="configData[placeholder.key] ?? ''"
+                      :label="placeholder.label || placeholder.key"
+                      :error="!!validationErrors[placeholder.key]"
+                      :error-messages="
+                        validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
+                      "
+                      :hint="placeholder.description || `Usado en: ${placeholder.elementType}`"
+                      persistent-hint
+                      density="comfortable"
+                      variant="outlined"
+                      @update:model-value="(val) => updateConfigData(placeholder.key, val)"
+                    />
                     <v-text-field
+                      v-else
                       :model-value="configData[placeholder.key] || ''"
-                      :label="placeholder.key"
+                      :label="placeholder.label || placeholder.key"
+                      :type="
+                        ['number', 'date', 'email', 'url'].includes(placeholder.type)
+                          ? placeholder.type
+                          : 'text'
+                      "
                       :error="!!validationErrors[placeholder.key]"
                       :error-messages="
                         validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
                       "
                       density="comfortable"
                       variant="outlined"
-                      :hint="`Usado en: ${placeholder.elementType}`"
+                      :hint="
+                        placeholder.description ||
+                        (placeholder.example
+                          ? `Ejemplo: ${placeholder.example}`
+                          : `Usado en: ${placeholder.elementType}`)
+                      "
                       persistent-hint
                       @update:model-value="(val) => updateConfigData(placeholder.key, val)"
                     />
