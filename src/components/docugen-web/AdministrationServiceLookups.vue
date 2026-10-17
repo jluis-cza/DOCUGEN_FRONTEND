@@ -12,6 +12,7 @@
     <div class="my-4">
       <v-card>
         <v-data-table
+          class="responsive-actions-table"
           :items="serviceLookups"
           :headers="headers"
           :loading="loading"
@@ -24,7 +25,7 @@
             }}</v-chip>
           </template>
           <template #[`item.actions`]="{ item }">
-            <div class="d-flex justify-space-between align-center">
+            <div class="table-row-actions d-flex align-center ga-2">
               <v-switch
                 :model-value="item.status === 'running'"
                 color="primary"
@@ -188,4 +189,24 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.responsive-actions-table :deep(.v-table__wrapper) {
+  overflow-x: auto;
+}
+
+.table-row-actions {
+  width: max-content;
+  min-width: 100%;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.table-row-actions :deep(.v-switch),
+.table-row-actions .v-btn {
+  flex: 0 0 auto;
+}
+
+.table-row-actions :deep(.v-label) {
+  white-space: nowrap;
+}
+</style>

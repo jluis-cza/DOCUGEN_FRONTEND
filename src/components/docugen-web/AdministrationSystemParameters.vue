@@ -8,6 +8,7 @@
     <div>
       <v-card class="my-4">
         <v-data-table
+          class="responsive-actions-table"
           :headers="headers"
           :items="systemParameters"
           :loading="system_parameters_loading"
@@ -20,7 +21,7 @@
             }}</v-chip>
           </template>
           <template #[`item.actions`]="{ item }">
-            <div class="d-flex justify-space-between align-center">
+            <div class="table-row-actions d-flex align-center ga-2">
               <v-switch
                 :model-value="item.status === 'followed'"
                 color="primary"
@@ -34,6 +35,7 @@
                 inset
                 density="compact"
                 hide-details
+                :disabled="switchingItemId === item._id"
                 @update:modelValue="(value) => onSwitchStatus(value, item)"
               ></v-switch>
               <v-btn @click="viewItemDetail(item._id)" class="bg-info" size="small" variant="tonal">
@@ -73,6 +75,8 @@ import { useRouter, useRoute } from 'vue-router';
 import { useSystemParameters } from '../../composables/docugen-web/useSystemParameters.js';
 import { useSystemParameter } from '../../composables/docugen-web/useSystemParameter.js';
 import { useTablesStore } from '../../stores/utils/tablesStore.js';
+import { useDialogBoxStore } from '../../stores/utils/dialogBoxStore.js';
+import { DIALOGS } from '../../constants/dialogs.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -124,6 +128,8 @@ const status = (itemStatus) => {
 };
 const tablesStore = useTablesStore();
 const tableId = 1;
+const dialogBoxStore = useDialogBoxStore();
+const switchingItemId = ref(null);
 const {
   systemParameters,
   message: system_parameters_message,
@@ -134,10 +140,30 @@ const {
 const { actions: system_parameter_actions } = useSystemParameter();
 
 const onSwitchStatus = async (value, item) => {
-  const status = value ? 'followed' : 'unfollowed';
-  const id = item._id;
-  const payload = { status };
-  await system_parameter_actions.systemParameterSetter(id, { data: payload });
+  if (switchingItemId.value === item._id) return;
+  switchingItemId.value = item._id;
+
+  try {
+    if (!value) {
+      const dialogBoxData =
+        DIALOGS.docugen_web.administration.system_parameter_monitoring_suspension;
+      dialogBoxStore.setDialogBox({
+        data: {
+          ...dialogBoxData,
+          text: dialogBoxData.text.replace('<parameter>', item.alias),
+        },
+      });
+      dialogBoxStore.openDialogBox();
+      const response = await dialogBoxStore.requestDialogBoxData();
+      dialogBoxStore.resolveDialogBoxProcedure(true);
+      if (response.key !== 'y') return;
+    }
+
+    const status = value ? 'followed' : 'unfollowed';
+    await system_parameter_actions.systemParameterSetter(item._id, { data: { status } });
+  } finally {
+    switchingItemId.value = null;
+  }
 };
 
 const viewItemDetail = (id) => {
@@ -156,4 +182,24 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.responsive-actions-table :deep(.v-table__wrapper) {
+  overflow-x: auto;
+}
+
+.table-row-actions {
+  width: max-content;
+  min-width: 100%;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.table-row-actions :deep(.v-switch),
+.table-row-actions .v-btn {
+  flex: 0 0 auto;
+}
+
+.table-row-actions :deep(.v-label) {
+  white-space: nowrap;
+}
+</style>

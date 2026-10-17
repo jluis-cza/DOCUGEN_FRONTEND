@@ -569,4 +569,10 @@ onMounted(loadTokens);
   min-width: 1000px;
   white-space: nowrap;
 }
+
+@media (max-width: 600px) {
+  .api-tokens-container {
+    padding: 12px;
+  }
+}
 </style>

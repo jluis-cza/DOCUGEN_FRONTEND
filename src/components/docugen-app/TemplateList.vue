@@ -1,10 +1,10 @@
 <template>
   <v-container fluid>
-    <div class="d-flex justify-space-between align-center mb-4">
+    <div class="d-flex flex-wrap justify-space-between align-center ga-2 mb-4">
       <div>
         <h3>Plantillas</h3>
       </div>
-      <div class="d-flex ga-2">
+      <div class="d-flex flex-wrap ga-2 template-list-header-actions">
         <v-btn color="secondary" variant="tonal" prepend-icon="mdi-import" @click="triggerImport">
           Importar plantilla
         </v-btn>
@@ -22,8 +22,39 @@
       @change="handleImportTemplate"
     />
 
+    <v-dialog v-model="importDialogOpen" max-width="560" persistent>
+      <v-card>
+        <v-card-title>Importar plantilla como copia</v-card-title>
+        <v-card-text>
+          <v-text-field
+            v-model="importName"
+            label="Nombre de la copia"
+            :rules="[templateNameRule]"
+            :error-messages="importError ? [importError] : []"
+            maxlength="120"
+            counter="120"
+            autofocus
+            :disabled="importing"
+            @update:model-value="importError = ''"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn :disabled="importing" @click="closeImportDialog">Cancelar</v-btn>
+          <v-btn
+            color="primary"
+            :loading="importing"
+            :disabled="!isValidTemplateName(importName)"
+            @click="submitTemplateImport"
+          >
+            Importar copia
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-card class="mb-4 pa-2">
-      <div class="d-flex ga-3 align-center">
+      <div class="d-flex flex-wrap ga-3 align-center">
         <v-text-field
           v-model="search"
           label="Buscar plantilla"
@@ -38,6 +69,7 @@
 
     <v-card>
       <v-data-table
+        class="responsive-actions-table"
         :headers="headers"
         :items="templates"
         :loading="loading"
@@ -59,7 +91,7 @@
         </template>
 
         <template #[`item.actions`]="{ item }">
-          <div class="d-flex ga-2">
+          <div class="table-row-actions d-flex ga-2">
             <v-btn
               color="info"
               variant="tonal"
@@ -87,24 +119,38 @@
             >
               Exportar
             </v-btn>
-            <v-btn
-              color="warning"
-              variant="tonal"
-              size="small"
-              prepend-icon="mdi-swap-horizontal"
-              @click="openStatusDialog(item)"
-            >
-              Actualizar estado
-            </v-btn>
-            <v-btn
-              color="error"
-              variant="tonal"
-              size="small"
-              prepend-icon="mdi-delete-outline"
-              @click="deleteItem(item._id)"
-            >
-              Eliminar
-            </v-btn>
+            <v-menu>
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                  prepend-icon="mdi-cog-outline"
+                  append-icon="mdi-chevron-down"
+                >
+                  Actualizar plantilla
+                </v-btn>
+              </template>
+              <v-list density="compact">
+                <v-list-item
+                  prepend-icon="mdi-rename-box"
+                  title="Actualizar nombre"
+                  @click="openRenameDialog(item)"
+                />
+                <v-list-item
+                  prepend-icon="mdi-swap-horizontal"
+                  title="Actualizar estado"
+                  @click="openStatusDialog(item)"
+                />
+                <v-list-item
+                  prepend-icon="mdi-delete-outline"
+                  title="Eliminar"
+                  class="text-error"
+                  @click="openDeleteDialog(item)"
+                />
+              </v-list>
+            </v-menu>
           </div>
         </template>
       </v-data-table>
@@ -285,7 +331,13 @@
       <v-card>
         <v-card-title>Crear plantilla</v-card-title>
         <v-card-text>
-          <v-text-field v-model="form.name" label="Nombre de la plantilla" />
+          <v-text-field
+            v-model="form.name"
+            label="Nombre de la plantilla"
+            :rules="[templateNameRule]"
+            maxlength="120"
+            counter="120"
+          />
           <v-text-field v-model="form.description" label="Descripción" />
           <v-select
             v-model="form.status"
@@ -351,6 +403,44 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="renameDialogOpen" max-width="480" persistent>
+      <v-card>
+        <v-card-title>Actualizar nombre de plantilla</v-card-title>
+        <v-card-text>
+          <v-text-field
+            v-model="renameName"
+            label="Nombre de la plantilla"
+            :rules="[templateNameRule]"
+            :error-messages="renameError ? [renameError] : []"
+            maxlength="120"
+            counter="120"
+            autofocus
+            :disabled="renaming"
+            @update:model-value="renameError = ''"
+          />
+          <div class="text-caption text-medium-emphasis">
+            El nombre debe ser único en tu cuenta. Se permiten letras, números y puntuación común,
+            excepto caracteres de ruta y control.
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn :disabled="renaming" @click="closeRenameDialog">Cancelar</v-btn>
+          <v-btn
+            color="primary"
+            :loading="renaming"
+            :disabled="
+              !isValidTemplateName(renameName) ||
+              renameName.trim() === selectedTemplateForRename?.name
+            "
+            @click="confirmRename"
+          >
+            Guardar nombre
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="statusDialogOpen" max-width="480" persistent>
       <v-card>
         <v-card-title class="bg-primary text-white">
@@ -393,6 +483,24 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="deleteDialogOpen" max-width="480" persistent>
+      <v-card>
+        <v-card-title class="text-error">Eliminar plantilla</v-card-title>
+        <v-card-text>
+          ¿Estás seguro de que deseas eliminar la plantilla
+          <strong>{{ selectedTemplateForDelete?.name }}</strong
+          >? Esta acción no se puede deshacer.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn :disabled="deleting" @click="closeDeleteDialog">Cancelar</v-btn>
+          <v-btn color="error" variant="text" :loading="deleting" @click="confirmDelete">
+            Eliminar plantilla
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -424,6 +532,19 @@ const {
 } = useTemplates();
 const dialogOpen = ref(false);
 const statusDialogOpen = ref(false);
+const deleteDialogOpen = ref(false);
+const deleting = ref(false);
+const selectedTemplateForDelete = ref(null);
+const importDialogOpen = ref(false);
+const importing = ref(false);
+const importName = ref('');
+const importError = ref('');
+const pendingImport = ref(null);
+const renameDialogOpen = ref(false);
+const renaming = ref(false);
+const renameName = ref('');
+const renameError = ref('');
+const selectedTemplateForRename = ref(null);
 const updatingStatus = ref(false);
 const selectedTemplateForStatus = ref(null);
 const selectedStatus = ref('');
@@ -489,6 +610,15 @@ const PAPER_SIZES = [
 ];
 const selectedPaperSize = ref('a4');
 
+const isValidTemplateName = (value) => {
+  if (typeof value !== 'string') return false;
+  const name = value.normalize('NFC').trim();
+  return name.length >= 2 && name.length <= 120 && !/[\p{C}\p{Zl}\p{Zp}<>:"/\\|?*]/u.test(name);
+};
+const templateNameRule = (value) =>
+  isValidTemplateName(value) ||
+  'Usa entre 2 y 120 caracteres; no se permiten caracteres de control ni <>:"/\\|?*.';
+
 const form = ref({
   name: '',
   description: '',
@@ -504,7 +634,7 @@ const dimensionRule = (value) =>
   `Ingresa un número entero entre ${MIN_DIMENSION} y ${MAX_DIMENSION} px.`;
 const canCreateTemplate = computed(
   () =>
-    Boolean(form.value.name.trim()) &&
+    isValidTemplateName(form.value.name) &&
     isValidDimension(form.value.dimensions.width) &&
     isValidDimension(form.value.dimensions.height) &&
     !loading.value
@@ -896,13 +1026,109 @@ const handleImportTemplate = async (event) => {
     const parsed = JSON.parse(content);
     const sourceName = file.name.replace(/\.json$/i, '') || 'Plantilla importada';
     const normalized = normalizeImportedTemplate(parsed, sourceName);
-    await createTemplate(normalized);
-    await loadTemplates();
+    pendingImport.value = normalized;
+    importName.value = normalized.name;
+    importError.value = '';
+    importDialogOpen.value = true;
   } catch (error) {
-    console.error('Error importando plantilla', error);
-    alert(`No se pudo importar la plantilla. Motivo: ${error.message || 'archivo inválido'}`);
+    notificationStore.setNotification({
+      message: `No se pudo preparar la plantilla para importar. Motivo: ${error.message || 'archivo inválido'}`,
+      code: error.response?.data?.code || 'EXXX',
+      mode: 'automatic',
+    });
   } finally {
     event.target.value = '';
+  }
+};
+
+const closeImportDialog = () => {
+  if (importing.value) return;
+  importDialogOpen.value = false;
+  pendingImport.value = null;
+  importName.value = '';
+  importError.value = '';
+};
+
+const submitTemplateImport = async () => {
+  if (!pendingImport.value || !isValidTemplateName(importName.value) || importing.value) return;
+
+  importing.value = true;
+  importError.value = '';
+  try {
+    await createTemplate({
+      ...pendingImport.value,
+      name: importName.value.normalize('NFC').trim(),
+    });
+    importDialogOpen.value = false;
+    pendingImport.value = null;
+    importName.value = '';
+    importError.value = '';
+    try {
+      await loadTemplates();
+      notificationStore.setNotification({
+        message: 'Plantilla importada correctamente como una copia nueva.',
+        code: code.value || 'S2003',
+        mode: 'automatic',
+      });
+    } catch (error) {
+      notificationStore.setNotification({
+        message:
+          'La copia se importó correctamente, pero no se pudo actualizar la lista. Actualiza la vista para verla.',
+        code: error.response?.data?.code || 'EXXX',
+        mode: 'automatic',
+      });
+    }
+  } catch (error) {
+    importError.value =
+      error.response?.data?.message || error.message || 'No se pudo importar la plantilla.';
+  } finally {
+    importing.value = false;
+  }
+};
+
+const openRenameDialog = (template) => {
+  selectedTemplateForRename.value = template;
+  renameName.value = template.name || '';
+  renameError.value = '';
+  renameDialogOpen.value = true;
+};
+
+const closeRenameDialog = () => {
+  if (renaming.value) return;
+  renameDialogOpen.value = false;
+  selectedTemplateForRename.value = null;
+  renameName.value = '';
+  renameError.value = '';
+};
+
+const confirmRename = async () => {
+  const template = selectedTemplateForRename.value;
+  if (!template || !isValidTemplateName(renameName.value) || renaming.value) return;
+
+  renaming.value = true;
+  renameError.value = '';
+  try {
+    const updated = await updateTemplate(template._id, {
+      name: renameName.value.normalize('NFC').trim(),
+    });
+    template.name = updated.name;
+    if (selectedTemplateDetails.value?._id === updated._id) {
+      selectedTemplateDetails.value.name = updated.name;
+    }
+    renameDialogOpen.value = false;
+    selectedTemplateForRename.value = null;
+    renameName.value = '';
+    renameError.value = '';
+    notificationStore.setNotification({
+      message: message.value,
+      code: code.value,
+      mode: 'automatic',
+    });
+  } catch (error) {
+    renameError.value =
+      error.response?.data?.message || error.message || 'No se pudo actualizar el nombre.';
+  } finally {
+    renaming.value = false;
   }
 };
 
@@ -954,7 +1180,8 @@ const exportTemplate = async (item) => {
     URL.revokeObjectURL(url);
   } catch (error) {
     notificationStore.setNotification({
-      message: error.response?.data?.message || error.message || 'No se pudo exportar la plantilla.',
+      message:
+        error.response?.data?.message || error.message || 'No se pudo exportar la plantilla.',
       code: error.response?.data?.code || 'EXXX',
       mode: 'automatic',
     });
@@ -966,9 +1193,26 @@ const openEditor = (templateId) => {
   router.push(`/templates/${templateId}/edit`);
 };
 
-const deleteItem = async (templateId) => {
+const openDeleteDialog = (template) => {
+  selectedTemplateForDelete.value = template;
+  deleteDialogOpen.value = true;
+};
+
+const closeDeleteDialog = () => {
+  if (deleting.value) return;
+  deleteDialogOpen.value = false;
+  selectedTemplateForDelete.value = null;
+};
+
+const confirmDelete = async () => {
+  const template = selectedTemplateForDelete.value;
+  if (!template || deleting.value) return;
+
+  deleting.value = true;
   try {
-    await deleteTemplate(templateId);
+    await deleteTemplate(template._id);
+    deleteDialogOpen.value = false;
+    selectedTemplateForDelete.value = null;
     notificationStore.setNotification({
       message: message.value,
       code: code.value,
@@ -982,6 +1226,8 @@ const deleteItem = async (templateId) => {
       code: error.response?.data?.code || 'EXXX',
       mode: 'automatic',
     });
+  } finally {
+    deleting.value = false;
   }
 };
 
@@ -1002,5 +1248,30 @@ onMounted(async () => {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.responsive-actions-table :deep(.v-table__wrapper) {
+  overflow-x: auto;
+}
+
+.table-row-actions {
+  width: max-content;
+  min-width: 100%;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.table-row-actions .v-btn {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 600px) {
+  .template-list-header-actions {
+    width: 100%;
+  }
+
+  .template-list-header-actions .v-btn {
+    flex: 1 1 auto;
+  }
 }
 </style>

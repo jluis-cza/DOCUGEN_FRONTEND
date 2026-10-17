@@ -973,6 +973,7 @@ Object.assign(window, {
   flex: 0 0 auto;
   align-items: center;
   margin-left: clamp(32px, 12.5vw, 180px);
+  min-width: 0;
 }
 
 .presentation-body {
@@ -993,6 +994,10 @@ Object.assign(window, {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.presentation-layout > * {
+  min-width: 0;
 }
 
 .bulk-panel {
@@ -1161,6 +1166,43 @@ Object.assign(window, {
 
   .bulk-panel {
     min-height: 60vh;
+  }
+}
+
+@media (max-width: 600px) {
+  .presentation-topbar :deep(.v-toolbar__content) {
+    height: auto !important;
+    min-height: 64px;
+    flex-wrap: wrap;
+    padding-block: 6px;
+  }
+
+  .presentation-heading {
+    margin-left: 0;
+    min-width: 0;
+  }
+
+  .presentation-topbar :deep(.v-toolbar__append) {
+    flex: 1 1 100%;
+    margin-inline-start: 0;
+  }
+
+  .presentation-topbar :deep(.v-toolbar__append > div) {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .presentation-body {
+    padding: 8px !important;
+  }
+
+  .config-panel,
+  .preview-panel {
+    height: min(65vh, 600px);
+  }
+
+  .preview-placeholder {
+    padding: 20px;
   }
 }
 </style>

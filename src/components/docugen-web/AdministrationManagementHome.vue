@@ -10,11 +10,11 @@
 
   <v-row>
     <!-- Services overview -->
-    <v-col cols="8">
+    <v-col cols="12" lg="8">
       <AdministrationManagementHomeServices :account="account" />
     </v-col>
     <!-- My processes -->
-    <v-col cols="4">
+    <v-col cols="12" lg="4">
       <AdministrationManagementHomeProcesses :account="account" />
     </v-col>
   </v-row>
@@ -42,7 +42,13 @@
                     <span>{{ item.label }}</span>
                     <v-chip
                       size="small"
-                      :color="item.status === 'running' ? 'success' : item.status === 'stopped' ? 'error' : 'secondary'"
+                      :color="
+                        item.status === 'running'
+                          ? 'success'
+                          : item.status === 'stopped'
+                            ? 'error'
+                            : 'secondary'
+                      "
                       variant="flat"
                     >
                       {{
@@ -92,7 +98,6 @@
               </v-list>
             </v-col>
           </v-row>
-
         </v-card-item>
       </v-card>
     </v-col>
@@ -100,13 +105,13 @@
 
   <!-- Admin subpanel -->
   <v-row v-if="account.role === 'admin'">
-    <v-col cols="4">
+    <v-col cols="12" sm="6" lg="4">
       <AdministrationManagementHomeSystemParameters />
     </v-col>
-    <v-col cols="4">
+    <v-col cols="12" sm="6" lg="4">
       <AdministrationManagementHomeAccounts />
     </v-col>
-    <v-col cols="4">
+    <v-col cols="12" sm="6" lg="4">
       <AdministrationManagementHomeServiceLookups />
     </v-col>
   </v-row>
@@ -150,8 +155,12 @@ const globalServiceInfo = computed(() => {
   const edition = overview.find((s) => s.alias === 'edition') || null;
   const generation = overview.find((s) => s.alias === 'generation') || null;
 
-  const editionStatus = account.value.role === 'dev' ? globalServiceState.value.edition : getServiceStatus(edition);
-  const generationStatus = account.value.role === 'dev' ? globalServiceState.value.generation : getServiceStatus(generation);
+  const editionStatus =
+    account.value.role === 'dev' ? globalServiceState.value.edition : getServiceStatus(edition);
+  const generationStatus =
+    account.value.role === 'dev'
+      ? globalServiceState.value.generation
+      : getServiceStatus(generation);
 
   return [
     { label: 'Servicio de Edición de Plantillas', status: editionStatus },

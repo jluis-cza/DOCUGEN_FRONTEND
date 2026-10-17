@@ -124,7 +124,8 @@
     <!-- Drawer nav -->
     <v-navigation-drawer
       v-model="drawerOpen"
-      :permanent="true"
+      :permanent="mdAndUp"
+      :temporary="!mdAndUp"
       color="surface"
       border="end"
       width="240"
@@ -182,7 +183,7 @@
       </v-list>
     </v-navigation-drawer>
     <v-main>
-      <v-container fluid class="pa-7">
+      <v-container fluid class="dashboard-content pa-3 pa-md-7">
         <RouterView />
       </v-container>
     </v-main>
@@ -190,8 +191,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useDisplay } from 'vuetify';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useMyNotificationsStore } from '../../stores/docugen-web/myNotificationsStore.js';
 import { useMyNotifications } from '../../composables/docugen-web/useMyNotifications.js';
@@ -205,6 +207,7 @@ import ManagementMyNotifications from '../../components/docugen-web/ManagementMy
 
 const router = useRouter();
 const route = useRoute();
+const { mdAndUp } = useDisplay();
 const myAccountStore = useMyAccountStore();
 const myNotificationsStore = useMyNotificationsStore();
 const myProfileStore = useMyProfileStore();
@@ -226,6 +229,13 @@ const profileLoaded = computed(
 );
 
 const drawerOpen = ref(true);
+watch(
+  mdAndUp,
+  (isDesktop) => {
+    drawerOpen.value = isDesktop;
+  },
+  { immediate: true }
+);
 const accountMenuOpen = ref(false);
 const notificationsMenuOpen = ref(false);
 const userInitials = computed(() =>

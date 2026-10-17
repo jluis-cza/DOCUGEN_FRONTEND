@@ -5,7 +5,7 @@
     </v-btn>
     <!-- Form -->
     <div class="flex-grow-1 d-flex w-100 h-100 align-center justify-center">
-      <v-card width="400" :loading="loading" variant="elevated">
+      <v-card class="auth-card" :loading="loading" variant="elevated">
         <v-card-title>Inicio de sesión</v-card-title>
         <v-form ref="form" validate-on="submit lazy" @submit.prevent="login">
           <v-card-text>
@@ -93,3 +93,8 @@ const login = async () => {
   }
 };
 </script>
+<style scoped>
+.auth-card {
+  width: min(400px, 100%);
+}
+</style>

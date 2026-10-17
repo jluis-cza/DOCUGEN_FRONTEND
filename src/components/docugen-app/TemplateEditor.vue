@@ -3820,6 +3820,32 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 600px) {
+  .editor-topbar :deep(.v-toolbar__content) {
+    height: auto !important;
+    min-height: 64px;
+    flex-wrap: wrap;
+    padding-block: 6px;
+  }
+
+  .editor-heading {
+    margin-left: 0;
+    gap: 6px;
+  }
+
+  .editor-topbar :deep(.v-toolbar__append) {
+    flex: 1 1 100%;
+    margin-inline-start: 0;
+  }
+
+  .editor-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .editor-actions .v-btn {
+    flex: 1 1 auto;
+  }
+
   .editor-body {
     padding: 12px !important;
   }

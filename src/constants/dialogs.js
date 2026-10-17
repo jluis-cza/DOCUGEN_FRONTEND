@@ -35,6 +35,16 @@ export const DIALOGS = {
         ],
         parameters: [],
       },
+      system_parameter_monitoring_suspension: {
+        title: 'Detener monitoreo del parámetro',
+        icon: 'mdi-eye-off-outline',
+        text: `¿Está seguro de dejar de monitorear el parámetro <parameter>? No se registrarán nuevos valores hasta que vuelva a activar su monitoreo.`,
+        actions: [
+          { name: 'Cancelar', key: 'n', color: 'bg-secondary' },
+          { name: 'Dejar de monitorear', key: 'y', color: 'bg-primary' },
+        ],
+        parameters: [],
+      },
     },
     management: {
       set_username: {

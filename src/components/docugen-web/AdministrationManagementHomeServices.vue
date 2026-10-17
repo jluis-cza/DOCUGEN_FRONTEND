@@ -15,7 +15,7 @@
     <!-- two panels (cols=6) -->
     <v-card-item>
       <v-row dense>
-        <v-col cols="6" v-for="(panel, pIndex) in panels" :key="pIndex">
+        <v-col cols="12" sm="6" v-for="(panel, pIndex) in panels" :key="pIndex">
           <v-card
             variant="tonal"
             color="primary"

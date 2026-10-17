@@ -25,7 +25,7 @@
         <v-list density="compact">
           <template v-for="(item, i) in cardInfo" :key="i">
             <v-list-item>
-              <div class="d-flex justify-space-between align-center">
+              <div class="d-flex flex-wrap justify-space-between align-center ga-2">
                 <span class="font-weight-medium text-secondary">{{ item.label }}</span>
                 <span class="font-weight-light text-right">
                   <template v-if="item.label === 'Estado'">

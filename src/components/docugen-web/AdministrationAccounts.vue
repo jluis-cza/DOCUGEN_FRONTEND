@@ -41,6 +41,7 @@
     <div class="my-4">
       <v-card>
         <v-data-table-server
+          class="responsive-actions-table"
           :items-per-page="params.limit"
           :page="params.page"
           :headers="headers"
@@ -56,7 +57,7 @@
             }}</v-chip>
           </template>
           <template #[`item.actions`]="{ item }">
-            <div class="d-flex justify-space-between align-center">
+            <div class="table-row-actions d-flex align-center ga-2">
               <v-switch
                 :model-value="item.status === 'active'"
                 color="primary"
@@ -279,6 +280,26 @@ const viewItemDetail = (id) => {
 </script>
 
 <style scoped>
+.responsive-actions-table :deep(.v-table__wrapper) {
+  overflow-x: auto;
+}
+
+.table-row-actions {
+  width: max-content;
+  min-width: 100%;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.table-row-actions :deep(.v-switch),
+.table-row-actions .v-btn {
+  flex: 0 0 auto;
+}
+
+.table-row-actions :deep(.v-label) {
+  white-space: nowrap;
+}
+
 .v-data-table-server {
   border-radius: 8px;
   overflow: hidden;

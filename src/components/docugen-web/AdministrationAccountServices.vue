@@ -21,6 +21,7 @@
     <div class="my-4">
       <v-card>
         <v-data-table-server
+          class="responsive-actions-table"
           :items-per-page="params.limit"
           :page="params.page"
           :headers="headers"
@@ -41,7 +42,7 @@
             >
           </template>
           <template #[`item.actions`]="{ item }">
-            <div class="d-flex justify-space-between align-center">
+            <div class="table-row-actions d-flex align-center ga-2">
               <v-switch
                 :model-value="item.status === 'running'"
                 color="primary"
@@ -245,4 +246,23 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.responsive-actions-table :deep(.v-table__wrapper) {
+  overflow-x: auto;
+}
+
+.table-row-actions {
+  width: max-content;
+  min-width: 100%;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.table-row-actions :deep(.v-switch) {
+  flex: 0 0 auto;
+}
+
+.table-row-actions :deep(.v-label) {
+  white-space: nowrap;
+}
+</style>

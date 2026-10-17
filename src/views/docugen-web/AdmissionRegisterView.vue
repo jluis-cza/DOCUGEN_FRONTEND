@@ -5,7 +5,7 @@
     </v-btn>
     <!-- Form -->
     <div class="flex-grow-1 d-flex align-center justify-center">
-      <v-card class="mx-auto" width="400" :loading="loading" variant="elevated">
+      <v-card class="auth-card mx-auto" :loading="loading" variant="elevated">
         <v-card-title> Registro </v-card-title>
         <v-form ref="form" validate-on="submit lazy" @submit.prevent="register">
           <v-card-text>
@@ -129,4 +129,8 @@ const register = async () => {
   }
 };
 </script>
-<style scoped></style>
+<style scoped>
+.auth-card {
+  width: min(400px, 100%);
+}
+</style>
