@@ -113,55 +113,59 @@
                 <v-window-item value="elements">
                   <div class="sidebar-content-scroll">
             <div class="toolbar-grid">
-              <v-btn block color="primary" variant="tonal" @click="addTextElement">
+              <v-btn block draggable="true" color="primary" variant="tonal" @click="addTextElement" @dragstart="startElementToolDrag($event, 'text')">
                 <v-icon start icon="mdi-format-text" /> Texto
               </v-btn>
-              <v-btn block color="primary" variant="tonal" @click="addTitleElement">
+              <v-btn block draggable="true" color="primary" variant="tonal" @click="addTitleElement" @dragstart="startElementToolDrag($event, 'title')">
                 <v-icon start icon="mdi-format-header-pound" /> Título
               </v-btn>
-              <v-btn block color="primary" variant="tonal" @click="addSubtitleElement">
+              <v-btn block draggable="true" color="primary" variant="tonal" @click="addSubtitleElement" @dragstart="startElementToolDrag($event, 'subtitle')">
                 <v-icon start icon="mdi-format-size" /> Subtítulo
               </v-btn>
-              <v-btn block color="primary" variant="tonal" @click="addParagraphElement">
+              <v-btn block draggable="true" color="primary" variant="tonal" @click="addParagraphElement" @dragstart="startElementToolDrag($event, 'paragraph')">
                 <v-icon start icon="mdi-format-paragraph" /> Párrafo
               </v-btn>
-              <v-btn block color="primary" variant="tonal" @click="addListElement">
+              <v-btn block draggable="true" color="primary" variant="tonal" @click="addListElement" @dragstart="startElementToolDrag($event, 'list')">
                 <v-icon start icon="mdi-format-list-bulleted" /> Lista
               </v-btn>
-              <v-btn block color="secondary" variant="tonal" @click="addPlaceholder">
+              <v-btn block draggable="true" color="secondary" variant="tonal" @click="addPlaceholder" @dragstart="startElementToolDrag($event, 'placeholder')">
                         <v-icon start icon="mdi-variable" /> Campo dinámico
               </v-btn>
-              <v-btn block color="secondary" variant="tonal" @click="addImageElement">
+              <v-btn block draggable="true" color="secondary" variant="tonal" @click="addImageElement" @dragstart="startElementToolDrag($event, 'image')">
                 <v-icon start icon="mdi-image" /> Imagen
               </v-btn>
-              <v-btn block color="secondary" variant="tonal" @click="addQrElement">
+              <v-btn block draggable="true" color="secondary" variant="tonal" @click="addQrElement" @dragstart="startElementToolDrag($event, 'qr')">
                 <v-icon start icon="mdi-qrcode" /> QR
               </v-btn>
-              <v-btn block color="secondary" variant="tonal" @click="addDateElement">
+              <v-btn block draggable="true" color="secondary" variant="tonal" @click="addDateElement" @dragstart="startElementToolDrag($event, 'date')">
                 <v-icon start icon="mdi-calendar" /> Fecha
               </v-btn>
-              <v-btn block color="warning" variant="tonal" @click="addFooterElement">
+              <v-btn block draggable="true" color="warning" variant="tonal" @click="addFooterElement" @dragstart="startElementToolDrag($event, 'footer')">
                 <v-icon start icon="mdi-page-layout-footer" /> Pie
               </v-btn>
-              <v-btn block color="warning" variant="tonal" @click="addSignatureElement">
+              <v-btn block draggable="true" color="warning" variant="tonal" @click="addSignatureElement" @dragstart="startElementToolDrag($event, 'signature')">
                 <v-icon start icon="mdi-signature-freehand" /> Firma
               </v-btn>
-              <v-btn block color="success" variant="tonal" @click="addLineElement">
+              <v-btn block draggable="true" color="success" variant="tonal" @click="addLineElement" @dragstart="startElementToolDrag($event, 'line')">
                 <v-icon start icon="mdi-minus" /> Línea
               </v-btn>
-              <v-btn block color="success" variant="tonal" @click="addRectElement">
+              <v-btn block draggable="true" color="success" variant="tonal" @click="addRectElement" @dragstart="startElementToolDrag($event, 'rect')">
                 <v-icon start icon="mdi-rectangle" /> Caja
               </v-btn>
-              <v-btn block color="success" variant="tonal" @click="addTableElement">
+              <v-btn block draggable="true" color="success" variant="tonal" @click="addTableElement" @dragstart="startElementToolDrag($event, 'table')">
                 <v-icon start icon="mdi-table" /> Tabla
               </v-btn>
-              <v-btn block color="info" variant="tonal" @click="addCheckboxElement">
-                <v-icon start icon="mdi-checkbox-marked-outline" /> Check
+              <v-btn block draggable="true" color="info" variant="tonal" @click="addCheckboxElement" @dragstart="startElementToolDrag($event, 'checkbox')">
+                <v-icon start icon="mdi-checkbox-marked-outline" /> Casilla
               </v-btn>
-              <v-btn block color="info" variant="tonal" @click="addPageNumberElement">
+              <v-btn block draggable="true" color="info" variant="tonal" @click="addPageNumberElement" @dragstart="startElementToolDrag($event, 'pageNumber')">
                 <v-icon start icon="mdi-numeric" /> Nº página
               </v-btn>
             </div>
+                    <div class="text-caption text-medium-emphasis mt-3">
+                      Haz clic para agregar un elemento en su posición inicial o arrástralo hasta
+                      el lienzo para colocarlo donde quieras.
+                    </div>
                   </div>
                 </v-window-item>
                 <v-window-item value="resources">
@@ -359,6 +363,8 @@
                     @pointercancel="stopDrag"
                     @pointerdown.capture="handleCanvasPointerDown"
                     @pointerdown="clearSelectionIfEmpty"
+                    @dragover.prevent
+                    @drop.prevent="dropElementTool"
                     @contextmenu.prevent
                   >
                     <defs>
@@ -780,38 +786,41 @@
                           stroke-width="1.5"
                           stroke-dasharray="5 3"
                         />
-                        <circle
-                          :cx="Number(element.x || 0) - 4"
-                          :cy="Number(element.y || 0) - 4"
-                          r="3"
-                          fill="#ffffff"
-                          stroke="#2563eb"
-                          stroke-width="1.5"
-                        />
-                        <circle
-                          :cx="Number(element.x || 0) + Number(element.width || 0) + 4"
-                          :cy="Number(element.y || 0) - 4"
-                          r="3"
-                          fill="#ffffff"
-                          stroke="#2563eb"
-                          stroke-width="1.5"
-                        />
-                        <circle
-                          :cx="Number(element.x || 0) - 4"
-                          :cy="Number(element.y || 0) + Number(element.height || 0) + 4"
-                          r="3"
-                          fill="#ffffff"
-                          stroke="#2563eb"
-                          stroke-width="1.5"
-                        />
-                        <circle
-                          :cx="Number(element.x || 0) + Number(element.width || 0) + 4"
-                          :cy="Number(element.y || 0) + Number(element.height || 0) + 4"
-                          r="3"
-                          fill="#ffffff"
-                          stroke="#2563eb"
-                          stroke-width="1.5"
-                        />
+                        <g
+                          v-if="!element.locked"
+                          :transform="`translate(${Number(element.x || 0) + Number(element.width || 0) / 2} ${Number(element.y || 0) >= 28 ? Number(element.y || 0) - 17 : Number(element.y || 0) + 17})`"
+                          pointer-events="all"
+                          style="cursor: move"
+                          @pointerdown.stop="startElementMoveDrag($event, element)"
+                        >
+                          <circle r="10" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" />
+                          <path
+                            d="M0-6v12m0-12-2.5 2.5M0-6l2.5 2.5M0 6l-2.5-2.5M0 6l2.5-2.5M-6 0h12m-12 0 2.5-2.5M-6 0l2.5 2.5M6 0 3.5-2.5M6 0 3.5 2.5"
+                            fill="none"
+                            stroke="#2563eb"
+                            stroke-width="1.2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            pointer-events="none"
+                          />
+                        </g>
+                        <template v-if="!element.locked">
+                          <rect
+                            v-for="handle in resizeHandles"
+                            :key="`${element.id}-resize-${handle.position}`"
+                            :x="getResizeHandlePosition(element, handle.position).x - 4"
+                            :y="getResizeHandlePosition(element, handle.position).y - 4"
+                            width="8"
+                            height="8"
+                            rx="1"
+                            fill="#ffffff"
+                            stroke="#2563eb"
+                            stroke-width="1.5"
+                            :style="{ cursor: handle.cursor }"
+                            pointer-events="all"
+                            @pointerdown.stop="startElementResize($event, element, handle.position)"
+                          />
+                        </template>
                       </g>
                     </g>
                   </svg>
@@ -1031,16 +1040,18 @@
               <v-text-field
                 v-if="
                   selectedElement.type === 'placeholder' ||
-                  selectedElement.type === 'date' ||
-                selectedElement.type === 'pageNumber' ||
-                selectedElement.type === 'checkbox'
+                  selectedElement.type === 'checkbox'
                 "
                 v-model="selectedElement.placeholderKey"
                 label="Clave del dato"
-                      hint="Identificador del valor dinámico usado por el elemento."
-                      persistent-hint
+                :hint="
+                  selectedElement.type === 'checkbox'
+                    ? 'Clave del valor booleano que determina si la casilla aparece marcada. El texto/etiqueta es independiente.'
+                    : 'Clave del valor insertado en este campo dinámico.'
+                "
+                persistent-hint
                 density="comfortable"
-                      @change="handlePlaceholderKeyChange"
+                @change="handlePlaceholderKeyChange"
               />
 
               <v-row dense>
@@ -1318,7 +1329,9 @@
             <template v-else>
               <v-text-field
                 v-model="template.name"
-                label="Nombre"
+                label="Nombre de clave"
+                hint="Identificador del dato usado como {{clave}} o enviado en los datos de generación."
+                persistent-hint
                 density="comfortable"
                 @change="markDirty"
               />
@@ -1592,9 +1605,20 @@ const templateLoadError = ref('');
 const selectedElement = ref(null);
 const sidebarTab = ref('properties');
 const elementSidebarTab = ref('elements');
+const pendingDropPosition = ref(null);
 const imageResourceInput = ref(null);
 const imageResourceError = ref('');
 const dragState = ref(null);
+const resizeHandles = [
+  { position: 'nw', cursor: 'nwse-resize' },
+  { position: 'n', cursor: 'ns-resize' },
+  { position: 'ne', cursor: 'nesw-resize' },
+  { position: 'e', cursor: 'ew-resize' },
+  { position: 'se', cursor: 'nwse-resize' },
+  { position: 's', cursor: 'ns-resize' },
+  { position: 'sw', cursor: 'nesw-resize' },
+  { position: 'w', cursor: 'ew-resize' },
+];
 const svgRef = ref(null);
 const pageViewport = ref(null);
 const canvasShell = ref(null);
@@ -2228,6 +2252,7 @@ const loadTemplate = async () => {
     };
 
     template.value.elements.forEach((element) => {
+      if (element.type === 'date') element.placeholderKey = '';
       if (element.type === 'image' && !element.imageMode) {
         element.imageMode =
           element.resourceId || String(element.src || '').startsWith('resource:')
@@ -2305,6 +2330,12 @@ const makeElement = (type, extra = {}) => {
 
   template.value.elements.push(base);
   selectedElement.value = base;
+  if (pendingDropPosition.value) {
+    adjustTextElementHeight(base);
+    base.x = pendingDropPosition.value.x - Number(base.width || 0) / 2;
+    base.y = pendingDropPosition.value.y - Number(base.height || 0) / 2;
+    constrainElementToPage(base);
+  }
   syncDynamicParametersFromTemplate();
   pushHistory();
 };
@@ -2516,19 +2547,41 @@ const addQrElement = () => {
 const addDateElement = () =>
   makeElement('date', {
     text: '{{fecha}}',
-    placeholderKey: 'fecha',
     x: 50,
     y: 640,
     width: 180,
     height: 24,
     fontSize: 14,
   });
+const getDefaultFooterLayout = () => {
+  const pageWidth = Number(template.value.dimensions.width || width.value);
+  const pageHeight = Number(template.value.dimensions.height || height.value);
+  const margin = template.value.page?.margin || {};
+  const left = Number(margin.left ?? 40);
+  const right = Number(margin.right ?? 40);
+  const bottom = Number(margin.bottom ?? 40);
+  const contentWidth = Math.max(1, pageWidth - left - right);
+  const pageNumberWidth = Math.min(100, contentWidth * 0.3);
+  const gap = Math.min(12, contentWidth * 0.05);
+  const y = Math.max(0, pageHeight - bottom - 36);
+
+  return {
+    footer: {
+      x: left,
+      y,
+      width: Math.max(1, contentWidth - pageNumberWidth - gap),
+    },
+    pageNumber: {
+      x: left + contentWidth - pageNumberWidth,
+      y,
+      width: pageNumberWidth,
+    },
+  };
+};
 const addFooterElement = () =>
   makeElement('footer', {
     text: 'Documento generado por Docugen • {{fecha}}',
-    x: 60,
-    y: 1060,
-    width: 660,
+    ...getDefaultFooterLayout().footer,
     height: 24,
     align: 'center',
     color: '#6b7280',
@@ -2579,9 +2632,7 @@ const addPageNumberElement = () =>
   makeElement('pageNumber', {
     text: 'Página {{page_number}}',
     placeholderKey: '',
-    x: 660,
-    y: 1090,
-    width: 80,
+    ...getDefaultFooterLayout().pageNumber,
     height: 20,
     align: 'right',
     fontSize: 10,
@@ -2622,7 +2673,6 @@ const insertPlaceholder = (key) => {
   }
 
   if (selectedElement.value.type === 'date') {
-    selectedElement.value.placeholderKey = key;
     selectedElement.value.text = `{{${key}}}`;
     if (parameter) parameter.type = 'date';
   }
@@ -2855,6 +2905,81 @@ const handleCanvasPointerDown = (event) => {
   }
 };
 
+const startElementToolDrag = (event, type) => {
+  if (!event.dataTransfer) return;
+  event.dataTransfer.effectAllowed = 'copy';
+  event.dataTransfer.setData('application/x-docugen-element', type);
+
+  const sourceIcon = event.currentTarget.querySelector('.v-icon');
+  if (!sourceIcon) return;
+
+  const dragImage = document.createElement('div');
+  const icon = sourceIcon.cloneNode(true);
+  const iconColor = getComputedStyle(sourceIcon).color;
+
+  dragImage.setAttribute('aria-hidden', 'true');
+  Object.assign(dragImage.style, {
+    position: 'fixed',
+    left: `${event.clientX}px`,
+    top: `${event.clientY}px`,
+    width: '56px',
+    height: '56px',
+    display: 'grid',
+    placeItems: 'center',
+    color: iconColor,
+    background: '#fff',
+    border: '1px solid rgba(148, 163, 184, 0.4)',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.18)',
+    pointerEvents: 'none',
+    zIndex: '9999',
+  });
+  Object.assign(icon.style, { fontSize: '32px', width: '32px', height: '32px' });
+  dragImage.appendChild(icon);
+  document.body.appendChild(dragImage);
+  event.dataTransfer.setDragImage(dragImage, 28, 28);
+  setTimeout(() => dragImage.remove(), 0);
+};
+
+const dropElementTool = (event) => {
+  const type = event.dataTransfer?.getData('application/x-docugen-element');
+  const svg = svgRef.value;
+  if (!type || !svg) return;
+
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const addElement = {
+    text: addTextElement,
+    title: addTitleElement,
+    subtitle: addSubtitleElement,
+    paragraph: addParagraphElement,
+    list: addListElement,
+    placeholder: addPlaceholder,
+    image: addImageElement,
+    qr: addQrElement,
+    date: addDateElement,
+    footer: addFooterElement,
+    signature: addSignatureElement,
+    line: addLineElement,
+    rect: addRectElement,
+    table: addTableElement,
+    checkbox: addCheckboxElement,
+    pageNumber: addPageNumberElement,
+  }[type];
+  if (!addElement) return;
+
+  pendingDropPosition.value = {
+    x: ((event.clientX - rect.left) / rect.width) * width.value,
+    y: ((event.clientY - rect.top) / rect.height) * height.value,
+  };
+  try {
+    addElement();
+  } finally {
+    pendingDropPosition.value = null;
+  }
+};
+
 const startDrag = (event, element) => {
   if (event.button !== 0) return;
   event.preventDefault();
@@ -2877,12 +3002,63 @@ const startDrag = (event, element) => {
   );
 
   dragState.value = {
+    mode: 'move',
     id: element.id,
     offsetX: x - element.x,
     offsetY: y - element.y,
   };
 
   pushHistory();
+};
+
+const getResizeHandlePosition = (element, position) => {
+  const x = Number(element.x || 0) - 4;
+  const y = Number(element.y || 0) - 4;
+  const elementWidth = Math.max(Number(element.width || 0), 8) + 8;
+  const elementHeight = Math.max(Number(element.height || 0), 8) + 8;
+  const positions = {
+    nw: { x, y },
+    n: { x: x + elementWidth / 2, y },
+    ne: { x: x + elementWidth, y },
+    e: { x: x + elementWidth, y: y + elementHeight / 2 },
+    se: { x: x + elementWidth, y: y + elementHeight },
+    s: { x: x + elementWidth / 2, y: y + elementHeight },
+    sw: { x, y: y + elementHeight },
+    w: { x, y: y + elementHeight / 2 },
+  };
+  return positions[position] || positions.se;
+};
+
+const startElementMoveDrag = (event, element) => {
+  startDrag(event, element);
+};
+
+const startElementResize = (event, element, handle) => {
+  if (event.button !== 0 || element.locked) return;
+  event.preventDefault();
+  event.stopPropagation();
+  selectElement(element);
+
+  const svg = svgRef.value;
+  if (!svg) return;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  svg.setPointerCapture?.(event.pointerId);
+
+  dragState.value = {
+    mode: 'resize',
+    id: element.id,
+    handle,
+    startX: ((event.clientX - rect.left) / rect.width) * width.value,
+    startY: ((event.clientY - rect.top) / rect.height) * height.value,
+    x: Number(element.x || 0),
+    y: Number(element.y || 0),
+    width: Number(element.width || 0),
+    height: Number(element.height || 0),
+    rotation: Number(element.rotation || 0),
+  };
+  pushHistory();
+  if (TEXT_LAYOUT_TYPES.includes(element.type)) element.autoHeight = false;
 };
 
 const handlePointerMove = (event) => {
@@ -2904,6 +3080,34 @@ const handlePointerMove = (event) => {
 
   const current = template.value.elements.find((element) => element.id === dragState.value.id);
   if (!current) return;
+
+  if (dragState.value.mode === 'resize') {
+    const drag = dragState.value;
+    const pageDeltaX = x - drag.startX;
+    const pageDeltaY = y - drag.startY;
+    const radians = (drag.rotation * Math.PI) / 180;
+    const deltaX = pageDeltaX * Math.cos(radians) + pageDeltaY * Math.sin(radians);
+    const deltaY = -pageDeltaX * Math.sin(radians) + pageDeltaY * Math.cos(radians);
+    const minSize = 8;
+    const resizeLeft = drag.handle.includes('w');
+    const resizeRight = drag.handle.includes('e');
+    const resizeTop = drag.handle.includes('n');
+    const resizeBottom = drag.handle.includes('s');
+
+    if (resizeLeft) {
+      current.width = Math.max(minSize, drag.width - deltaX);
+      current.x = drag.x + drag.width - current.width;
+    } else if (resizeRight) {
+      current.width = Math.max(minSize, drag.width + deltaX);
+    }
+    if (resizeTop) {
+      current.height = Math.max(minSize, drag.height - deltaY);
+      current.y = drag.y + drag.height - current.height;
+    } else if (resizeBottom) {
+      current.height = Math.max(minSize, drag.height + deltaY);
+    }
+    return;
+  }
 
   current.x = Math.max(
     0,
@@ -3265,6 +3469,25 @@ onBeforeUnmount(() => {
   display: none;
 }
 
+.sidebar-section-tabs :deep(.v-tab) {
+  min-height: 40px;
+  border-radius: 10px;
+  color: rgb(var(--v-theme-on-surface-variant));
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.sidebar-section-tabs :deep(.v-tab--selected) {
+  color: rgb(var(--v-theme-primary));
+  background-color: rgba(var(--v-theme-primary), 0.12);
+  font-weight: 600;
+}
+
+.sidebar-section-tabs :deep(.v-tab__slider) {
+  display: none;
+}
+
 .sidebar-tab-content {
   flex: 1 1 auto;
   min-height: 0;
@@ -3312,6 +3535,11 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   min-height: 42px;
   font-weight: 600;
+  cursor: grab;
+}
+
+.toolbar-grid .v-btn:active {
+  cursor: grabbing;
 }
 
 .stage-panel {

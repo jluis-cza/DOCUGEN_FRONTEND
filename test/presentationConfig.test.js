@@ -40,7 +40,7 @@ test('infers parameter input types from dynamic element types', () => {
     },
     elements: [
       { id: 'paragraph', type: 'paragraph', text: '{{details}}' },
-      { id: 'date', type: 'date', placeholderKey: 'issued_on' },
+      { id: 'date', type: 'date', text: '{{issued_on}}' },
       { id: 'image', type: 'image', placeholderKey: 'photo' },
       { id: 'qr', type: 'qr', placeholderKey: 'verification' },
       { id: 'checkbox-label', type: 'checkbox', text: 'Hello {{recipient}}' },
