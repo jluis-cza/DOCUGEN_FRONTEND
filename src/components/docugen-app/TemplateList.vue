@@ -619,7 +619,7 @@ const openTemplateDetails = async (item) => {
   try {
     detailsLoading.value = true;
     const payload = await getTemplateParameters(item._id);
-    const template = payload?.template || (await getTemplate(item._id));
+    const template = await getTemplate(item._id, { includeContent: true });
     const dynamicParameters = Array.isArray(payload?.parameters)
       ? payload.parameters
       : Array.isArray(template?.metadata?.dynamicParameters)
@@ -909,40 +909,56 @@ const handleImportTemplate = async (event) => {
 const exportTemplate = async (item) => {
   if (!item) return;
 
-  const payload = {
-    name: item.name || 'Plantilla exportada',
-    description: item.description || '',
-    status: item.status || 'draft',
-    dimensions: item.dimensions || { width: 794, height: 1123, unit: 'px' },
-    page: item.page || {
-      backgroundColor: '#ffffff',
-      margin: { top: 40, right: 40, bottom: 40, left: 40 },
-    },
-    canvas: item.canvas || {
-      version: 1,
-      zoom: 1,
-      background: '#ffffff',
-    },
-    elements: Array.isArray(item.elements) ? item.elements : [],
-    metadata: {
-      ...(item.metadata || {}),
-      schemaVersion: 1,
-      exportVersion: 1,
-      exportedAt: new Date().toISOString(),
-    },
-  };
+  try {
+    const templateId = item._id || item.id;
+    if (!templateId) throw new Error('No se encontró el identificador de la plantilla.');
 
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  const fileName = buildExportFileName(item.name || 'plantilla');
+    const template = await getTemplate(templateId, { includeContent: true });
+    if (!Array.isArray(template?.elements)) {
+      throw new Error('La plantilla recuperada no incluye su contenido completo.');
+    }
 
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    const payload = {
+      name: template.name || 'Plantilla exportada',
+      description: template.description || '',
+      status: template.status || 'draft',
+      dimensions: template.dimensions || { width: 794, height: 1123, unit: 'px' },
+      page: template.page || {
+        backgroundColor: '#ffffff',
+        margin: { top: 40, right: 40, bottom: 40, left: 40 },
+      },
+      canvas: template.canvas || {
+        version: 1,
+        zoom: 1,
+        background: '#ffffff',
+      },
+      elements: template.elements,
+      metadata: {
+        ...(template.metadata || {}),
+        schemaVersion: 1,
+        exportVersion: 1,
+        exportedAt: new Date().toISOString(),
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = buildExportFileName(template.name || 'plantilla');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    notificationStore.setNotification({
+      message: error.response?.data?.message || error.message || 'No se pudo exportar la plantilla.',
+      code: error.response?.data?.code || 'EXXX',
+      mode: 'automatic',
+    });
+  }
 };
 
 const openEditor = (templateId) => {

@@ -741,7 +741,7 @@ onMounted(async () => {
   }
 
   try {
-    const tmpl = await getTemplate(templateId.value);
+    const tmpl = await getTemplate(templateId.value, { includeContent: true });
 
     if (!tmpl || !tmpl._id) {
       loadErrorMessage.value = 'La plantilla no existe o no tienes permisos';

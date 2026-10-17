@@ -12,7 +12,10 @@ const AVAILABILITY = SERVICES.path.docugen_app.documents.availability;
 
 export const TemplateService = {
   listTemplates: (params) => axiosInstance.get(BASE + TEMPLATES, { params }),
-  getTemplate: (id) => axiosInstance.get(BASE + TEMPLATES + `/${id}`),
+  getTemplate: (id, includeContent = false) =>
+    axiosInstance.get(BASE + TEMPLATES + `/${id}`, {
+      params: includeContent ? { include: 'content' } : undefined,
+    }),
   getTemplateParameters: (id) => axiosInstance.get(BASE + TEMPLATES + `/${id}` + PARAMETERS),
   getGenerationAvailability: () => axiosInstance.get(BASE + DOCUMENTS + AVAILABILITY),
   getAccountServicesAvailability: () => axiosInstance.get(BASE + DOCUMENTS + AVAILABILITY),

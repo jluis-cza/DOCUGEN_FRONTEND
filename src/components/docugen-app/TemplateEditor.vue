@@ -2220,7 +2220,7 @@ const loadTemplate = async () => {
   }
 
   try {
-    const item = await getTemplate(templateId.value);
+    const item = await getTemplate(templateId.value, { includeContent: true });
     if (!item?._id) throw new Error('La plantilla no existe o no tienes permisos.');
     const normalizedItem = item && typeof item === 'object' ? item : {};
 

@@ -4,6 +4,7 @@
     persistent
     max-width="400"
     :transition="{ component: Transition, name: 'fade-transition' }"
+    @after-leave="resetDialogContent"
   >
     <v-card>
       <v-card-item class="text-left text-dark">
@@ -162,12 +163,8 @@ const selectAction = async (key) => {
     dialogBoxStore.resolveDialogBoxData(key, parameters.value, valid);
     const exit = await dialogBoxStore.requestDialogBoxProcedure();
     if (exit) {
-      await form.value?.reset();
       showDialogBox.value = false;
       dialogBoxStore.resetDialogBox();
-      parameters.value = [];
-      parametersGroupsInfo.value = [];
-      hasParameters.value = false;
     }
   } catch (error) {
     interactionError.value =
@@ -179,11 +176,16 @@ const selectAction = async (key) => {
 };
 
 const processParameters = (receivedParameters) => {
-  parameters.value = [...receivedParameters].sort((a, b) => {
-    const compareGroup = String(a.group || '').localeCompare(String(b.group || ''));
-    if (compareGroup !== 0) return compareGroup;
-    return Number(a.member) - Number(b.member);
-  });
+  parameters.value = receivedParameters
+    .map((parameter) => ({
+      ...parameter,
+      value: parameter.value ?? '',
+    }))
+    .sort((a, b) => {
+      const compareGroup = String(a.group || '').localeCompare(String(b.group || ''));
+      if (compareGroup !== 0) return compareGroup;
+      return Number(a.member) - Number(b.member);
+    });
 
   parametersGroupsInfo.value = Object.values(
     receivedParameters.reduce((acc, item) => {
@@ -195,6 +197,13 @@ const processParameters = (receivedParameters) => {
       return acc;
     }, {})
   );
+};
+
+const resetDialogContent = async () => {
+  await form.value?.reset();
+  parameters.value = [];
+  parametersGroupsInfo.value = [];
+  hasParameters.value = false;
 };
 
 // const getRules = (value, ruleSet) => {

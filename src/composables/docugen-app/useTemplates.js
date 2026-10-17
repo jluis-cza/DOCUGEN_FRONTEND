@@ -44,10 +44,10 @@ export const useTemplates = () => {
     }
   };
 
-  const getTemplate = async (id) => {
+  const getTemplate = async (id, { includeContent = false } = {}) => {
     try {
       loading.value = true;
-      const response = await TemplateService.getTemplate(id);
+      const response = await TemplateService.getTemplate(id, includeContent);
       const template = unwrapApiData(response, {});
       templatesStore.setSelectedTemplate(template || {});
       return template || {};
