@@ -2,7 +2,7 @@
   <v-snackbar
     v-model="isVisible"
     :color="color"
-    location="bottom right"
+    location="bottom"
     transition="fade-transition"
     :timeout="timeout"
     contained
