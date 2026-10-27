@@ -123,164 +123,19 @@
 
             <v-divider />
 
-            <v-card-text class="config-content pa-4">
-              <!-- Form View -->
-              <div v-if="viewMode === 'form'" class="form-view">
-                <div v-if="placeholdersList.length === 0" class="text-center pa-8">
-                  <v-icon size="48" class="text-disabled mb-4">mdi-information-outline</v-icon>
-                  <div class="text-subtitle-2 text-disabled">No hay parámetros dinámicos</div>
-                  <div class="text-caption text-disabled">Todos los datos son estáticos</div>
-                </div>
-
-                <div v-else class="d-flex flex-column ga-4">
-                  <div
-                    v-for="placeholder in placeholdersList"
-                    :key="placeholder.key"
-                    class="placeholder-field"
-                  >
-                    <v-select
-                      v-if="placeholder.allowedValues?.length"
-                      :model-value="configData[placeholder.key] ?? ''"
-                      :items="placeholder.allowedValues"
-                      :label="placeholder.label || placeholder.key"
-                      :error="!!validationErrors[placeholder.key]"
-                      :error-messages="
-                        validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
-                      "
-                      :hint="placeholder.description || `Usado en: ${placeholder.elementType}`"
-                      persistent-hint
-                      density="comfortable"
-                      variant="outlined"
-                      @update:model-value="(val) => updateConfigData(placeholder.key, val)"
+            <TemplateConfigurationForm
+              :parameters="placeholdersList"
+              :values="configData"
+              :errors="validationErrors"
+              :view-mode="viewMode"
+              :json-error="jsonError"
+              @update:value="({ key, value }) => updateConfigData(key, value)"
+              v-model:json-string="jsonString"
+              @sync-json="syncJsonToData"
+              @set-image-file-input-ref="setImageFileInputRef"
+              @image-file-selected="handleImageParameterFile"
+              @request-image-file="openImageFilePicker"
                     />
-                    <v-checkbox
-                      v-else-if="placeholder.type === 'boolean'"
-                      :model-value="configData[placeholder.key] === true || configData[placeholder.key] === 'true'"
-                      :label="placeholder.label || placeholder.key"
-                      :error="!!validationErrors[placeholder.key]"
-                      :error-messages="
-                        validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
-                      "
-                      :hint="placeholder.description || `Usado en: ${placeholder.elementType}`"
-                      persistent-hint
-                      density="comfortable"
-                      @update:model-value="(val) => updateConfigData(placeholder.key, val)"
-                    />
-                    <div v-else-if="placeholder.type === 'image'" class="d-flex flex-column ga-2">
-                      <v-text-field
-                        :model-value="configData[placeholder.key] ?? ''"
-                        :label="placeholder.label || placeholder.key"
-                        autocomplete="off"
-                        :error="!!validationErrors[placeholder.key]"
-                        :error-messages="
-                          validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
-                        "
-                        hint="Imagen dinámica para este parámetro: pega una URL HTTP(S), un data URL o Base64 PNG/JPEG. También puedes cargar un archivo."
-                        persistent-hint
-                        density="comfortable"
-                        variant="outlined"
-                        @update:model-value="(val) => updateConfigData(placeholder.key, val)"
-                      />
-                      <input
-                        :ref="(el) => setImageFileInputRef(placeholder.key, el)"
-                        class="d-none"
-                        type="file"
-                        accept="image/png,image/jpeg"
-                        @change="(event) => handleImageParameterFile(placeholder.key, event)"
-                      />
-                      <div class="d-flex align-center ga-2">
-                        <v-btn
-                          size="x-small"
-                          variant="text"
-                          color="primary"
-                          prepend-icon="mdi-upload"
-                          @click="openImageFilePicker(placeholder.key)"
-                        >
-                          Subir imagen dinámica · {{ placeholder.label || placeholder.key }}
-                        </v-btn>
-                        <span class="text-caption text-medium-emphasis">PNG/JPEG · máx. 2 MB</span>
-                      </div>
-                      <v-img
-                        v-if="String(configData[placeholder.key] || '').startsWith('data:image/')"
-                        :src="configData[placeholder.key]"
-                        max-width="120"
-                        max-height="80"
-                        class="rounded border"
-                        cover
-                      />
-                    </div>
-                    <v-textarea
-                      v-else-if="placeholder.type === 'textarea'"
-                      :model-value="configData[placeholder.key] ?? ''"
-                      :label="placeholder.label || placeholder.key"
-                      :error="!!validationErrors[placeholder.key]"
-                      :error-messages="
-                        validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
-                      "
-                      :hint="placeholder.description || `Usado en: ${placeholder.elementType}`"
-                      persistent-hint
-                      density="comfortable"
-                      variant="outlined"
-                      @update:model-value="(val) => updateConfigData(placeholder.key, val)"
-                    />
-                    <v-text-field
-                      v-else
-                      :model-value="configData[placeholder.key] || ''"
-                      :label="placeholder.label || placeholder.key"
-                      :type="
-                        ['number', 'date', 'email', 'url'].includes(placeholder.type)
-                          ? placeholder.type
-                          : 'text'
-                      "
-                      :error="!!validationErrors[placeholder.key]"
-                      :error-messages="
-                        validationErrors[placeholder.key] ? [validationErrors[placeholder.key]] : []
-                      "
-                      density="comfortable"
-                      variant="outlined"
-                      :hint="
-                        placeholder.description ||
-                        (placeholder.example
-                          ? `Ejemplo: ${placeholder.example}`
-                          : `Usado en: ${placeholder.elementType}`)
-                      "
-                      persistent-hint
-                      @update:model-value="(val) => updateConfigData(placeholder.key, val)"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- JSON View -->
-              <div v-else class="json-view">
-                <div class="text-caption text-medium-emphasis mb-2">
-                  Edita el JSON de los parámetros directamente:
-                </div>
-                <v-textarea
-                  v-model="jsonString"
-                  label="Datos (JSON)"
-                  rows="12"
-                  density="compact"
-                  variant="outlined"
-                  font-family="monospace"
-                  @blur="syncJsonToData"
-                  class="font-mono"
-                />
-                <div v-if="jsonError" class="text-caption text-error mt-2">{{ jsonError }}</div>
-              </div>
-            </v-card-text>
-
-            <!-- Validation Summary -->
-            <div v-if="Object.keys(validationErrors).length > 0" class="validation-summary">
-              <v-alert type="warning" density="compact" class="ma-4">
-                <div class="text-subtitle-2 font-weight-bold mb-2">Campos incompletos:</div>
-                <ul class="pl-5">
-                  <li v-for="(error, key) in validationErrors" :key="key" class="text-caption">
-                    <strong>{{ key }}:</strong> {{ error }}
-                  </li>
-                </ul>
-              </v-alert>
-            </div>
           </v-card>
         </div>
 
@@ -518,6 +373,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import TemplateConfigurationForm from './TemplateConfigurationForm.vue';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 import {
   normalizeImageValue,
@@ -573,8 +429,7 @@ const canGeneratePdf = computed(() => {
   if (!hasParams) return true;
   return Object.keys(validationErrors.value || {}).length === 0;
 });
-const canGenerateBulk = computed(
-  () => {
+const canGenerateBulk = computed(() => {
     bulkRowsVersion.value;
     return (
       !isBulkGenerating.value &&
@@ -582,8 +437,7 @@ const canGenerateBulk = computed(
       bulkRows.value.length <= MAX_BULK_DOCUMENTS &&
       bulkRows.value.every((row) => validateConfigData(row.data, placeholders.value).isValid)
     );
-  }
-);
+});
 
 function createBulkRow() {
   const data = Object.fromEntries(
@@ -642,7 +496,11 @@ const handleBulkImageFile = (row, placeholder, event) => {
   const file = input.files?.[0];
   if (!file) return;
   if (!['image/png', 'image/jpeg'].includes(file.type)) {
-    showNotification('Formato no compatible. Selecciona una imagen PNG o JPEG.', 'W0002', 'persistent');
+    showNotification(
+      'Formato no compatible. Selecciona una imagen PNG o JPEG.',
+      'W0002',
+      'persistent'
+    );
     input.value = '';
     return;
   }
@@ -662,7 +520,11 @@ const handleBulkImageFile = (row, placeholder, event) => {
     input.value = '';
   };
   reader.onerror = () => {
-    showNotification(reader.error?.message || 'No se pudo leer el archivo de imagen.', 'W0002', 'persistent');
+    showNotification(
+      reader.error?.message || 'No se pudo leer el archivo de imagen.',
+      'W0002',
+      'persistent'
+    );
     input.value = '';
   };
   reader.readAsDataURL(file);
@@ -1068,7 +930,7 @@ Object.assign(window, {
   border: 1px solid rgba(148, 163, 184, 0.18);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
-.config-content {
+.config-panel :deep(.config-content) {
   height: calc(100% - 60px);
   overflow-y: auto;
   padding-right: 8px;
@@ -1091,7 +953,7 @@ Object.assign(window, {
   }
 }
 
-.placeholder-field {
+.config-panel :deep(.placeholder-field) {
   animation: slideIn 0.3s ease-out;
 }
 
@@ -1106,13 +968,13 @@ Object.assign(window, {
   }
 }
 
-.json-view {
+.config-panel :deep(.json-view) {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.json-view textarea {
+.config-panel :deep(.json-view textarea) {
   font-family: 'Fira Code', 'Courier New', monospace;
   font-size: 12px;
   line-height: 1.5;
@@ -1139,12 +1001,12 @@ Object.assign(window, {
   border: none;
 }
 
-.validation-summary {
+.config-panel :deep(.validation-summary) {
   background: rgba(251, 191, 36, 0.05);
   border-top: 1px solid rgba(251, 191, 36, 0.2);
 }
 
-.font-mono {
+.config-panel :deep(.font-mono) {
   font-family: 'Fira Code', 'Courier New', monospace;
 }
 

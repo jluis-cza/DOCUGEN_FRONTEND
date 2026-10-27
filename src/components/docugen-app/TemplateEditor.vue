@@ -12,69 +12,17 @@
     </div>
 
     <div v-if="templateLoaded" class="editor-shell">
-    <v-app-bar color="surface" flat class="editor-topbar border-b" density="comfortable">
-      <template #prepend>
-        <v-btn icon="mdi-arrow-left" variant="text" color="primary" @click="backToTemplates" />
-      </template>
-
-        <div class="editor-heading">
-        <div class="text-start">
-          <div class="text-caption text-medium-emphasis">Plantillas</div>
-          <div class="text-subtitle-1 font-weight-bold">
-            {{ template.name || 'Nueva plantilla' }}
-          </div>
-        </div>
-          <v-chip
-            v-if="hasUnsavedChanges"
-            class="editor-dirty-chip"
-            color="warning"
-            size="small"
-            variant="tonal"
-          >
-            Cambios sin guardar
-          </v-chip>
-      </div>
-
-      <template #append>
-          <div class="editor-actions">
-          <v-btn
-            size="small"
-            variant="text"
-            prepend-icon="mdi-undo"
-            :disabled="history.length <= 1"
-            @click="undo"
-          >
-            Deshacer
-          </v-btn>
-          <v-btn
-            size="small"
-            variant="text"
-            prepend-icon="mdi-redo"
-            :disabled="future.length === 0"
-            @click="redo"
-          >
-            Rehacer
-          </v-btn>
-
-            <v-btn
-              variant="tonal"
-              prepend-icon="mdi-content-save"
-              size="small"
-              @click="saveTemplate"
-            >
-            Guardar
-          </v-btn>
-          <v-btn
-            color="primary"
-            prepend-icon="mdi-file-pdf-box"
-            size="small"
-            @click="openPresentation"
-          >
-            Configurar y Generar
-          </v-btn>
-        </div>
-      </template>
-    </v-app-bar>
+      <TemplateEditorToolbar
+        :template-name="template.name"
+        :has-unsaved-changes="hasUnsavedChanges"
+        :history-length="history.length"
+        :future-length="future.length"
+        @back="backToTemplates"
+        @undo="undo"
+        @redo="redo"
+        @save="saveTemplate"
+        @configure="openPresentation"
+      />
 
     <v-container fluid class="editor-body pa-4">
       <div class="editor-layout">
@@ -112,128 +60,20 @@
               <v-window v-model="elementSidebarTab" class="sidebar-tab-content">
                 <v-window-item value="elements">
                   <div class="sidebar-content-scroll">
-            <div class="toolbar-grid">
-              <v-btn block draggable="true" color="primary" variant="tonal" @click="addTextElement" @dragstart="startElementToolDrag($event, 'text')">
-                <v-icon start icon="mdi-format-text" /> Texto
-              </v-btn>
-              <v-btn block draggable="true" color="primary" variant="tonal" @click="addTitleElement" @dragstart="startElementToolDrag($event, 'title')">
-                <v-icon start icon="mdi-format-header-pound" /> Título
-              </v-btn>
-              <v-btn block draggable="true" color="primary" variant="tonal" @click="addSubtitleElement" @dragstart="startElementToolDrag($event, 'subtitle')">
-                <v-icon start icon="mdi-format-size" /> Subtítulo
-              </v-btn>
-              <v-btn block draggable="true" color="primary" variant="tonal" @click="addParagraphElement" @dragstart="startElementToolDrag($event, 'paragraph')">
-                <v-icon start icon="mdi-format-paragraph" /> Párrafo
-              </v-btn>
-              <v-btn block draggable="true" color="primary" variant="tonal" @click="addListElement" @dragstart="startElementToolDrag($event, 'list')">
-                <v-icon start icon="mdi-format-list-bulleted" /> Lista
-              </v-btn>
-              <v-btn block draggable="true" color="secondary" variant="tonal" @click="addPlaceholder" @dragstart="startElementToolDrag($event, 'placeholder')">
-                        <v-icon start icon="mdi-variable" /> Campo dinámico
-              </v-btn>
-              <v-btn block draggable="true" color="secondary" variant="tonal" @click="addImageElement" @dragstart="startElementToolDrag($event, 'image')">
-                <v-icon start icon="mdi-image" /> Imagen
-              </v-btn>
-              <v-btn block draggable="true" color="secondary" variant="tonal" @click="addQrElement" @dragstart="startElementToolDrag($event, 'qr')">
-                <v-icon start icon="mdi-qrcode" /> QR
-              </v-btn>
-              <v-btn block draggable="true" color="secondary" variant="tonal" @click="addDateElement" @dragstart="startElementToolDrag($event, 'date')">
-                <v-icon start icon="mdi-calendar" /> Fecha
-              </v-btn>
-              <v-btn block draggable="true" color="warning" variant="tonal" @click="addFooterElement" @dragstart="startElementToolDrag($event, 'footer')">
-                <v-icon start icon="mdi-page-layout-footer" /> Pie
-              </v-btn>
-              <v-btn block draggable="true" color="warning" variant="tonal" @click="addSignatureElement" @dragstart="startElementToolDrag($event, 'signature')">
-                <v-icon start icon="mdi-signature-freehand" /> Firma
-              </v-btn>
-              <v-btn block draggable="true" color="success" variant="tonal" @click="addLineElement" @dragstart="startElementToolDrag($event, 'line')">
-                <v-icon start icon="mdi-minus" /> Línea
-              </v-btn>
-              <v-btn block draggable="true" color="success" variant="tonal" @click="addRectElement" @dragstart="startElementToolDrag($event, 'rect')">
-                <v-icon start icon="mdi-rectangle" /> Caja
-              </v-btn>
-              <v-btn block draggable="true" color="success" variant="tonal" @click="addTableElement" @dragstart="startElementToolDrag($event, 'table')">
-                <v-icon start icon="mdi-table" /> Tabla
-              </v-btn>
-              <v-btn block draggable="true" color="info" variant="tonal" @click="addCheckboxElement" @dragstart="startElementToolDrag($event, 'checkbox')">
-                <v-icon start icon="mdi-checkbox-marked-outline" /> Casilla
-              </v-btn>
-              <v-btn block draggable="true" color="info" variant="tonal" @click="addPageNumberElement" @dragstart="startElementToolDrag($event, 'pageNumber')">
-                <v-icon start icon="mdi-numeric" /> Nº página
-              </v-btn>
-            </div>
-                    <div class="text-caption text-medium-emphasis mt-3">
-                      Haz clic para agregar un elemento en su posición inicial o arrástralo hasta
-                      el lienzo para colocarlo donde quieras.
-                    </div>
+            <TemplateEditorToolbox
+              @add-element="addElementTool"
+              @start-drag="startElementToolDrag"
+            />
                   </div>
                 </v-window-item>
                 <v-window-item value="resources">
-                  <div class="sidebar-content-scroll resource-panel">
-                    <div class="text-body-2 mb-2">
-                      Imágenes estáticas de la plantilla. PNG y JPEG, hasta 2 MB por imagen y 6 MB
-                      en total.
-                    </div>
-                    <input
-                      ref="imageResourceInput"
-                      class="d-none"
-                      type="file"
-                      accept="image/png,image/jpeg"
-                      @change="handleImageResourceUpload"
-                    />
-                    <v-btn
-                      block
-                      color="secondary"
-                      variant="tonal"
-                      prepend-icon="mdi-upload"
-                      class="mb-3"
-                      @click="imageResourceInput?.click()"
-                    >
-                      Subir imagen
-                    </v-btn>
-                    <div v-if="imageResourceError" class="text-caption text-error mb-2">
-                      {{ imageResourceError }}
-                    </div>
-                    <div v-if="!imageResources.length" class="text-caption text-medium-emphasis">
-                      Aún no hay imágenes. Sube recursos y selecciónalos en un elemento imagen.
-                    </div>
-                    <v-card
-                      v-for="resource in imageResources"
-                      :key="resource.id"
-                      class="pa-2 mb-2"
-                      variant="tonal"
-                    >
-                      <img
-                        :src="resource.dataUrl"
-                        :alt="resource.name"
-                        class="resource-thumbnail mb-2"
-                      />
-                      <div class="text-body-2 text-truncate" :title="resource.name">
-                        {{ resource.name }}
-                      </div>
-                      <div class="text-caption text-medium-emphasis mb-2">
-                        {{ formatResourceSize(resource.size) }}
-                      </div>
-                      <div class="d-flex ga-1">
-                        <v-btn
-                          size="small"
-                          variant="text"
-                          prepend-icon="mdi-image-plus"
-                          @click="useImageResource(resource)"
-                        >
-                          Usar imagen
-                        </v-btn>
-                        <v-btn
-                          icon="mdi-delete-outline"
-                          size="small"
-                          variant="text"
-                          color="error"
-                          :aria-label="`Eliminar recurso ${resource.name}`"
-                          @click="removeImageResource(resource)"
-                        />
-                      </div>
-                    </v-card>
-                  </div>
+                  <TemplateEditorResourcesPanel
+                    :resources="imageResources"
+                    :error="imageResourceError"
+                    @upload="handleImageResourceUpload"
+                    @use-resource="useImageResource"
+                    @remove-resource="removeImageResource"
+                  />
                 </v-window-item>
               </v-window>
           </v-card>
@@ -241,70 +81,15 @@
 
         <div class="editor-stage-col">
           <v-card ref="stagePanel" class="panel stage-panel" rounded="xl">
-            <div class="stage-toolbar d-flex justify-space-between align-center">
-              <div class="canvas-guides-control">
-                <v-checkbox
-                  v-model="showGrid"
-                  label="Cuadrícula"
-                  density="compact"
-                  color="primary"
-                  hide-details
-                  title="Mostrar u ocultar la cuadrícula de referencia"
-                />
-                <v-checkbox
-                  v-model="showMargins"
-                  label="Márgenes"
-                  density="compact"
-                  color="primary"
-                  hide-details
-                  title="Mostrar u ocultar la guía de márgenes"
-                />
-              </div>
-              <div class="d-flex align-center ga-1">
-                <v-btn
-                  icon="mdi-minus"
-                  size="small"
-                  variant="text"
-                  aria-label="Reducir zoom"
-                  title="Reducir zoom"
-                  @click="zoomOut"
-                />
-                <span class="zoom-percentage" aria-live="polite">
-                  {{ Math.round(zoom * 100) }}%
-                </span>
-                <v-btn
-                  icon="mdi-plus"
-                  size="small"
-                  variant="text"
-                  aria-label="Aumentar zoom"
-                  title="Aumentar zoom"
-                  @click="zoomIn"
-                />
-                <v-divider vertical class="mx-1" />
-                <v-btn
-                  size="small"
-                  :icon="panMode ? 'mdi-hand-back-right' : 'mdi-hand-back-right-outline'"
-                  variant="text"
-                  :color="panMode ? 'primary' : undefined"
-                  :aria-pressed="panMode"
-                    :aria-label="
-                      panMode
-                        ? 'Desactivar desplazamiento de hoja'
-                        : 'Activar desplazamiento de hoja'
-                    "
-                  title="Modo para mover la hoja"
-                  @click="panMode = !panMode"
-                />
-                <v-btn
-                  icon="mdi-fit-to-page-outline"
-                  size="small"
-                  variant="text"
-                  aria-label="Restablecer vista de hoja"
-                  title="Restablecer vista de hoja"
-                  @click="resetZoom"
-                />
-              </div>
-            </div>
+            <TemplateEditorCanvasToolbar
+              v-model:show-grid="showGrid"
+              v-model:show-margins="showMargins"
+              v-model:pan-mode="panMode"
+              :zoom="zoom"
+              @zoom-out="zoomOut"
+              @zoom-in="zoomIn"
+              @reset-zoom="resetZoom"
+            />
 
             <div
               ref="canvasShell"
@@ -1576,6 +1361,10 @@ import '@fontsource/open-sans/latin-600-italic.css';
 import '@fontsource/open-sans/latin-700.css';
 import '@fontsource/open-sans/latin-700-italic.css';
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
+import TemplateEditorCanvasToolbar from './TemplateEditorCanvasToolbar.vue';
+import TemplateEditorToolbar from './TemplateEditorToolbar.vue';
+import TemplateEditorToolbox from './TemplateEditorToolbox.vue';
+import TemplateEditorResourcesPanel from './TemplateEditorResourcesPanel.vue';
 import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 import { TEMPLATE_STATUS_OPTIONS } from '../../helpers/docugen-app/templateStatus.js';
@@ -1606,7 +1395,6 @@ const selectedElement = ref(null);
 const sidebarTab = ref('properties');
 const elementSidebarTab = ref('elements');
 const pendingDropPosition = ref(null);
-const imageResourceInput = ref(null);
 const imageResourceError = ref('');
 const dragState = ref(null);
 const resizeHandles = [
@@ -2435,9 +2223,6 @@ const handleImageSourceChange = () => {
   markDirty();
 };
 
-const formatResourceSize = (size) =>
-  size < 1024 * 1024 ? `${Math.ceil(size / 1024)} KB` : `${(size / (1024 * 1024)).toFixed(1)} MB`;
-
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -2941,6 +2726,27 @@ const startElementToolDrag = (event, type) => {
   setTimeout(() => dragImage.remove(), 0);
 };
 
+const elementToolActions = {
+  text: addTextElement,
+  title: addTitleElement,
+  subtitle: addSubtitleElement,
+  paragraph: addParagraphElement,
+  list: addListElement,
+  placeholder: addPlaceholder,
+  image: addImageElement,
+  qr: addQrElement,
+  date: addDateElement,
+  footer: addFooterElement,
+  signature: addSignatureElement,
+  line: addLineElement,
+  rect: addRectElement,
+  table: addTableElement,
+  checkbox: addCheckboxElement,
+  pageNumber: addPageNumberElement,
+};
+
+const addElementTool = (type) => elementToolActions[type]?.();
+
 const dropElementTool = (event) => {
   const type = event.dataTransfer?.getData('application/x-docugen-element');
   const svg = svgRef.value;
@@ -2949,24 +2755,7 @@ const dropElementTool = (event) => {
   const rect = svg.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
 
-  const addElement = {
-    text: addTextElement,
-    title: addTitleElement,
-    subtitle: addSubtitleElement,
-    paragraph: addParagraphElement,
-    list: addListElement,
-    placeholder: addPlaceholder,
-    image: addImageElement,
-    qr: addQrElement,
-    date: addDateElement,
-    footer: addFooterElement,
-    signature: addSignatureElement,
-    line: addLineElement,
-    rect: addRectElement,
-    table: addTableElement,
-    checkbox: addCheckboxElement,
-    pageNumber: addPageNumberElement,
-  }[type];
+  const addElement = elementToolActions[type];
   if (!addElement) return;
 
   pendingDropPosition.value = {
@@ -3378,7 +3167,7 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, #f4f7ff 0%, #eef4fb 100%);
 }
 
-.editor-topbar {
+:deep(.editor-topbar) {
   position: sticky;
   flex: 0 0 auto;
   top: 0;
@@ -3388,11 +3177,11 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid rgba(148, 163, 184, 0.18);
 }
 
-.editor-topbar :deep(.v-toolbar__prepend) {
+:deep(.editor-topbar .v-toolbar__prepend) {
   margin-inline-end: 0;
 }
 
-.editor-heading {
+:deep(.editor-heading) {
   display: flex;
   flex: 1 1 auto;
   min-width: 0;
@@ -3401,13 +3190,13 @@ onBeforeUnmount(() => {
   margin-left: clamp(32px, 12.5vw, 180px);
 }
 
-.editor-dirty-chip {
+:deep(.editor-dirty-chip) {
   flex: 0 0 auto;
   font-size: 0.75rem;
   font-weight: 500;
 }
 
-.editor-actions {
+:deep(.editor-actions) {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -3508,40 +3297,6 @@ onBeforeUnmount(() => {
   padding-right: 6px;
 }
 
-.resource-panel {
-  max-height: none;
-}
-
-.resource-thumbnail {
-  display: block;
-  width: 100%;
-  height: 120px;
-  object-fit: contain;
-  background: #fff;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 8px;
-}
-
-.toolbar-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 0 0 auto;
-}
-
-.toolbar-grid .v-btn {
-  justify-content: flex-start;
-  padding-inline: 12px;
-  border-radius: 12px;
-  min-height: 42px;
-  font-weight: 600;
-  cursor: grab;
-}
-
-.toolbar-grid .v-btn:active {
-  cursor: grabbing;
-}
-
 .stage-panel {
   display: flex;
   flex-direction: column;
@@ -3551,7 +3306,7 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.9));
 }
 
-.stage-toolbar {
+:deep(.stage-toolbar) {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -3561,18 +3316,18 @@ onBeforeUnmount(() => {
   margin-bottom: 12px;
 }
 
-.canvas-guides-control {
+:deep(.canvas-guides-control) {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   column-gap: 12px;
 }
 
-.canvas-guides-control :deep(.v-selection-control) {
+:deep(.canvas-guides-control .v-selection-control) {
   min-height: 32px;
 }
 
-.zoom-percentage {
+:deep(.zoom-percentage) {
   min-width: 42px;
   text-align: center;
   font-size: 0.8rem;
@@ -3727,11 +3482,11 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 960px) {
-  .editor-heading {
+  :deep(.editor-heading) {
     gap: 10px;
   }
 
-  .editor-actions {
+  :deep(.editor-actions) {
     gap: 4px;
   }
 
@@ -3787,16 +3542,16 @@ onBeforeUnmount(() => {
     height: auto;
   }
 
-  .stage-toolbar {
+  :deep(.stage-toolbar) {
     flex-wrap: wrap;
     padding: 6px 4px 10px;
   }
 
-  .canvas-guides-control {
+  :deep(.canvas-guides-control) {
     column-gap: 6px;
   }
 
-  .canvas-guides-control :deep(.v-label) {
+  :deep(.canvas-guides-control .v-label) {
     font-size: 0.75rem;
   }
 
@@ -3820,29 +3575,29 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 600px) {
-  .editor-topbar :deep(.v-toolbar__content) {
+  :deep(.editor-topbar .v-toolbar__content) {
     height: auto !important;
     min-height: 64px;
     flex-wrap: wrap;
     padding-block: 6px;
   }
 
-  .editor-heading {
+  :deep(.editor-heading) {
     margin-left: 0;
     gap: 6px;
   }
 
-  .editor-topbar :deep(.v-toolbar__append) {
+  :deep(.editor-topbar .v-toolbar__append) {
     flex: 1 1 100%;
     margin-inline-start: 0;
   }
 
-  .editor-actions {
+  :deep(.editor-actions) {
     justify-content: flex-start;
     width: 100%;
   }
 
-  .editor-actions .v-btn {
+  :deep(.editor-actions .v-btn) {
     flex: 1 1 auto;
   }
 
