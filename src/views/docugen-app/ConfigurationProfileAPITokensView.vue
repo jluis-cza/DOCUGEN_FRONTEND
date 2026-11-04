@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import APITokenManagement from '@/components/docugen-app/APITokenManagement.vue';
+import APITokenManagement from '@/components/docugen-app/ConfigurationAPITokenManagement.vue';
 </script>
 
 <style scoped>

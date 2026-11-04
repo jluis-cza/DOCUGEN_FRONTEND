@@ -5,8 +5,7 @@ const createTextStyle = (depths) => ({
   italic: depths.italic > 0,
   underlined: depths.underlined > 0,
 });
-const areTextStylesEqual = (left, right) =>
-  MARKUP_TAGS.every((tag) => left[tag] === right[tag]);
+const areTextStylesEqual = (left, right) => MARKUP_TAGS.every((tag) => left[tag] === right[tag]);
 
 export const parseTextMarkup = (value) => {
   const runs = [];
@@ -48,10 +47,13 @@ export const wrapTextToWidth = (value, maxWidth, measureText) => {
   const width = Math.max(1, Number(maxWidth) || 1);
   const sourceParagraphs = [[]];
   parseTextMarkup(value).forEach((run) => {
-    run.text.replace(/\r\n?/g, '\n').split('\n').forEach((part, index, parts) => {
-      if (part) appendTextRun(sourceParagraphs[sourceParagraphs.length - 1], part, run);
-      if (index < parts.length - 1) sourceParagraphs.push([]);
-    });
+    run.text
+      .replace(/\r\n?/g, '\n')
+      .split('\n')
+      .forEach((part, index, parts) => {
+        if (part) appendTextRun(sourceParagraphs[sourceParagraphs.length - 1], part, run);
+        if (index < parts.length - 1) sourceParagraphs.push([]);
+      });
   });
   const lines = [];
 
@@ -143,10 +145,7 @@ export const wrapTextToWidth = (value, maxWidth, measureText) => {
 };
 
 export const getTextLineHeight = (fontSize, lineSpacing) =>
-  Math.max(
-    Number(fontSize || 16),
-    Number(lineSpacing) || Number(fontSize || 16) * 1.35
-  );
+  Math.max(Number(fontSize || 16), Number(lineSpacing) || Number(fontSize || 16) * 1.35);
 
 export const getTextContentHeight = (lineCount, fontSize, lineSpacing) => {
   const lines = Math.max(1, lineCount);

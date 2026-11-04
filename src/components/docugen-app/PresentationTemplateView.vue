@@ -135,7 +135,7 @@
               @set-image-file-input-ref="setImageFileInputRef"
               @image-file-selected="handleImageParameterFile"
               @request-image-file="openImageFilePicker"
-                    />
+            />
           </v-card>
         </div>
 
@@ -163,171 +163,19 @@
         </div>
       </div>
 
-      <v-card v-else class="bulk-panel" rounded="xl">
-        <v-card-title class="d-flex align-center justify-space-between flex-wrap ga-2">
-          <span>Generación masiva de documentos</span>
-          <div class="d-flex align-center ga-2">
-            <v-chip size="small" color="primary" variant="tonal">
-              {{ bulkRows.length }} / {{ MAX_BULK_DOCUMENTS }} documentos
-            </v-chip>
-            <v-btn
-              size="small"
-              variant="tonal"
-              prepend-icon="mdi-plus"
-              :disabled="bulkRows.length >= MAX_BULK_DOCUMENTS || isBulkGenerating"
-              @click="addBulkRow"
-            >
-              Agregar fila
-            </v-btn>
-          </div>
-        </v-card-title>
-        <v-divider />
-        <v-card-text class="bulk-table-container pa-4">
-          <div v-if="!placeholdersList.length" class="text-center text-medium-emphasis pa-8">
-            La plantilla no tiene parámetros dinámicos; cada fila generará el mismo documento.
-          </div>
-          <div class="bulk-table-scroll">
-            <table class="bulk-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th v-for="placeholder in placeholdersList" :key="placeholder.key">
-                    {{ placeholder.label || placeholder.key }}
-                    <span v-if="placeholder.required" class="text-error">*</span>
-                  </th>
-                  <th class="status-column">Estado</th>
-                  <th class="row-actions-column" aria-label="Acciones"></th>
-                  <th class="document-column">Documento</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, rowIndex) in bulkRows" :key="row.id">
-                  <td>{{ rowIndex + 1 }}</td>
-                  <td v-for="placeholder in placeholdersList" :key="placeholder.key">
-                    <v-select
-                      v-if="placeholder.allowedValues?.length"
-                      :model-value="row.data[placeholder.key] ?? ''"
-                      :items="placeholder.allowedValues"
-                      :error="!!row.errors[placeholder.key]"
-                      :error-messages="
-                        row.errors[placeholder.key] ? [row.errors[placeholder.key]] : []
-                      "
-                      density="compact"
-                      variant="outlined"
-                      hide-details="auto"
-                      @update:model-value="(value) => updateBulkValue(row, placeholder, value)"
-                    />
-                    <v-checkbox
-                      v-else-if="placeholder.type === 'boolean'"
-                      :model-value="
-                        row.data[placeholder.key] === true || row.data[placeholder.key] === 'true'
-                      "
-                      :error="!!row.errors[placeholder.key]"
-                      density="compact"
-                      hide-details
-                      @update:model-value="(value) => updateBulkValue(row, placeholder, value)"
-                    />
-                    <v-textarea
-                      v-else-if="placeholder.type === 'textarea'"
-                      :model-value="row.data[placeholder.key] ?? ''"
-                      :error="!!row.errors[placeholder.key]"
-                      :error-messages="
-                        row.errors[placeholder.key] ? [row.errors[placeholder.key]] : []
-                      "
-                      rows="1"
-                      auto-grow
-                      density="compact"
-                      variant="outlined"
-                      hide-details="auto"
-                      @update:model-value="(value) => updateBulkValue(row, placeholder, value)"
-                    />
-                    <v-text-field
-                      v-else
-                      :model-value="row.data[placeholder.key] ?? ''"
-                      :type="
-                        ['number', 'date', 'email', 'url'].includes(placeholder.type)
-                          ? placeholder.type
-                          : 'text'
-                      "
-                      :error="!!row.errors[placeholder.key]"
-                      :error-messages="
-                        row.errors[placeholder.key] ? [row.errors[placeholder.key]] : []
-                      "
-                      :placeholder="
-                        placeholder.type === 'image' ? 'URL o Base64 PNG/JPEG' : placeholder.key
-                      "
-                      :append-inner-icon="placeholder.type === 'image' ? 'mdi-upload' : undefined"
-                      density="compact"
-                      variant="outlined"
-                      hide-details="auto"
-                      @click:append-inner="openBulkImagePicker(row.id, placeholder.key)"
-                      @update:model-value="(value) => updateBulkValue(row, placeholder, value)"
-                    />
-                    <input
-                      v-if="placeholder.type === 'image'"
-                      :ref="(element) => setBulkImageFileInputRef(row.id, placeholder.key, element)"
-                      class="d-none"
-                      type="file"
-                      accept="image/png,image/jpeg"
-                      @change="(event) => handleBulkImageFile(row, placeholder, event)"
-                    />
-                  </td>
-                  <td class="status-column">
-                    <v-tooltip v-if="row.error" :text="row.error">
-                      <template #activator="{ props }">
-                        <v-chip v-bind="props" size="small" color="error" variant="tonal">
-                          <v-icon start icon="mdi-alert-circle-outline" /> Error
-                        </v-chip>
-                      </template>
-                    </v-tooltip>
-                    <v-chip v-else-if="row.url" size="small" color="success" variant="tonal">
-                      <v-icon start icon="mdi-check-circle-outline" /> Generado
-                    </v-chip>
-                    <v-chip
-                      v-else-if="row.status === 'invalid'"
-                      size="small"
-                      color="warning"
-                      variant="tonal"
-                    >
-                      <v-icon start icon="mdi-alert-outline" /> Revisar datos
-                    </v-chip>
-                    <v-chip v-else size="small" variant="tonal">Pendiente</v-chip>
-                  </td>
-                  <td class="row-actions-column">
-                    <v-btn
-                      icon="mdi-delete-outline"
-                      size="x-small"
-                      variant="text"
-                      color="error"
-                      aria-label="Eliminar fila"
-                      :disabled="bulkRows.length === 1 || isBulkGenerating"
-                      @click="removeBulkRow(row.id)"
-                    />
-                  </td>
-                  <td class="document-column">
-                    <a
-                      v-if="row.url"
-                      :href="row.url"
-                      target="_blank"
-                      rel="noopener"
-                      class="text-primary"
-                    >
-                      Ver PDF
-                    </a>
-                    <span v-else class="text-medium-emphasis">—</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div
-            v-if="bulkRows.some((row) => Object.keys(row.errors).length)"
-            class="text-caption text-error mt-3"
-          >
-            Corrige los campos marcados antes de generar los documentos.
-          </div>
-        </v-card-text>
-      </v-card>
+      <PresentationBulkGenerationPanel
+        v-else
+        :placeholders="placeholdersList"
+        :bulk-rows="bulkRows"
+        :max-documents="MAX_BULK_DOCUMENTS"
+        :is-generating="isBulkGenerating"
+        @add-row="addBulkRow"
+        @update-value="updateBulkValue"
+        @request-image-file="openBulkImagePicker"
+        @set-image-file-input-ref="setBulkImageFileInputRef"
+        @image-file-selected="handleBulkImageFile"
+        @remove-row="removeBulkRow"
+      />
     </v-container>
 
     <!-- Loading Dialog -->
@@ -373,13 +221,19 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import TemplateConfigurationForm from './TemplateConfigurationForm.vue';
-import { useTemplates } from '../../composables/docugen-app/useTemplates.js';
+import TemplateConfigurationForm from './ConfigurationTemplateForm.vue';
+import PresentationBulkGenerationPanel from './PresentationBulkGenerationPanel.vue';
+import { useTemplateAcquisition } from '../../composables/docugen-app/useTemplateAcquisition.js';
+import { useTemplatePresentation } from '../../composables/docugen-app/useTemplatePresentation.js';
+import { useDocumentProcessing } from '../../composables/docugen-app/useDocumentProcessing.js';
 import {
   normalizeImageValue,
   usePresentationConfig,
-  validateConfigData,
 } from '../../composables/docugen-app/usePresentationConfig.js';
+import {
+  MAX_BULK_DOCUMENTS,
+  useBulkDocumentGeneration,
+} from '../../composables/docugen-app/useBulkDocumentGeneration.js';
 import { usePresentationStore } from '../../stores/docugen-app/presentationStore.js';
 import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 
@@ -387,7 +241,9 @@ const route = useRoute();
 const router = useRouter();
 const presentationStore = usePresentationStore();
 const notificationStore = useNotificationStore();
-const { getTemplate, renderTemplate, generateDocumentsBulk } = useTemplates();
+const { getTemplate, getTemplateParameters } = useTemplateAcquisition();
+const { renderTemplate } = useTemplatePresentation();
+const { generateDocumentsBulk } = useDocumentProcessing();
 const {
   template,
   placeholders,
@@ -406,7 +262,6 @@ const {
 } = usePresentationConfig();
 
 const templateId = computed(() => route.params.templateId);
-const MAX_BULK_DOCUMENTS = 100;
 const generatorSection = ref('single');
 const jsonString = ref('{}');
 const jsonError = ref(null);
@@ -415,13 +270,7 @@ const isLoadingTemplate = ref(true);
 const showLoadError = ref(false);
 const loadErrorMessage = ref('');
 const imageFileInputs = ref({});
-const isBulkGenerating = ref(false);
-const bulkRowsVersion = ref(0);
-let nextBulkRowId = 1;
 const pdfFileName = ref('');
-const bulkRows = ref([createBulkRow()]);
-const bulkHasResults = computed(() => bulkRows.value.some((row) => row.url || row.error));
-const successfulBulkRows = computed(() => bulkRows.value.filter((row) => row.url));
 
 const canGeneratePdf = computed(() => {
   if (jsonError.value || isGenerating.value) return false;
@@ -429,57 +278,6 @@ const canGeneratePdf = computed(() => {
   if (!hasParams) return true;
   return Object.keys(validationErrors.value || {}).length === 0;
 });
-const canGenerateBulk = computed(() => {
-    bulkRowsVersion.value;
-    return (
-      !isBulkGenerating.value &&
-      bulkRows.value.length > 0 &&
-      bulkRows.value.length <= MAX_BULK_DOCUMENTS &&
-      bulkRows.value.every((row) => validateConfigData(row.data, placeholders.value).isValid)
-    );
-});
-
-function createBulkRow() {
-  const data = Object.fromEntries(
-    placeholdersList.value.map((placeholder) => [
-      placeholder.key,
-      placeholder.type === 'boolean' && !placeholder.allowedValues?.length ? false : '',
-    ])
-  );
-  return {
-    id: `document-${nextBulkRowId++}`,
-    data,
-    errors: {},
-    status: 'pending',
-    url: '',
-    fileName: '',
-    error: '',
-  };
-}
-
-const addBulkRow = () => {
-  if (bulkRows.value.length >= MAX_BULK_DOCUMENTS) return;
-  bulkRows.value.push(createBulkRow());
-  bulkRowsVersion.value += 1;
-};
-
-const removeBulkRow = (rowId) => {
-  if (bulkRows.value.length <= 1) return;
-  bulkRows.value = bulkRows.value.filter((row) => row.id !== rowId);
-  bulkRowsVersion.value += 1;
-};
-
-const updateBulkValue = (row, placeholder, value) => {
-  row.data[placeholder.key] =
-    placeholder.type === 'image' ? normalizeImageValue(value) : (value ?? '');
-  delete row.errors[placeholder.key];
-  row.status = 'pending';
-  row.url = '';
-  row.fileName = '';
-  row.error = '';
-  row.errors = validateConfigData(row.data, placeholders.value).errors;
-  bulkRowsVersion.value += 1;
-};
 
 const getBulkImageInputKey = (rowId, key) => `${rowId}:${key}`;
 const setBulkImageFileInputRef = (rowId, key, element) => {
@@ -537,6 +335,30 @@ const showNotification = (message, code, mode = 'persistent') => {
     mode,
   });
 };
+
+const {
+  isBulkGenerating,
+  bulkRows,
+  bulkHasResults,
+  successfulBulkRows,
+  canGenerateBulk,
+  addBulkRow,
+  resetBulkRows,
+  removeBulkRow,
+  updateBulkValue,
+  generateBulkPdfs,
+  downloadBulkPdfs,
+} = useBulkDocumentGeneration({
+  templateId,
+  template,
+  placeholders,
+  placeholdersList,
+  generateDocumentsBulk,
+  showNotification,
+  setGenerating: (isGenerating) => {
+    showGeneratingDialog.value = isGenerating;
+  },
+});
 
 const setImageFileInputRef = (key, element) => {
   if (element) imageFileInputs.value[key] = element;
@@ -603,7 +425,10 @@ onMounted(async () => {
   }
 
   try {
-    const tmpl = await getTemplate(templateId.value, { includeContent: true });
+    const [tmpl, parameterResponse] = await Promise.all([
+      getTemplate(templateId.value, { includeContent: true }),
+      getTemplateParameters(templateId.value),
+    ]);
 
     if (!tmpl || !tmpl._id) {
       loadErrorMessage.value = 'La plantilla no existe o no tienes permisos';
@@ -614,8 +439,12 @@ onMounted(async () => {
       return;
     }
 
-    extractPlaceholdersFromTemplate(tmpl);
-    bulkRows.value = [createBulkRow()];
+    if (!Array.isArray(parameterResponse?.parameters)) {
+      throw new Error('La respuesta del servidor no contiene parámetros dinámicos válidos.');
+    }
+
+    extractPlaceholdersFromTemplate(tmpl, parameterResponse.parameters);
+    resetBulkRows();
     presentationStore.setTemplate(tmpl);
     updateJsonString();
     isLoadingTemplate.value = false;
@@ -702,72 +531,6 @@ const generatePdf = async () => {
   }
 };
 
-const generateBulkPdfs = async () => {
-  const invalidRows = [];
-  bulkRows.value.forEach((row, index) => {
-    const validation = validateConfigData(row.data, placeholders.value);
-    row.errors = validation.errors;
-    row.status = validation.isValid ? 'pending' : 'invalid';
-    if (!validation.isValid) invalidRows.push(index + 1);
-  });
-  if (invalidRows.length) {
-    showNotification(
-      `Completa los datos obligatorios de las filas: ${invalidRows.join(', ')}.`,
-      'W0002',
-      'persistent'
-    );
-    return;
-  }
-
-  isBulkGenerating.value = true;
-  showGeneratingDialog.value = true;
-  try {
-    const result = await generateDocumentsBulk({
-      templateId: templateId.value,
-      metadata: { documentName: template.value?.name || 'Documento' },
-      documents: bulkRows.value.map((row) => ({
-        id: row.id,
-        data: row.data,
-        metadata: { documentName: template.value?.name || 'Documento' },
-      })),
-    });
-
-    const resultsById = new Map((result?.results || []).map((item) => [item.id, item]));
-    bulkRows.value.forEach((row, index) => {
-      const item = resultsById.get(row.id) || result?.results?.[index];
-      if (item?.success) {
-        row.url = item.url;
-        row.fileName = item.fileName || '';
-        row.error = '';
-        row.status = 'success';
-      } else {
-        row.url = '';
-        row.fileName = '';
-        row.status = 'error';
-        row.error = item?.error?.message || 'No se pudo generar el PDF.';
-      }
-    });
-
-    const succeeded = successfulBulkRows.value.length;
-    const failed = bulkRows.value.length - succeeded;
-    showNotification(
-      failed
-        ? `Lote procesado: ${succeeded} PDF(s) generado(s), ${failed} con error.`
-        : `Se generaron ${succeeded} PDF(s) correctamente.`,
-      failed ? 'S2011' : 'S2010',
-      failed ? 'persistent' : 'short'
-    );
-  } catch (error) {
-    const message =
-      error?.response?.data?.message || error?.message || 'No se pudo generar el lote de PDFs.';
-    console.error('Error generando PDFs masivos:', error);
-    showNotification(message, error?.response?.data?.code || 'E2007', 'persistent');
-  } finally {
-    isBulkGenerating.value = false;
-    showGeneratingDialog.value = false;
-  }
-};
-
 const downloadPdf = () => {
   if (pdfUrl.value) {
     const link = document.createElement('a');
@@ -777,20 +540,6 @@ const downloadPdf = () => {
     link.click();
     document.body.removeChild(link);
   }
-};
-
-const downloadBulkPdfs = () => {
-  const rows = successfulBulkRows.value;
-  rows.forEach((row) => {
-    const link = document.createElement('a');
-    link.href = row.url;
-    link.download = row.fileName || 'documento.pdf';
-    link.rel = 'noopener';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  });
-  showNotification(`Se solicitaron las descargas de ${rows.length} PDF(s).`, 'S2010', 'short');
 };
 
 const backToEditor = () => {
@@ -860,62 +609,6 @@ Object.assign(window, {
 
 .presentation-layout > * {
   min-width: 0;
-}
-
-.bulk-panel {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-}
-
-.bulk-table-container {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-}
-
-.bulk-table-scroll {
-  width: 100%;
-  overflow: auto;
-}
-
-.bulk-table {
-  width: 100%;
-  min-width: max-content;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.bulk-table th,
-.bulk-table td {
-  min-width: 150px;
-  padding: 8px;
-  text-align: left;
-  vertical-align: middle;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.bulk-table th:first-child,
-.bulk-table td:first-child,
-.bulk-table .row-actions-column {
-  min-width: 48px;
-  width: 48px;
-}
-
-.bulk-table .status-column,
-.bulk-table .document-column {
-  min-width: 130px;
-}
-
-.bulk-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: #f8fafc;
 }
 
 .config-panel,
@@ -1024,10 +717,6 @@ Object.assign(window, {
   .config-panel,
   .preview-panel {
     height: min(70vh, 720px);
-  }
-
-  .bulk-panel {
-    min-height: 60vh;
   }
 }
 

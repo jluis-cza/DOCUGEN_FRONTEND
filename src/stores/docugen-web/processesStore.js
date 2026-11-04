@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { deepMerge, extractTime, extractSubarray } from '../../helpers/utils.js';
-import { identifyModuleProcessPrefix } from '../../helpers/docugen-web/managerProcessHelper.js';
+import { identifyModuleProcessPrefix } from '../../helpers/docugen-web/managementProcessHelper.js';
 import { toRaw } from 'vue';
 
 export const useProcessesStore = defineStore('processes', () => {

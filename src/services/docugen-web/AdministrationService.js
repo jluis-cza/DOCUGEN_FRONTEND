@@ -62,9 +62,13 @@ export const AdministrationService = {
       params,
     });
   },
-  monitorAccountsServices: (params) => {
+  monitorAccountsServices: (id, params) => {
     return axiosInstance.get(
-      ADMINISTRATION_BASE_PATH + MONITOR_PATH + RESOURCE_ACCOUNTS_PATH + RESOURCE_SERVICES_PATH,
+      ADMINISTRATION_BASE_PATH +
+        MONITOR_PATH +
+        RESOURCE_ACCOUNTS_PATH +
+        `/${id}` +
+        RESOURCE_SERVICES_PATH,
       {
         params,
       }

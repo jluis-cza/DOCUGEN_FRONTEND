@@ -40,7 +40,7 @@
               autocomplete="off"
               :error="!!errors[parameter.key]"
               :error-messages="errors[parameter.key] ? [errors[parameter.key]] : []"
-              hint="Imagen dinámica: pega una URL HTTP(S), un data URL o Base64 PNG/JPEG. También puedes cargar un archivo."
+              hint="Imagen dinámica: URL, un data URL o Base64 PNG/JPEG. También se puede cargar un archivo."
               persistent-hint
               density="comfortable"
               variant="outlined"

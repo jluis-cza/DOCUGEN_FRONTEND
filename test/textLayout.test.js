@@ -6,23 +6,26 @@ import {
   parseBoldMarkup,
   parseTextMarkup,
   wrapTextToWidth,
-} from '../src/helpers/docugen-app/textLayout.js';
+} from '../src/helpers/docugen-app/editorTextLayoutHelper.js';
 
 test('wraps plain text against measured font width and preserves explicit newlines', () => {
   const lines = wrapTextToWidth('wide word\nlast line', 6, (text) => text.length * 3);
 
-  assert.deepEqual(lines.map((line) => line.text), ['wi', 'de', 'wo', 'rd', 'la', 'st', 'li', 'ne']);
+  assert.deepEqual(
+    lines.map((line) => line.text),
+    ['wi', 'de', 'wo', 'rd', 'la', 'st', 'li', 'ne']
+  );
 });
 
 test('parses inline styles and measures styled runs without exposing markup', () => {
-  const source = 'Normal <bold>bold</bold> <semibold>semi</semibold> <italic>italic</italic> <underlined>under</underlined>';
+  const source =
+    'Normal <bold>bold</bold> <semibold>semi</semibold> <italic>italic</italic> <underlined>under</underlined>';
   const runs = parseTextMarkup(source);
   const lines = wrapTextToWidth(
     source,
     100,
     (text, style) =>
-      Array.from(text).length *
-      (style.bold ? 10 : style.semibold ? 8 : style.italic ? 6 : 5)
+      Array.from(text).length * (style.bold ? 10 : style.semibold ? 8 : style.italic ? 6 : 5)
   );
 
   assert.deepEqual(runs, [

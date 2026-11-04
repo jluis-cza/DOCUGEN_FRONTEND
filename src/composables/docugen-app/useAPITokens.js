@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { APITokenService } from '../../services/docugen-app/APITokenService.js';
+import { ConfigurationService } from '../../services/docugen-app/ConfigurationService.js';
 
 const unwrapApiData = (response, fallback = {}) => {
   if (response?.data?.data !== undefined) return response.data.data;
@@ -33,7 +33,7 @@ export const useAPITokens = () => {
   const getTokens = async () => {
     try {
       loading.value = true;
-      const response = await APITokenService.getTokens();
+      const response = await ConfigurationService.getTokens();
       const payload = unwrapApiData(response, { tokens: [] });
       tokens.value = Array.isArray(payload?.tokens) ? payload.tokens : [];
       success.value = response.data?.success ?? true;
@@ -53,7 +53,7 @@ export const useAPITokens = () => {
   const createToken = async (payload) => {
     try {
       loading.value = true;
-      const response = await APITokenService.createToken(payload);
+      const response = await ConfigurationService.createToken(payload);
       success.value = response.data?.success ?? true;
       message.value = response.data?.message || '';
       code.value = response.data?.code || 'S3001';
@@ -76,7 +76,7 @@ export const useAPITokens = () => {
   const getToken = async (id) => {
     try {
       loading.value = true;
-      const response = await APITokenService.getToken(id);
+      const response = await ConfigurationService.getToken(id);
       const token = unwrapApiData(response, {});
       selectedToken.value = token;
       success.value = response.data?.success ?? true;
@@ -96,7 +96,7 @@ export const useAPITokens = () => {
   const updateToken = async (id, payload) => {
     try {
       loading.value = true;
-      const response = await APITokenService.updateToken(id, payload);
+      const response = await ConfigurationService.updateToken(id, payload);
       const token = unwrapApiData(response, {});
       success.value = response.data?.success ?? true;
       message.value = response.data?.message || '';
@@ -119,7 +119,7 @@ export const useAPITokens = () => {
   const revokeToken = async (id) => {
     try {
       loading.value = true;
-      const response = await APITokenService.revokeToken(id);
+      const response = await ConfigurationService.revokeToken(id);
       success.value = response.data?.success ?? true;
       message.value = response.data?.message || '';
       code.value = response.data?.code || 'S3005';
@@ -141,7 +141,7 @@ export const useAPITokens = () => {
   const deleteToken = async (id) => {
     try {
       loading.value = true;
-      const response = await APITokenService.deleteToken(id);
+      const response = await ConfigurationService.deleteToken(id);
       success.value = response.data?.success ?? true;
       message.value = response.data?.message || '';
       code.value = response.data?.code || 'S3006';
@@ -163,7 +163,7 @@ export const useAPITokens = () => {
   const getTokenUsage = async (id) => {
     try {
       loading.value = true;
-      const response = await APITokenService.getTokenUsage(id);
+      const response = await ConfigurationService.getTokenUsage(id);
       const usage = unwrapApiData(response, {});
       success.value = response.data?.success ?? true;
       message.value = response.data?.message || '';

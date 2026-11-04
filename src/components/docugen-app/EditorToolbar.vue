@@ -26,7 +26,7 @@
           size="small"
           variant="text"
           prepend-icon="mdi-undo"
-          :disabled="historyLength <= 1"
+          :disabled="!canUndo"
           @click="$emit('undo')"
         >
           Deshacer
@@ -35,7 +35,7 @@
           size="small"
           variant="text"
           prepend-icon="mdi-redo"
-          :disabled="futureLength === 0"
+          :disabled="!canRedo"
           @click="$emit('redo')"
         >
           Rehacer
@@ -60,8 +60,8 @@
 defineProps({
   templateName: { type: String, default: '' },
   hasUnsavedChanges: { type: Boolean, default: false },
-  historyLength: { type: Number, default: 0 },
-  futureLength: { type: Number, default: 0 },
+  canUndo: { type: Boolean, default: false },
+  canRedo: { type: Boolean, default: false },
 });
 
 defineEmits(['back', 'undo', 'redo', 'save', 'configure']);

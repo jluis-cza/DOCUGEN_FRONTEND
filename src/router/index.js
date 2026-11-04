@@ -1,7 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { admission } from './docugen-web/admission.js';
 import { administrationManagement } from './docugen-web/administrationManagement.js';
-import { USERS } from '../constants/users.js';
+import { acquisitionRoutes } from './docugen-app/acquisitionRoutes.js';
+import { editorRoutes } from './docugen-app/editorRoutes.js';
+import { processingRoutes } from './docugen-app/processingRoutes.js';
+import { presentationRoutes } from './docugen-app/presentationRoutes.js';
 import guard from './guard.js';
 import { useOverlayStore } from '../stores/utils/overlayStore.js';
 
@@ -37,28 +40,11 @@ const routes = [
   },
   ...admission,
   ...administrationManagement,
-  {
-    path: '/templates/:templateId/edit',
-    name: 'standalone-template-editor',
-    meta: {
-      requiresAuth: true,
-      allowedRoles: [USERS.type.client.role.developer],
-      requiredService: 'edition',
-    },
-    component: () => import('../components/docugen-app/TemplateEditor.vue'),
-  },
-  {
-    path: '/templates/:templateId/present',
-    name: 'standalone-template-presentation',
-    meta: {
-      requiresAuth: true,
-      allowedRoles: [USERS.type.client.role.developer],
-      requiredService: 'generation',
-    },
-    component: () => import('../components/docugen-app/TemplatePresentationView.vue'),
-  },
-
-  //  DOCUGEN-APP
+  // DOCUGEN-APP
+  ...acquisitionRoutes,
+  ...editorRoutes,
+  ...processingRoutes,
+  ...presentationRoutes,
 
   //  EXCEPTIONS
   {

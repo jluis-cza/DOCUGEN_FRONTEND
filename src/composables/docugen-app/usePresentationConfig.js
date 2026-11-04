@@ -51,9 +51,7 @@ const getImageBase64 = (value) => {
     const canonicalBase64 = btoa(binary);
     const isPng =
       binary.length >= 24 &&
-      [137, 80, 78, 71, 13, 10, 26, 10].every(
-        (byte, index) => binary.charCodeAt(index) === byte
-      ) &&
+      [137, 80, 78, 71, 13, 10, 26, 10].every((byte, index) => binary.charCodeAt(index) === byte) &&
       binary.slice(16, 20) !== '\0\0\0\0' &&
       binary.slice(20, 24) !== '\0\0\0\0';
     const isJpeg =
@@ -77,8 +75,29 @@ export const normalizeImageValue = (value) => {
   return getImageBase64(normalized)?.dataUrl || normalized;
 };
 
-export const extractPlaceholders = (template) => {
+export const extractPlaceholders = (template, parameterDetails) => {
   if (!template || !template.elements) return {};
+
+  if (Array.isArray(parameterDetails)) {
+    return Object.fromEntries(
+      parameterDetails.map((parameter) => {
+        const key = normalizePlaceholderKey(parameter?.key);
+        if (!key || key === 'page_number') {
+          throw new Error('El servidor devolvió un parámetro dinámico sin una clave válida.');
+        }
+
+        return [
+          key,
+          {
+            ...parameter,
+            key,
+            elementId: parameter.elements?.[0]?.id || '',
+            elementType: parameter.elements?.[0]?.type || '',
+          },
+        ];
+      })
+    );
+  }
 
   const placeholderMap = {};
   const metadataParams = Array.isArray(template?.metadata?.dynamicParameters)
@@ -250,7 +269,30 @@ export const validateConfigData = (data, placeholders) => {
   };
 };
 
-export const normalizeDynamicParameters = (template) => {
+export const normalizeDynamicParameters = (template, parameterDetails) => {
+  if (Array.isArray(parameterDetails)) {
+    return parameterDetails
+      .map((parameter) => {
+        const key = normalizePlaceholderKey(parameter?.key);
+        if (!key || key === 'page_number') {
+          throw new Error('El servidor devolvió un parámetro dinámico sin una clave válida.');
+        }
+        return {
+          ...parameter,
+          key,
+          label: parameter.label || key,
+          type: parameter.type || 'text',
+          required: Boolean(parameter.required),
+          description: parameter.description || '',
+          allowedValues: Array.isArray(parameter.allowedValues)
+            ? parameter.allowedValues
+            : undefined,
+          example: parameter.example || '',
+        };
+      })
+      .sort(paramSort);
+  }
+
   const existing = Array.isArray(template?.metadata?.dynamicParameters)
     ? template.metadata.dynamicParameters
     : [];
@@ -300,16 +342,17 @@ export const usePresentationConfig = () => {
 
   const placeholdersList = computed(() => Object.values(placeholders.value));
 
-  const extractPlaceholdersFromTemplate = (tmpl) => {
+  const extractPlaceholdersFromTemplate = (tmpl, parameterDetails) => {
+    const dynamicParameters = normalizeDynamicParameters(tmpl, parameterDetails);
     template.value = {
       ...tmpl,
       metadata: {
         ...(tmpl?.metadata || {}),
-        dynamicParameters: normalizeDynamicParameters(tmpl),
+        dynamicParameters,
       },
     };
 
-    placeholders.value = extractPlaceholders(template.value);
+    placeholders.value = extractPlaceholders(template.value, parameterDetails);
     configData.value = createEmptyDataObject(placeholders.value);
     validationErrors.value = {};
   };
@@ -319,7 +362,7 @@ export const usePresentationConfig = () => {
     const nextValue =
       placeholder?.type === 'image' && value !== undefined && value !== null
         ? normalizeImageValue(value)
-        : value ?? '';
+        : (value ?? '');
     configData.value[key] = nextValue;
     if (validationErrors.value[key]) {
       validationErrors.value[key] = null;

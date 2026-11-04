@@ -18,9 +18,10 @@
 
 ```
 Vue 3 (Composition API)
-├── TemplatePresentationView.vue (Componente principal)
+├── PresentationTemplateView.vue (Coordinador de pantalla)
 ├── usePresentationConfig.js (Composable - lógica)
 ├── presentationStore.js (Pinia - estado)
+├── PresentationBulkGenerationPanel.vue (UI de generación masiva)
 └── Vuetify 3 (UI Components)
     ├── v-app-bar (topbar)
     ├── v-card (paneles)
@@ -32,19 +33,21 @@ Vue 3 (Composition API)
 ### Patron de Responsabilidades
 
 ```
-Component (TemplatePresentationView.vue)
+Component (PresentationTemplateView.vue)
     ↓
-    Maneja: UI, eventos, navegación
+    Coordina: UI, eventos, navegación y estado de carga
     ├── Composable (usePresentationConfig.js)
     │   ├── Maneja: Lógica de presentación
     │   ├── Extracción de placeholders
     │   ├── Validación
     │   └── Gestión de modo (form/json)
     │
-    └── Service Layer (useTemplates.js)
-        ├── Maneja: Comunicación HTTP
-        ├── Carga de plantillas
-        └── Generación de PDFs
+    ├── PresentationBulkGenerationPanel.vue
+    │   └── Maneja: edición visual de filas y estado de resultados masivos
+    └── Composables por módulo
+        ├── useTemplateAcquisition.js: carga de plantillas y parámetros
+        ├── useTemplatePresentation.js: render de vista previa PDF
+        └── useDocumentProcessing.js: procesamiento/generación masiva
 
 Store (presentationStore.js)
     └── Persistencia entre vistas
@@ -329,7 +332,9 @@ export const usePresentationStore = defineStore('presentation', () => {
 const route = useRoute();
 const router = useRouter();
 const presentationStore = usePresentationStore();
-const { getTemplate, renderTemplate } = useTemplates();
+const { getTemplate, getTemplateParameters } = useTemplateAcquisition();
+const { renderTemplate } = useTemplatePresentation();
+const { generateDocumentsBulk } = useDocumentProcessing();
 const {
   template,
   placeholders,
@@ -801,9 +806,9 @@ describe('usePresentationConfig', () => {
 ### Pruebas de Integración (Componente)
 
 ```javascript
-describe('TemplatePresentationView', () => {
+describe('PresentationTemplateView', () => {
   it('carga plantilla al montar', async () => {
-    const wrapper = mount(TemplatePresentationView, {
+    const wrapper = mount(PresentationTemplateView, {
       props: { route: { params: { templateId: '123' } } },
     });
 

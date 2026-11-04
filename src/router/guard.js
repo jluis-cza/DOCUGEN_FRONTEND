@@ -2,7 +2,7 @@ import { useTokenStore } from '../stores/docugen-web/tokenStore.js';
 import { useMyAccountStore } from '../stores/docugen-web/myAccountStore.js';
 import { accessRemover, accessRenewer } from '../helpers/docugen-web/admissionAccessHelper.js';
 import { useNotificationStore } from '../stores/utils/notificationStore.js';
-import { TemplateService } from '../services/docugen-app/TemplateService.js';
+import { ConfigurationService } from '../services/docugen-app/ConfigurationService.js';
 
 const AUTH_PUBLIC_PATHS = ['/login', '/register', '/verification'];
 
@@ -36,7 +36,7 @@ const guard = (router) => {
           };
 
           try {
-            const response = await TemplateService.getAccountServicesAvailability();
+            const response = await ConfigurationService.getAccountServicesAvailability();
             const service = response.data?.data?.services?.[to.meta.requiredService];
             if (!service?.enabled) {
               useNotificationStore().setNotification({

@@ -293,7 +293,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useAPITokens } from '@/composables/docugen-app/useAPITokens.js';
+import { useAPITokens } from '../../composables/docugen-app/useAPITokens.js';
 import { useNotificationStore } from '@/stores/utils/notificationStore.js';
 import { extractTime } from '@/helpers/utils.js';
 

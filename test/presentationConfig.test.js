@@ -61,6 +61,35 @@ test('infers parameter input types from dynamic element types', () => {
   assert.equal(placeholders.photo.type, 'image');
 });
 
+test('uses server parameter details as the presentation form source of truth', () => {
+  const placeholders = extractPlaceholders(
+    {
+      metadata: { dynamicParameters: [] },
+      elements: [
+        { id: 'known', type: 'text', text: '{{from_template}}' },
+        { id: 'orphan', type: 'date', text: '{{not_in_server_contract}}' },
+      ],
+    },
+    [
+      {
+        key: 'server_key',
+        label: 'Etiqueta API',
+        type: 'number',
+        required: false,
+        allowedValues: ['1', '2'],
+        elements: [{ id: 'input-1', type: 'text', field: 'text' }],
+      },
+    ]
+  );
+
+  assert.deepEqual(Object.keys(placeholders), ['server_key']);
+  assert.equal(placeholders.server_key.label, 'Etiqueta API');
+  assert.equal(placeholders.server_key.type, 'number');
+  assert.equal(placeholders.server_key.required, false);
+  assert.deepEqual(placeholders.server_key.allowedValues, ['1', '2']);
+  assert.equal(placeholders.server_key.elementId, 'input-1');
+});
+
 test('validates dynamic values according to metadata types', () => {
   const placeholders = {
     accepted: { key: 'accepted', type: 'boolean', required: true },
@@ -76,7 +105,10 @@ test('validates dynamic values according to metadata types', () => {
     validateConfigData({ accepted: 'maybe', count: 'many' }, placeholders).isValid,
     false
   );
-  assert.equal(validateConfigData({ accepted: true }, placeholders).errors.count, 'count es requerido');
+  assert.equal(
+    validateConfigData({ accepted: true }, placeholders).errors.count,
+    'count es requerido'
+  );
 });
 
 test('validates presentation image URLs and PNG/JPEG data URLs consistently', () => {
@@ -89,15 +121,18 @@ test('validates presentation image URLs and PNG/JPEG data URLs consistently', ()
   assert.equal(validateConfigData({ photo: validPng }, placeholders).isValid, true);
   const rawPng = validPng.split(',')[1];
   assert.equal(validateConfigData({ photo: rawPng }, placeholders).isValid, true);
+  assert.equal(normalizeImageValue(rawPng), validPng);
   assert.equal(
-    normalizeImageValue(rawPng),
-    validPng
-  );
-  assert.equal(
-    validateConfigData({ photo: `data:image/png;base64,${rawPng.slice(0, 28)}\n${rawPng.slice(28)}` }, placeholders).isValid,
+    validateConfigData(
+      { photo: `data:image/png;base64,${rawPng.slice(0, 28)}\n${rawPng.slice(28)}` },
+      placeholders
+    ).isValid,
     true
   );
-  assert.equal(validateConfigData({ photo: 'https://example.test/photo.jpg' }, placeholders).isValid, true);
+  assert.equal(
+    validateConfigData({ photo: 'https://example.test/photo.jpg' }, placeholders).isValid,
+    true
+  );
   assert.match(
     validateConfigData({ photo: 'data:image/gif;base64,AAAA' }, placeholders).errors.photo,
     /PNG\/JPEG/

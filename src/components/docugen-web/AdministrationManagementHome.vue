@@ -124,7 +124,7 @@ import { useTime } from '../../composables/utils/useTime.js';
 import { useServiceLookups } from '../../composables/docugen-web/useServiceLookups.js';
 import { useServiceLookupsStore } from '../../stores/docugen-web/serviceLookupsStore.js';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
-import { TemplateService } from '../../services/docugen-app/TemplateService.js';
+import { ConfigurationService } from '../../services/docugen-app/ConfigurationService.js';
 import { extractTime } from '../../helpers/utils.js';
 import AdministrationManagementHomeProcesses from './AdministrationManagementHomeProcesses.vue';
 import AdministrationManagementHomeServices from './AdministrationManagementHomeServices.vue';
@@ -207,7 +207,7 @@ onMounted(async () => {
 
   if (account.value.role === 'dev') {
     try {
-      const response = await TemplateService.getAccountServicesAvailability();
+      const response = await ConfigurationService.getAccountServicesAvailability();
       const data = response?.data?.data || {};
       const editionEnabled = Boolean(data?.services?.edition?.enabled);
       const generationEnabled = Boolean(data?.services?.generation?.enabled);
