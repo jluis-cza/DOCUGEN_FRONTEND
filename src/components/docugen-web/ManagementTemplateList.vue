@@ -233,60 +233,41 @@
               </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <v-sheet border rounded class="pa-3 mb-3">
-                <div class="text-caption text-medium-emphasis mb-2">Payload para generación</div>
-                <code class="text-caption d-block">{{
-                  JSON.stringify({ templateId: selectedTemplateDetails._id }, null, 2)
-                }}</code>
-              </v-sheet>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-sheet border rounded class="pa-3 mb-3">
-                <div class="text-caption text-medium-emphasis mb-2">Metadata</div>
-                <pre class="metadata-json text-caption mb-0">{{
-                  JSON.stringify(selectedTemplateDetails.metadata || {}, null, 2)
-                }}</pre>
-              </v-sheet>
-            </v-col>
-
             <v-col cols="12">
               <v-sheet border rounded class="pa-3 mb-3">
-                <div class="text-caption text-medium-emphasis mb-2">Parámetros estáticos</div>
-                <div v-if="selectedTemplateDetails.staticParameters?.length">
+                <div class="text-caption text-medium-emphasis mb-2">Contenido fijo</div>
+                <div v-if="selectedTemplateDetails.staticContent?.length">
                   <v-table density="compact">
                     <thead>
                       <tr>
-                        <th>Clave</th>
+                        <th>Elemento</th>
                         <th>Tipo</th>
-                        <th>Requerido</th>
-                        <th>Origen</th>
+                        <th>Campo</th>
+                        <th>Contenido</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr
-                        v-for="(param, index) in selectedTemplateDetails.staticParameters"
-                        :key="`${param.key}-${index}`"
+                        v-for="(content, index) in selectedTemplateDetails.staticContent"
+                        :key="`${content.elementId}-${content.field}-${index}`"
                       >
-                        <td>{{ param.key }}</td>
-                        <td>{{ param.type || 'text' }}</td>
-                        <td>{{ param.required ? 'Sí' : 'No' }}</td>
-                        <td>{{ param.source || 'elemento' }}</td>
+                        <td>{{ content.elementId }}</td>
+                        <td>{{ content.type }}</td>
+                        <td>{{ content.field }}</td>
+                        <td>{{ content.value }}</td>
                       </tr>
                     </tbody>
                   </v-table>
                 </div>
                 <div v-else class="text-body-2 text-medium-emphasis">
-                  No se detectaron parámetros estáticos.
+                  No hay texto literal fijo en los elementos de esta plantilla.
                 </div>
               </v-sheet>
             </v-col>
 
             <v-col cols="12">
               <v-sheet border rounded class="pa-3 mb-3">
-                <div class="text-caption text-medium-emphasis mb-2">
-                  Parámetros dinámicos configurables
-                </div>
+                <div class="text-caption text-medium-emphasis mb-2">Parámetros dinámicos</div>
                 <div v-if="selectedTemplateDetails.dynamicParameters?.length">
                   <v-table density="compact">
                     <thead>
@@ -514,7 +495,7 @@ import {
 import {
   buildExportFileName,
   createTemplateExportPayload,
-  extractStaticParameters,
+  extractStaticContent,
   normalizeImportedTemplate,
 } from '../../helpers/docugen-web/managementTemplateTransferHelper.js';
 import { extractTime } from '../../helpers/utils.js';
@@ -664,7 +645,6 @@ const templateDimensionSummary = computed(() => {
       : 'Tamaño personalizado',
   };
 });
-
 const headers = [
   {
     title: 'Nombre',
@@ -702,16 +682,14 @@ const openTemplateDetails = async (item) => {
     detailsLoading.value = true;
     const payload = await getTemplateParameters(item._id);
     const template = await getTemplate(item._id, { includeContent: true });
-    const dynamicParameters = Array.isArray(payload?.parameters)
-      ? payload.parameters
-      : Array.isArray(template?.metadata?.dynamicParameters)
-        ? template.metadata.dynamicParameters
-        : [];
+    if (!Array.isArray(payload?.parameters)) {
+      throw new Error('La respuesta del servidor no contiene parámetros dinámicos válidos.');
+    }
 
     selectedTemplateDetails.value = {
       ...template,
-      staticParameters: extractStaticParameters(template),
-      dynamicParameters,
+      staticContent: extractStaticContent(template),
+      dynamicParameters: payload.parameters,
     };
     detailsDialog.value = true;
   } catch (error) {
@@ -1031,12 +1009,40 @@ onMounted(async () => {
 
 <style scoped>
 .metadata-json {
-  max-height: 240px;
-  overflow-x: hidden;
-  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.details-equal-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 440px;
+  min-height: 440px;
+  max-height: 440px;
+}
+
+.template-api-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.api-example-json {
+  margin: 0;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .responsive-actions-table :deep(.v-table__wrapper) {

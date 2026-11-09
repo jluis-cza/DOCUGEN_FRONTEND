@@ -4,6 +4,7 @@ import { useNotificationStore } from '../../stores/utils/notificationStore.js';
 import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
 import { useMySessionStore } from '../../stores/docugen-web/mySessionStore.js';
+import { clearAuthenticatedState } from '../../helpers/docugen-web/authenticatedStateHelper.js';
 
 export const useMySession = () => {
   // Notification settings
@@ -23,6 +24,7 @@ export const useMySession = () => {
       try {
         loading.value = true;
         const response = await AdmissionService.login(payload);
+        clearAuthenticatedState();
         mySessionStore.setMySession(response.data.data.session);
         myAccountStore.setMyAccount(response.data.data.account);
         tokenStore.setToken(response.data.data.token);
@@ -47,9 +49,7 @@ export const useMySession = () => {
       try {
         loading.value = true;
         const response = await AdmissionService.logout(payload);
-        mySessionStore.resetMySession();
-        myAccountStore.resetMyAccount();
-        tokenStore.resetToken();
+        clearAuthenticatedState();
         message.value = response?.data?.message || response.statusText;
         success.value = response?.data?.success || true;
         code.value = response?.data?.code || 'EXXX';

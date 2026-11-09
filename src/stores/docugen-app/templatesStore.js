@@ -12,6 +12,10 @@ export const useTemplatesStore = defineStore('docugen-app-templates', () => {
     templates.value = data;
   };
 
+  const resetTemplates = () => {
+    templates.value = [];
+  };
+
   const setSelectedTemplate = (data = {}) => {
     selectedTemplate.value = data;
   };
@@ -24,6 +28,7 @@ export const useTemplatesStore = defineStore('docugen-app-templates', () => {
     getTemplates,
     getSelectedTemplate,
     setTemplates,
+    resetTemplates,
     setSelectedTemplate,
     resetSelectedTemplate,
   };

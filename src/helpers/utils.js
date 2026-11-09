@@ -111,6 +111,19 @@ export const extractTime = (utcDate, dateZone = 'America/La_Paz', format = 'nume
   return { date: formattedString, hour: '' };
 };
 
+export const formatSystemUptime = (seconds) => {
+  if (seconds === null || seconds === undefined || seconds === '') return 'No disponible';
+  const totalSeconds = Number(seconds);
+  if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return 'No disponible';
+
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const hourLabel = hours === 1 ? 'hora' : 'horas';
+  const minuteLabel = minutes === 1 ? 'minuto' : 'minutos';
+  return `${hours} ${hourLabel} ${minutes} ${minuteLabel}`;
+};
+
 // SUBARRAY EXTRACTOR
 // Selects a specific subarray of an array given the size(number of elements) and the offset(index of the first element)
 export const extractSubarray = (array, offset, size) => {

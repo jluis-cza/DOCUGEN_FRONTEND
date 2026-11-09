@@ -31,6 +31,7 @@
 import { computed, onMounted } from 'vue';
 import { useSystemParametersStore } from '../../stores/docugen-web/systemParametersStore.js';
 import { useSystemParameters } from '../../composables/docugen-web/useSystemParameters.js';
+import { formatSystemUptime } from '../../helpers/utils.js';
 
 const systemParametersStore = useSystemParametersStore();
 const { actions, loading, success, message, code } = useSystemParameters();
@@ -45,10 +46,7 @@ const cardInfo = computed(() => {
     dbTotalValue !== null && dbTotalValue !== undefined
       ? `${dbTotalValue}[${overview.dbTotalSize.unit}]`
       : 'No disponible';
-  const uptimeText =
-    overview.systemUptime?.value !== null && overview.systemUptime?.value !== undefined
-      ? `${overview.systemUptime.value}[${overview.systemUptime.unit}]`
-      : 'No disponible';
+  const uptimeText = formatSystemUptime(overview.systemUptime?.seconds);
 
   return [
     {

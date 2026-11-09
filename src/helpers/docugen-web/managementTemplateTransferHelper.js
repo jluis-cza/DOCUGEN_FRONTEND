@@ -18,47 +18,32 @@ const SUPPORTED_ELEMENT_TYPES = [
   'checkbox',
 ];
 
-const normalizePlaceholderKey = (value) => {
-  if (!value || typeof value !== 'string') return '';
-  return value
-    .trim()
-    .replace(/^\{\{\s*/, '')
-    .replace(/\s*\}\}$/, '')
-    .replace(/\s+/g, '_');
-};
-
-export const extractStaticParameters = (template) => {
+export const extractStaticContent = (template) => {
   if (!template || !Array.isArray(template.elements)) return [];
 
-  const paramsMap = new Map();
+  const content = [];
   template.elements.forEach((element) => {
-    const explicitKey = normalizePlaceholderKey(element?.placeholderKey);
-    if (explicitKey) {
-      paramsMap.set(explicitKey, {
-        key: explicitKey,
-        label: explicitKey,
-        type: element?.type || 'text',
-        required: true,
-        source: 'placeholder',
+    if (!element || element.type === 'pageNumber') return;
+
+    for (const [field, label] of [
+      ['text', 'Texto'],
+      ['qrValue', 'Valor QR'],
+    ]) {
+      if (typeof element[field] !== 'string') continue;
+      if (/\{\{\s*[A-Za-z0-9_.-]+\s*\}\}/.test(element[field])) continue;
+      const value = element[field].trim();
+      if (!value) continue;
+
+      content.push({
+        elementId: element.id || 'Sin identificador',
+        type: element.type || 'desconocido',
+        field: label,
+        value,
       });
     }
-
-    const textContent = [element?.text || '', element?.qrValue || '', element?.src || ''].join(' ');
-    const matches = textContent.match(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g) || [];
-    matches.forEach((match) => {
-      const key = normalizePlaceholderKey(match);
-      if (!key || paramsMap.has(key)) return;
-      paramsMap.set(key, {
-        key,
-        label: key,
-        type: element?.type || 'text',
-        required: true,
-        source: 'texto',
-      });
-    });
   });
 
-  return [...paramsMap.values()].sort((a, b) => String(a.key).localeCompare(String(b.key)));
+  return content;
 };
 
 export const getSafeTemplateName = (value, fallback = 'Plantilla importada') => {

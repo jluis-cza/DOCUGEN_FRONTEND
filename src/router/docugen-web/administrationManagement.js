@@ -1,5 +1,8 @@
 import { USERS } from '../../constants/users.js';
-import { configurationProfileRoutes } from '../docugen-app/configurationRoutes.js';
+import {
+  configurationAPIRoutes,
+  configurationProfileRoutes,
+} from '../docugen-app/configurationRoutes.js';
 
 const ADMIN_ROLE = USERS.type.server.role.administrator;
 const DEV_ROLE = USERS.type.client.role.developer;
@@ -98,6 +101,15 @@ export const administrationManagement = [
         meta: { requiresAuth: true, allowedRoles: [ADMIN_ROLE, DEV_ROLE] },
         component: () => import('../../components/docugen-web/ManagementMyProfile.vue'),
         children: [...configurationProfileRoutes],
+      },
+
+      {
+        path: 'api-configuration',
+        name: 'api-configuration',
+        redirect: '/dashboard/api-configuration/tokens',
+        meta: { requiresAuth: true, allowedRoles: [DEV_ROLE] },
+        component: () => import('../../components/docugen-web/ConfigurationAPIView.vue'),
+        children: [...configurationAPIRoutes],
       },
 
       // Templates

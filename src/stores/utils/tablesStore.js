@@ -38,12 +38,16 @@ export const useTablesStore = defineStore('tables', () => {
       tables.value.splice(index, 1);
     }
   };
+  const resetAllTables = () => {
+    tables.value = [];
+  };
   return {
     getTables,
     getTable,
     setTable,
     resetTable,
     deleteTable,
+    resetAllTables,
   };
 });
 

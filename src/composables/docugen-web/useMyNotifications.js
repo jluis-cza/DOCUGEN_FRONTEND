@@ -15,7 +15,7 @@ export const useMyNotifications = () => {
   const loading = ref(false);
   const success = ref(null);
   const actions = {
-    notificationsGetter: async (params) => {
+    notificationsGetter: async (params, { beforeAppend } = {}) => {
       try {
         loading.value = true;
         const response = await ManagementService.getNotifications(params);
@@ -28,6 +28,9 @@ export const useMyNotifications = () => {
 
         const mergedNotifications = Array.isArray(notifications) ? notifications : [];
 
+        if (typeof beforeAppend === 'function') {
+          await beforeAppend(mergedNotifications);
+        }
         myNotificationsStore.appendMyNotifications(mergedNotifications);
         listStore.setList(1, {
           cursor: metadata.cursor ?? null,

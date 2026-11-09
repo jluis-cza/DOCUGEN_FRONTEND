@@ -33,16 +33,19 @@ export const useUsername = () => {
       try {
         loading.value = true;
         const response = await AdmissionService.getUsername(payload);
-        username.value = response.data.data.username;
+        const resolvedUsername = response.data.data.username;
+        username.value = resolvedUsername;
         success.value = response?.data?.success || false;
         message.value = response?.data?.message || response.statusText;
         code.value = response?.data?.code || 'EXXX';
+        return resolvedUsername;
       } catch (err) {
         console.error(err);
         success.value = err.response?.data?.success || false;
         message.value =
-          err.response?.data?.message || err.response.statusText || 'Error in usernameGetter';
+          err.response?.data?.message || err.response?.statusText || 'Error in usernameGetter';
         code.value = err.response?.data?.code || 'EXXX';
+        return null;
       } finally {
         loading.value = false;
       }

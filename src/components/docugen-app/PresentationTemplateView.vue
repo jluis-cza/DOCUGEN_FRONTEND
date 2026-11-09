@@ -178,6 +178,18 @@
       />
     </v-container>
 
+    <v-btn
+      v-if="!isLoadingTemplate"
+      :to="{ path: '/manual', hash: '#generacion-dentro-de-la-aplicacion' }"
+      icon="mdi-help-circle-outline"
+      class="presentation-help-link"
+      color="primary"
+      variant="tonal"
+      size="small"
+      aria-label="Ayuda sobre generación dentro de la aplicación"
+      title="Ayuda sobre generación dentro de la aplicación"
+    />
+
     <!-- Loading Dialog -->
     <v-dialog v-model="showGeneratingDialog" persistent width="400">
       <v-card>
@@ -564,6 +576,13 @@ Object.assign(window, {
 .presentation-shell {
   min-height: calc(100vh - 64px);
   background: linear-gradient(180deg, #f5f7ff 0%, #eef3fb 100%);
+}
+
+.presentation-help-link {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 5;
 }
 
 .presentation-topbar {

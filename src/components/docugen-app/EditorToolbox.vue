@@ -15,8 +15,7 @@
     </v-btn>
   </div>
   <div class="text-caption text-medium-emphasis mt-3">
-    Haz clic para agregar un elemento en su posición inicial o arrástralo hasta el lienzo para
-    colocarlo donde quieras.
+    Para agregar un elemento en su posición inicial hacer clic en el elmento o arrastralo hasta el lienzo.
   </div>
 </template>
 

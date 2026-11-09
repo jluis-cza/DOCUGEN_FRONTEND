@@ -7,7 +7,17 @@
       <template #prepend>
         <v-app-bar-nav-icon color="white" @click="drawerOpen = !drawerOpen"> </v-app-bar-nav-icon>
       </template>
-      <v-app-bar-title class="text-white font-weight-semibold"> DOCUGEN </v-app-bar-title>
+      <v-app-bar-title>
+        <v-btn
+          to="/"
+          variant="text"
+          color="white"
+          class="text-h6 font-weight-semibold px-0"
+          aria-label="Ir a la página de bienvenida de DOCUGEN"
+        >
+          DOCUGEN
+        </v-btn>
+      </v-app-bar-title>
       <!-- NavBar menu -->
       <template #append>
         <div class="d-flex align-center ga-3 mr-2">
@@ -176,6 +186,14 @@
             value="/dashboard/templates"
             prepend-icon="mdi-file-document-outline"
             title="Gestor de Plantillas"
+            color="primary"
+            rounded="lg"
+          />
+          <v-list-item
+            to="/dashboard/api-configuration"
+            value="/dashboard/api-configuration"
+            prepend-icon="mdi-api"
+            title="Configuración API"
             color="primary"
             rounded="lg"
           />

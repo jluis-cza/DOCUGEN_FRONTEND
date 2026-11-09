@@ -2,6 +2,7 @@ import { useMyAccountStore } from '../../stores/docugen-web/myAccountStore.js';
 import { useMySessionStore } from '../../stores/docugen-web/mySessionStore.js';
 import { useTokenStore } from '../../stores/docugen-web/tokenStore.js';
 import { AdmissionService } from '../../services/docugen-web/AdmissionService.js';
+import { clearAuthenticatedState } from './authenticatedStateHelper.js';
 
 let accessRenewalPromise = null;
 
@@ -28,13 +29,8 @@ export const accessRenewer = async () => {
 };
 
 export const accessRemover = () => {
-  const myAccountStore = useMyAccountStore();
-  const mySessionStore = useMySessionStore();
-  const tokenStore = useTokenStore();
   console.log('Removing access...');
-  tokenStore.resetToken();
-  mySessionStore.resetMySession();
-  myAccountStore.resetMyAccount();
+  clearAuthenticatedState();
   // router.push('/login'); // login redirect
   // window.location.reload()
   console.log('Access removed');

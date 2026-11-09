@@ -9,7 +9,7 @@
       side="end"
       @load="onLoad"
     >
-      <div>
+      <div v-if="isInitialSenderHydrationDone">
         <v-list>
           <v-list-item v-for="notification in safeNotifications" :key="notification._id">
             <v-card class="w-100 notification-card" color="info" variant="tonal">
@@ -71,7 +71,6 @@
 
 <script setup>
 import { onMounted, ref, computed, watch } from 'vue';
-import { useMyNotificationsStore } from '../../stores/docugen-web/myNotificationsStore.js';
 import { useMyNotifications } from '../../composables/docugen-web/useMyNotifications.js';
 import { useMyNotification } from '../../composables/docugen-web/useMyNotification.js';
 import { useUsername } from '../../composables/docugen-web/useUsername.js';
@@ -81,21 +80,22 @@ import { extractTime } from '../../helpers/utils.js';
 
 const myAccountStore = useMyAccountStore();
 const listsStore = useListsStore();
-const myNotificationsStore = useMyNotificationsStore();
 const {
   myNotifications,
   actions: myNotifications_actions,
   message: myNotifications_message,
 } = useMyNotifications();
 const { actions: myNotification_actions } = useMyNotification();
-const { username, actions: username_actions, success: username_success } = useUsername();
+const { actions: username_actions } = useUsername();
 const accounId = computed(() => myAccountStore.getMyAccount.id);
 const defaultNotificationsQuery = () => ({ cursor: null, limit: 5, hasNextChunk: true });
 const query = computed(() => listsStore.getList(1) ?? defaultNotificationsQuery());
 const openNotifications = ref({});
 const senderNames = ref({});
+const senderNameErrors = ref({});
+const senderNameRequests = new Map();
 const isLoadingNotifications = ref(false);
-const isInitialLoadDone = ref(false);
+const isInitialSenderHydrationDone = ref(false);
 const safeNotifications = computed(() =>
   Array.isArray(myNotifications.value)
     ? myNotifications.value.map((notification) => ({
@@ -115,16 +115,28 @@ const getSenderLabel = (notification) => {
   if (notification.senderName) return notification.senderName;
 
   if (typeof notification.from === 'string') {
-    return senderNames.value[notification.from] || notification.fromUsername || 'Sistema';
+    if (notification.from === 'Sistema') return 'Sistema';
+    return (
+      senderNames.value[notification.from] ||
+      notification.fromUsername ||
+      (senderNameErrors.value[notification.from]
+        ? 'Remitente no disponible'
+        : 'Cargando remitente...')
+    );
   }
 
   if (notification.from && typeof notification.from === 'object') {
+    const senderId = notification.from._id;
     return (
       notification.from.username ||
       notification.from.name ||
       notification.fromUsername ||
-      notification.senderName ||
-      'Sistema'
+      senderNames.value[senderId] ||
+      (senderId
+        ? senderNameErrors.value[senderId]
+          ? 'Remitente no disponible'
+          : 'Cargando remitente...'
+        : 'Sistema')
     );
   }
 
@@ -158,9 +170,10 @@ const onLoad = async ({ done }) => {
   isLoadingNotifications.value = true;
 
   try {
-    await myNotifications_actions.notificationsGetter(params.value);
+    await myNotifications_actions.notificationsGetter(params.value, {
+      beforeAppend: hydrateSenderNames,
+    });
     const nextQuery = listsStore.getList(1) ?? defaultNotificationsQuery();
-    isInitialLoadDone.value = true;
     done(nextQuery.hasNextChunk ? 'ok' : 'empty');
   } catch (error) {
     console.error('Error loading the list. ', error);
@@ -193,28 +206,36 @@ const resolveSenderName = async (notification) => {
     typeof notification.from === 'string' ? notification.from : notification.from?._id;
   if (!senderId || senderNames.value[senderId]) return;
 
+  let senderRequest = senderNameRequests.get(senderId);
+  if (!senderRequest) {
+    senderRequest = username_actions.usernameGetter({ id: senderId });
+    senderNameRequests.set(senderId, senderRequest);
+  }
+
   try {
-    await username_actions.usernameGetter({ id: senderId });
-    if (username_success.value && username.value) {
-      senderNames.value[senderId] = username.value;
-    }
+    const resolvedUsername = await senderRequest;
+    if (resolvedUsername) senderNames.value[senderId] = resolvedUsername;
+    else senderNameErrors.value[senderId] = true;
   } catch (error) {
+    senderNameErrors.value[senderId] = true;
     console.warn('No se pudo resolver el remitente:', error);
+  } finally {
+    if (senderNameRequests.get(senderId) === senderRequest) {
+      senderNameRequests.delete(senderId);
+    }
   }
 };
 
-const hydrateSenderNames = async () => {
-  if (!Array.isArray(myNotifications.value)) return;
-
-  await Promise.all(myNotifications.value.map((notification) => resolveSenderName(notification)));
+const hydrateSenderNames = async (notifications = myNotifications.value) => {
+  if (!Array.isArray(notifications)) return;
+  await Promise.all(notifications.map((notification) => resolveSenderName(notification)));
 };
 
 onMounted(async () => {
   listsStore.resetList(1);
-  myNotificationsStore.resetMyNotifications();
-  isInitialLoadDone.value = false;
   isLoadingNotifications.value = false;
   await hydrateSenderNames();
+  isInitialSenderHydrationDone.value = true;
 });
 
 watch(

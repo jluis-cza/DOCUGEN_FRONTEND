@@ -90,10 +90,16 @@ export const useTemplateParameters = ({ template, pushHistory }) => {
       if (!item?.key) return;
       const key = item.key.trim().replace(/\s+/g, '_');
       if (!key || key === 'page_number') return;
-      if (item.source === 'placeholder' && !referencedKeys.has(key)) return;
+      const sourceType = ['manual', 'placeholder'].includes(item.source)
+        ? item.source
+        : referencedKeys.has(key)
+          ? 'placeholder'
+          : 'manual';
+      if (sourceType === 'placeholder' && !referencedKeys.has(key)) return;
       map.set(key, {
         ...item,
         key,
+        source: sourceType,
         label: item.label || key,
         type: item.type || inferParameterType({ type: item.elementType }),
         required: Boolean(item.required),
@@ -207,7 +213,10 @@ export const useTemplateParameters = ({ template, pushHistory }) => {
     const key = buildDynamicKey('text');
     template.value.metadata = {
       ...(template.value.metadata || {}),
-      dynamicParameters: [...current, { key, label: key, type: 'text', required: true }],
+      dynamicParameters: [
+        ...current,
+        { key, label: key, type: 'text', required: true, source: 'manual' },
+      ],
     };
     pushHistory();
   };

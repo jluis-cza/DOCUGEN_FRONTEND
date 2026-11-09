@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   buildExportFileName,
   createTemplateExportPayload,
-  extractStaticParameters,
+  extractStaticContent,
   normalizeImportedTemplate,
 } from '../src/helpers/docugen-web/managementTemplateTransferHelper.js';
 
@@ -52,28 +52,29 @@ test('rejects imported templates with server-owned metadata and unsupported elem
   );
 });
 
-test('extracts static parameters from placeholder fields and text', () => {
+test('extracts literal content without classifying placeholders as static parameters', () => {
   assert.deepEqual(
-    extractStaticParameters({
+    extractStaticContent({
       elements: [
-        { id: 'one', type: 'text', placeholderKey: 'client_name' },
-        { id: 'two', type: 'text', text: 'Hello {{client_name}} {{city}}' },
+        { id: 'one', type: 'text', placeholderKey: 'client_name', text: 'Hello {{client_name}}' },
+        { id: 'two', type: 'qr', qrValue: 'https://example.test/{{client_name}}/fixed' },
+        { id: 'three', type: 'pageNumber', text: 'Page {{page_number}}' },
+        { id: 'four', type: 'text', text: 'Terms and conditions' },
+        { id: 'five', type: 'qr', qrValue: 'https://example.test/document' },
       ],
     }),
     [
       {
-        key: 'city',
-        label: 'city',
+        elementId: 'four',
         type: 'text',
-        required: true,
-        source: 'texto',
+        field: 'Texto',
+        value: 'Terms and conditions',
       },
       {
-        key: 'client_name',
-        label: 'client_name',
-        type: 'text',
-        required: true,
-        source: 'placeholder',
+        elementId: 'five',
+        type: 'qr',
+        field: 'Valor QR',
+        value: 'https://example.test/document',
       },
     ]
   );

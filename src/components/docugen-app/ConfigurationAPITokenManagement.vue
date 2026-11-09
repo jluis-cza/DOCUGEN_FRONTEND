@@ -94,16 +94,22 @@
       </v-card-text>
 
       <v-card-text v-else class="text-center pa-8">
-        <v-icon size="48" class="mb-4 text-disabled">mdi-key-link</v-icon>
         <div class="text-subtitle-2 text-disabled">No hay tokens creados</div>
-        <div class="text-caption text-disabled mb-4">
-          Crea tu primer token para acceder a la API programáticamente
-        </div>
-        <v-btn size="small" color="primary" @click="showCreateDialog = true">
-          Crear Token Ahora
-        </v-btn>
       </v-card-text>
     </v-card>
+
+    <div class="d-flex justify-end align-center ga-1 mt-2">
+      <v-btn
+        icon="mdi-help-circle-outline"
+        color="primary"
+        variant="text"
+        size="small"
+        density="compact"
+        aria-label="Ayuda sobre tokens de API"
+        title="Ayuda sobre tokens de API"
+        :to="{ path: '/manual', hash: '#tokens-api' }"
+      />
+    </div>
 
     <!-- Create Token Dialog -->
     <v-dialog v-model="showCreateDialog" max-width="500">
@@ -215,9 +221,25 @@
 
           <div class="bg-surface rounded pa-3 mb-4">
             <div class="text-caption text-medium-emphasis mb-1">Uso del Token:</div>
-            <div class="font-family-monospace text-caption">
-              curl -H "Authorization: Bearer {{ generatedToken.token }}" \<br />
-              https://api.docugen.com/api/app/documents/generate
+            <div v-if="apiBaseUrlLoading" class="text-caption text-medium-emphasis">
+              Cargando la URL pública del backend...
+            </div>
+            <pre
+              v-else-if="availabilityUrl"
+              class="font-family-monospace text-caption curl-example"
+              >{{ curlExample }}</pre
+            >
+            <div v-else class="text-caption text-error">
+              No se pudo obtener la URL pública del backend. Configura BACKEND_URL en el servidor.
+              <v-btn
+                size="small"
+                variant="text"
+                color="primary"
+                :loading="apiBaseUrlLoading"
+                @click="loadApiBaseUrl"
+              >
+                Reintentar
+              </v-btn>
             </div>
           </div>
 
@@ -292,10 +314,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAPITokens } from '../../composables/docugen-app/useAPITokens.js';
 import { useNotificationStore } from '@/stores/utils/notificationStore.js';
 import { extractTime } from '@/helpers/utils.js';
+import { SERVICES } from '@/constants/services.js';
+import { UtilsService } from '@/services/UtilsService.js';
 
 const {
   tokens,
@@ -324,6 +348,8 @@ const showEditDialog = ref(false);
 const showDeleteConfirm = ref(false);
 const hasLoadedTokens = ref(false);
 const tokensLoadError = ref(false);
+const apiBaseUrl = ref('');
+const apiBaseUrlLoading = ref(true);
 
 // Form data
 // TODO: Add permission selection only after backend route-level scope enforcement is implemented.
@@ -343,6 +369,42 @@ const expirationOptions = [
   { title: '90 días', value: '90d' },
   { title: '1 año', value: '1y' },
 ];
+
+const availabilityUrl = computed(() => {
+  if (!apiBaseUrl.value) return '';
+  const url = new URL(apiBaseUrl.value);
+  const { base, documents } = SERVICES.path.docugen_app;
+  url.pathname = `${url.pathname.replace(/\/+$/, '')}${base}${documents.base}${documents.availability}`;
+  url.search = '';
+  url.hash = '';
+  return url.toString();
+});
+
+const shellQuote = (value) => `'${String(value).replaceAll("'", "'\\''")}'`;
+const curlExample = computed(() =>
+  [
+    `curl --request GET ${shellQuote(availabilityUrl.value)}`,
+    `  --header ${shellQuote(`Authorization: Bearer ${generatedToken.value?.token || ''}`)}`,
+  ].join(' \\\n')
+);
+
+const loadApiBaseUrl = async () => {
+  apiBaseUrlLoading.value = true;
+  apiBaseUrl.value = '';
+  try {
+    const response = await UtilsService.getRoutesInfo();
+    const configuredApiBaseUrl = response.data?.data?.apiBaseUrl;
+    const parsedUrl = new URL(configuredApiBaseUrl);
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new Error('BACKEND_URL must use HTTP or HTTPS.');
+    }
+    apiBaseUrl.value = parsedUrl.toString().replace(/\/+$/, '');
+  } catch (error) {
+    console.error('Unable to load public backend URL for the API token example.', error);
+  } finally {
+    apiBaseUrlLoading.value = false;
+  }
+};
 
 // Methods
 const normalizeCreatedToken = (payload) => {
@@ -548,7 +610,10 @@ const loadTokens = async () => {
 };
 
 // Lifecycle
-onMounted(loadTokens);
+onMounted(() => {
+  loadTokens();
+  loadApiBaseUrl();
+});
 </script>
 
 <style scoped>
@@ -558,6 +623,12 @@ onMounted(loadTokens);
 
 .font-family-monospace {
   font-family: 'Courier New', monospace;
+}
+
+.curl-example {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .tokens-table-container {

@@ -17,6 +17,8 @@
         :has-unsaved-changes="hasUnsavedChanges"
         :can-undo="canUndo"
         :can-redo="canRedo"
+        :is-saving="isSaving"
+        :is-configuring="isConfiguring"
         @back="backToTemplates"
         @undo="undo"
         @redo="redo"
@@ -771,7 +773,7 @@
                           {{ selectedPlaceholderError }}
                         </div>
                         <div v-else class="text-caption text-medium-emphasis">
-                          Puedes escribir <code v-pre>{{ clave }}</code> o insertar una clave única.
+                          Se puede escribir <code v-pre>{{ clave }}</code> o insertar una clave única.
                         </div>
                       </div>
                       <v-radio-group
@@ -1024,8 +1026,7 @@
                         "
                         class="text-caption text-medium-emphasis mb-3"
                       >
-                        Roboto, Lato, Montserrat y Open Sans se incrustan en el PDF. Las fuentes
-                        estándar se asignan a sus equivalentes PDF.
+                        Roboto, Lato, Montserrat y Open Sans se incrustan en el PDF.
                       </div>
                       <v-select
                         v-if="TEXT_STYLE_TYPES.includes(selectedElement.type)"
@@ -1168,6 +1169,15 @@
           <span class="ruler-conversion" title="Conversión CSS estándar a 96 puntos por pulgada">
             Regletas: px · 96 px = 1 pulgada
           </span>
+          <v-btn
+            :to="{ path: '/manual', hash: '#edicion-plantillas' }"
+            icon="mdi-help-circle-outline"
+            variant="text"
+            size="small"
+            density="comfortable"
+            aria-label="Ayuda sobre edición de plantillas"
+            title="Ayuda sobre edición de plantillas"
+          />
         </v-card>
       </v-container>
     </div>
@@ -1234,7 +1244,7 @@ const router = useRouter();
 const templateId = computed(() => route.params.templateId);
 const notificationStore = useNotificationStore();
 const { getTemplate } = useTemplateAcquisition();
-const { updateTemplate, message, code } = useTemplateEditor();
+const { updateTemplate, message, code, loading: isSaving } = useTemplateEditor();
 
 const baseTemplate = () => ({
   _id: '',
@@ -1252,6 +1262,7 @@ const template = ref(baseTemplate());
 const templateLoaded = ref(false);
 const templateLoading = ref(true);
 const templateLoadError = ref('');
+const isConfiguring = ref(false);
 const selectedElement = ref(null);
 const sidebarTab = ref('properties');
 const elementSidebarTab = ref('elements');
@@ -2573,8 +2584,14 @@ const getTableRows = (element) =>
 const getTableColumnCount = (element) =>
   Math.max(1, ...getTableRows(element).map((row) => row.length));
 
-const saveTemplate = async () => {
-  if (!templateLoaded.value) return false;
+const saveTemplate = async ({ fromConfiguration = false } = {}) => {
+  if (
+    !templateLoaded.value ||
+    isSaving.value ||
+    (isConfiguring.value && !fromConfiguration)
+  ) {
+    return false;
+  }
 
   const placeholderError = getPlaceholderValidationError();
   if (placeholderError) {
@@ -2615,13 +2632,18 @@ const saveTemplate = async () => {
 };
 
 const openPresentation = async () => {
-  if (!templateLoaded.value) return;
-  if (getPlaceholderValidationError()) {
-    await saveTemplate();
-    return;
+  if (!templateLoaded.value || isSaving.value || isConfiguring.value) return;
+  isConfiguring.value = true;
+  try {
+    if (getPlaceholderValidationError()) {
+      await saveTemplate({ fromConfiguration: true });
+      return;
+    }
+    if (hasUnsavedChanges.value && !(await saveTemplate({ fromConfiguration: true }))) return;
+    await router.push(`/templates/${templateId.value}/present`);
+  } finally {
+    isConfiguring.value = false;
   }
-  if (hasUnsavedChanges.value && !(await saveTemplate())) return;
-  router.push(`/templates/${templateId.value}/present`);
 };
 
 watch(

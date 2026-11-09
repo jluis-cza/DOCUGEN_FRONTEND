@@ -33,9 +33,9 @@
     <v-divider></v-divider>
 
     <!-- Charts -->
-    <v-card-item>
+    <v-card-text>
       <v-row dense v-for="(chart, cIndex) in charts" :key="cIndex">
-        <v-col cols="12" class="overflow-y-auto overflow-x-auto">
+        <v-col cols="12" class="overflow-x-auto">
           <v-card variant="outlined" width="100%" min-width="500">
             <v-card-title class="text-center text-subtitle-1">{{ chart.title }}</v-card-title>
             <v-card-item>
@@ -68,7 +68,7 @@
           </v-card>
         </v-col>
       </v-row>
-    </v-card-item>
+    </v-card-text>
   </v-card>
 </template>
 
@@ -98,7 +98,7 @@ const props = defineProps({
 const { actions: processes_actions } = useProcesses();
 const { actions: myProcesses_actions } = useMyProcesses();
 const usageHistory = ref(null);
-const todayCounts = ref({ edition: 0, processing: 0 });
+const todayCounts = ref({ edition: 0, generation: 0 });
 const historyLoading = ref(false);
 const historyError = ref('');
 
@@ -133,13 +133,13 @@ const loadUsageHistory = async (page = 1) => {
 };
 
 // Chart Data
-const chartData = (module) => {
+const chartData = (module, label) => {
   const days = usageHistory.value?.days || [];
   return {
     labels: days.map(({ date }) => formatDate(date)),
     datasets: [
       {
-        label: 'Uso diario',
+        label,
         backgroundColor: '#1867C0',
         borderRadius: 4,
         data: days.map((day) => day[module]),
@@ -154,7 +154,7 @@ const chartOptions = {
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (context) => `Llamadas al servicio: ${context.raw}`,
+        label: (context) => `${context.dataset.label}: ${context.raw}`,
       },
     },
   },
@@ -165,7 +165,7 @@ const chartOptions = {
     },
     y: {
       beginAtZero: true,
-      title: { display: true, text: 'Uso de servicio' },
+      title: { display: true, text: 'Cantidad de operaciones exitosas' },
     },
   },
 };
@@ -175,23 +175,23 @@ const panels = computed(() => {
   return [
     {
       counter: todayCounts.value.edition,
-      description: 'Uso del módulo de Edición hoy',
+      description: 'Ediciones de plantillas hechas hoy',
     },
     {
-      counter: todayCounts.value.processing,
-      description: 'Uso del módulo de Generación hoy',
+      counter: todayCounts.value.generation,
+      description: 'Generaciones de documentos hechas hoy',
     },
   ];
 });
 const charts = computed(() => {
   return [
     {
-      title: 'Historial de uso del módulo de Edición de Plantillas',
-      data: chartData('edition'),
+      title: 'Historial de ediciones de plantillas',
+      data: chartData('edition', 'Ediciones de plantillas'),
     },
     {
-      title: 'Historial de uso del módulo de Generación de Documentos',
-      data: chartData('processing'),
+      title: 'Historial de generaciones de documentos',
+      data: chartData('generation', 'Documentos generados'),
     },
   ];
 });

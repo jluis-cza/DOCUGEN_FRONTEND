@@ -38,12 +38,16 @@ export const useListsStore = defineStore('lists', () => {
       lists.value.splice(index, 1);
     }
   };
+  const resetAllLists = () => {
+    lists.value = [];
+  };
   return {
     getLists,
     getList,
     setList,
     resetList,
     deleteList,
+    resetAllLists,
   };
 });
 

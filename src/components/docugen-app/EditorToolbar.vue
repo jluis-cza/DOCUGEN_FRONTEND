@@ -40,13 +40,22 @@
         >
           Rehacer
         </v-btn>
-        <v-btn variant="tonal" prepend-icon="mdi-content-save" size="small" @click="$emit('save')">
+        <v-btn
+          variant="tonal"
+          prepend-icon="mdi-content-save"
+          size="small"
+          :loading="isSaving"
+          :disabled="isSaving || isConfiguring"
+          @click="$emit('save')"
+        >
           Guardar
         </v-btn>
         <v-btn
           color="primary"
           prepend-icon="mdi-file-pdf-box"
           size="small"
+          :loading="isConfiguring"
+          :disabled="isSaving || isConfiguring"
           @click="$emit('configure')"
         >
           Configurar y Generar
@@ -62,6 +71,8 @@ defineProps({
   hasUnsavedChanges: { type: Boolean, default: false },
   canUndo: { type: Boolean, default: false },
   canRedo: { type: Boolean, default: false },
+  isSaving: { type: Boolean, default: false },
+  isConfiguring: { type: Boolean, default: false },
 });
 
 defineEmits(['back', 'undo', 'redo', 'save', 'configure']);
