@@ -51,43 +51,45 @@
         <v-card-item>
           <v-list density="compact">
             <template v-for="(item, i) in cardInfo" :key="i">
-              <v-list-item>
-                <div class="d-flex flex-wrap justify-space-between align-center ga-2">
-                  <span class="font-weight-medium text-secondary">{{ item.label }}</span>
-                  <span class="font-weight-light">
-                    <template v-if="item.label === 'Estado'">
-                      <v-chip size="small" :color="item.data[1]" variant="flat">{{
-                        item.data[0]
-                      }}</v-chip>
-                    </template>
-                    <template v-else-if="item.label === 'Sesiones'">
-                      <span
-                        class="text-info cursor-pointer text-decoration-underline"
-                        @click="viewAccountSessions(accountId)"
-                        >Ver sesiones</span
-                      >
-                    </template>
-                    <template v-else-if="item.label === 'Servicios'">
-                      <span
-                        class="text-info cursor-pointer text-decoration-underline"
-                        @click="viewAccountServices(accountId)"
-                        >Ver servicios</span
-                      >
-                    </template>
-                    <template v-else-if="item.label === 'Notificaciones'">
-                      <span
-                        class="text-info cursor-pointer text-decoration-underline"
-                        @click="viewAccountNotifications(accountId)"
-                        >Ver notificaciones</span
-                      >
-                    </template>
-                    <template v-else>
-                      {{ item.data }}
-                    </template>
-                  </span>
-                </div>
-              </v-list-item>
-              <v-divider></v-divider>
+              <template v-if="item.label !== 'Servicios' || account.role !== 'admin'">
+                <v-list-item>
+                  <div class="d-flex flex-wrap justify-space-between align-center ga-2">
+                    <span class="font-weight-medium text-secondary">{{ item.label }}</span>
+                    <span class="font-weight-light">
+                      <template v-if="item.label === 'Estado'">
+                        <v-chip size="small" :color="item.data[1]" variant="flat">{{
+                          item.data[0]
+                        }}</v-chip>
+                      </template>
+                      <template v-else-if="item.label === 'Sesiones'">
+                        <span
+                          class="text-info cursor-pointer text-decoration-underline"
+                          @click="viewAccountSessions(accountId)"
+                          >Ver sesiones</span
+                        >
+                      </template>
+                      <template v-else-if="item.label === 'Servicios'" >
+                        <span
+                          class="text-info cursor-pointer text-decoration-underline"
+                          @click="viewAccountServices(accountId)"
+                          >Ver servicios</span
+                        >
+                      </template>
+                      <template v-else-if="item.label === 'Notificaciones'">
+                        <span
+                          class="text-info cursor-pointer text-decoration-underline"
+                          @click="viewAccountNotifications(accountId)"
+                          >Ver notificaciones</span
+                        >
+                      </template>
+                      <template v-else>
+                        {{ item.data }}
+                      </template>
+                    </span>
+                  </div>
+                </v-list-item>
+                <v-divider></v-divider>
+              </template>
             </template>
           </v-list>
         </v-card-item>
