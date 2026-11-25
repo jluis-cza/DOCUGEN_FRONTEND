@@ -10,7 +10,7 @@
           size="small"
           variant="tonal"
           prepend-icon="mdi-plus"
-          :disabled="bulkRows.length >= maxDocuments || isGenerating"
+          :disabled="bulkRows.length >= maxDocuments || isBusy"
           @click="$emit('add-row')"
         >
           Agregar fila
@@ -44,6 +44,7 @@
                   v-if="placeholder.allowedValues?.length"
                   :model-value="row.data[placeholder.key] ?? ''"
                   :items="placeholder.allowedValues"
+                  :disabled="isBusy"
                   :error="!!row.errors[placeholder.key]"
                   :error-messages="row.errors[placeholder.key] ? [row.errors[placeholder.key]] : []"
                   density="compact"
@@ -56,6 +57,7 @@
                   :model-value="
                     row.data[placeholder.key] === true || row.data[placeholder.key] === 'true'
                   "
+                  :disabled="isBusy"
                   :error="!!row.errors[placeholder.key]"
                   density="compact"
                   hide-details
@@ -64,6 +66,7 @@
                 <v-textarea
                   v-else-if="placeholder.type === 'textarea'"
                   :model-value="row.data[placeholder.key] ?? ''"
+                  :disabled="isBusy"
                   :error="!!row.errors[placeholder.key]"
                   :error-messages="row.errors[placeholder.key] ? [row.errors[placeholder.key]] : []"
                   rows="1"
@@ -76,6 +79,7 @@
                 <v-text-field
                   v-else
                   :model-value="row.data[placeholder.key] ?? ''"
+                  :disabled="isBusy"
                   :type="
                     ['number', 'date', 'email', 'url'].includes(placeholder.type)
                       ? placeholder.type
@@ -101,6 +105,7 @@
                   class="d-none"
                   type="file"
                   accept="image/png,image/jpeg"
+                  :disabled="isBusy"
                   @change="(event) => $emit('image-file-selected', row, placeholder, event)"
                 />
               </td>
@@ -132,7 +137,7 @@
                   variant="text"
                   color="error"
                   aria-label="Eliminar fila"
-                  :disabled="bulkRows.length === 1 || isGenerating"
+                  :disabled="bulkRows.length === 1 || isBusy"
                   @click="$emit('remove-row', row.id)"
                 />
               </td>
@@ -167,7 +172,7 @@ defineProps({
   placeholders: { type: Array, required: true },
   bulkRows: { type: Array, required: true },
   maxDocuments: { type: Number, required: true },
-  isGenerating: { type: Boolean, required: true },
+  isBusy: { type: Boolean, required: true },
 });
 
 defineEmits([

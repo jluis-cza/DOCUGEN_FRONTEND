@@ -757,8 +757,8 @@ Invoke-RestMethod -Method Post `
             </li>
             <li>Haz clic en <strong>Generar PDFs</strong> para procesar el lote.</li>
             <li>
-              Cuando termine, podrás revisarlos y descargarlos desde el botón
-              <strong>Descargar PDFs</strong>.
+              Cuando termine, podrás revisarlos y descargar todos los PDFs juntos en un ZIP. El
+              archivo incluye un índice TSV con los datos de cada documento.
             </li>
           </ol>
 

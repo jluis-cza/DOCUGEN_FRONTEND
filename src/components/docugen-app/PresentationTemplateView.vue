@@ -51,7 +51,7 @@
             prepend-icon="mdi-file-pdf-box"
             @click="generatePdf"
             :loading="isGenerating"
-            :disabled="!canGeneratePdf"
+            :disabled="!canGeneratePdf || isBulkGenerating"
           >
             {{ pdfUrl ? 'Regenerar' : 'Generar' }} PDF
           </v-btn>
@@ -72,7 +72,7 @@
               color="primary"
               prepend-icon="mdi-file-multiple"
               :loading="isBulkGenerating"
-              :disabled="!canGenerateBulk"
+              :disabled="!canGenerateBulk || isGenerating"
               @click="generateBulkPdfs"
             >
               {{ bulkHasResults ? 'Regenerar' : 'Generar' }} PDFs
@@ -82,10 +82,11 @@
               size="small"
               color="success"
               prepend-icon="mdi-download-multiple"
-              :disabled="isBulkGenerating"
+              :loading="isBulkDownloading"
+              :disabled="isBulkGenerating || isBulkDownloading"
               @click="downloadBulkPdfs"
             >
-              Descargar PDFs
+              Descargar ZIP
             </v-btn>
           </template>
         </div>
@@ -168,7 +169,7 @@
         :placeholders="placeholdersList"
         :bulk-rows="bulkRows"
         :max-documents="MAX_BULK_DOCUMENTS"
-        :is-generating="isBulkGenerating"
+        :is-busy="isBulkGenerating || isBulkDownloading"
         @add-row="addBulkRow"
         @update-value="updateBulkValue"
         @request-image-file="openBulkImagePicker"
@@ -285,7 +286,7 @@ const imageFileInputs = ref({});
 const pdfFileName = ref('');
 
 const canGeneratePdf = computed(() => {
-  if (jsonError.value || isGenerating.value) return false;
+  if (jsonError.value || isGenerating.value || isBulkGenerating.value) return false;
   const hasParams = Object.keys(placeholders.value || {}).length > 0;
   if (!hasParams) return true;
   return Object.keys(validationErrors.value || {}).length === 0;
@@ -325,7 +326,7 @@ const handleBulkImageFile = (row, placeholder, event) => {
     if (typeof reader.result !== 'string') {
       showNotification('No se pudo leer el archivo de imagen.', 'W0002', 'persistent');
     } else {
-      updateBulkValue(row, placeholder, reader.result);
+      updateBulkValue(row, placeholder, reader.result, file.name);
     }
     input.value = '';
   };
@@ -350,6 +351,7 @@ const showNotification = (message, code, mode = 'persistent') => {
 
 const {
   isBulkGenerating,
+  isBulkDownloading,
   bulkRows,
   bulkHasResults,
   successfulBulkRows,
@@ -370,6 +372,7 @@ const {
   setGenerating: (isGenerating) => {
     showGeneratingDialog.value = isGenerating;
   },
+  isSingleGenerating: isGenerating,
 });
 
 const setImageFileInputRef = (key, element) => {
@@ -504,6 +507,7 @@ const toggleViewMode = () => {
 };
 
 const generatePdf = async () => {
+  if (isGenerating.value || isBulkGenerating.value) return;
   if (jsonError.value) {
     showNotification('Corrige el JSON inválido antes de generar el PDF.', 'W0001', 'persistent');
     return;
